@@ -8,7 +8,7 @@ import (
 )
 
 // ExtraTags generates '<Major>, '<Major>.<Minor>', and 'latest' tags based
-// on a target patch and a set of existing tags.
+// on a target tag and a set of existing tags.
 func ExtraTags(target string, existing []string) ([]string, error) {
 	// Skip tag check if target is a prerelease
 	if semver.Prerelease(target) != "" {
