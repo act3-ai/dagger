@@ -17,16 +17,34 @@ package main
 import (
 	"context"
 	"dagger/release/internal/dagger"
+	"dagger/release/util"
 	"fmt"
-	"slices"
 	"strings"
-
-	"golang.org/x/mod/semver"
 )
 
-type Release struct{}
+type Release struct {
+	// Source git repository
+	Source *dagger.Directory
 
-// Generate the next version from conventional commit messages (see cliff.toml). Includes 'v' prefix.
+	// +private
+	RegistryConfig *dagger.RegistryConfig
+	// +private
+	Netrc *dagger.Secret
+}
+
+func New(
+	// top level source code git directory
+	src *dagger.Directory,
+) *Release {
+	return &Release{
+		Source:         src,
+		RegistryConfig: dag.RegistryConfig(),
+	}
+}
+
+// Generate the next version from conventional commit messages (see cliff.toml).
+//
+// Includes 'v' prefix.
 func (r *Release) Version(ctx context.Context) (string, error) {
 	targetVersion, err := dag.GitCliff(r.Source).
 		BumpedVersion(ctx)
@@ -37,82 +55,22 @@ func (r *Release) Version(ctx context.Context) (string, error) {
 	return strings.TrimSpace(targetVersion), err
 }
 
-// generate Major, Minor, and latest tags based on new patch.
-func (r *Release) genTagList(newVersion string, existingTags []string) ([]string, error) {
-
-	// Filter out non-semver tags and sort
-	var semverTags []string
-	for _, tag := range existingTags {
-		if semver.IsValid(tag) {
-			semverTags = append(semverTags, tag)
-		}
-	}
-
-	semver.Sort(semverTags)
-	slices.Reverse(semverTags)
-
-	// Skip tag check if newVersion is a prerelease
-	if semver.Prerelease(newVersion) != "" {
-		return nil, nil
-	}
-
-	// check if new tag is valid semver
-	if !semver.IsValid(newVersion) {
-		return nil, fmt.Errorf("new version %q is not valid semver", newVersion)
-	}
-
-	// check if new tag doesn't already exist
-	for _, tag := range semverTags {
-		if tag == newVersion {
-			return nil, fmt.Errorf("version %s already exists", newVersion)
-		}
-	}
-
-	newMajor := semver.Major(newVersion)
-	newMajorMinor := semver.MajorMinor(newVersion)
-
-	// Find latest tags for each category.
-	var latestOverall, latestMajor, latestMajorMinor bool // default is false
-	for _, tag := range semverTags {
-		if semver.Compare(tag, newVersion) <= 0 {
-			continue
-		}
-		if !latestOverall {
-			latestOverall = true
-		}
-		if !latestMajor && semver.Major(tag) == newMajor {
-			latestMajor = true
-		}
-		if !latestMajorMinor && semver.MajorMinor(tag) == newMajorMinor {
-			latestMajorMinor = true
-		}
-		if latestOverall && latestMajor && latestMajorMinor {
-			break
-		}
-	}
-
-	publishTags := []string{newVersion} // Always return patch version
-
-	if !latestMajorMinor {
-		publishTags = append(publishTags, newMajorMinor)
-	}
-	if !latestMajor {
-		publishTags = append(publishTags, newMajor)
-	}
-	if !latestOverall {
-		publishTags = append(publishTags, "latest")
-	}
-	return publishTags, nil
-}
-
-// current issue with SSH AUTH SOCK: https://docs.dagger.io/api/remote-repositories/#multiple-ssh-keys-may-cause-ssh-forwarding-to-fail
-func (r *Release) CheckVersion(
+// Generate extra tags based on the provided target tag.
+//
+// Ex: Given the patch release 'v1.2.3', with an existing 'v1.3.0' release, it returns 'v1.2'.
+// Ex: Given the patch release 'v1.2.3', which is the latest and greatest, it returns 'v1', 'v1.2', 'latest'.
+//
+// Notice: current issue with SSH AUTH SOCK: https://docs.dagger.io/api/remote-repositories/#multiple-ssh-keys-may-cause-ssh-forwarding-to-fail
+func (r *Release) ExtraTags(
 	ctx context.Context,
 	// git repo to check existing tags
-	// +default="https://github.com/dagger/dagger"
 	url string,
 	// ssh auth socket to use for git cloning
-	sock *dagger.Socket) ([]string, error) {
+	sock *dagger.Socket,
+	// target version
+	// +optional
+	version string,
+) ([]string, error) {
 	existingTags, err := dag.Git(url, dagger.GitOpts{SSHAuthSocket: sock}).Tags(ctx)
 	if err != nil {
 		return nil, err
@@ -123,5 +81,5 @@ func (r *Release) CheckVersion(
 		return nil, err
 	}
 
-	return r.genTagList(newVersion, existingTags)
+	return util.ExtraTags(newVersion, existingTags)
 }
