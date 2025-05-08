@@ -1,11 +1,40 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
 	"golang.org/x/mod/semver"
 )
+
+// Project is a programming language type.
+type ProjectType string
+
+const (
+	Golang ProjectType = "go"
+	Python ProjectType = "python"
+)
+
+// ErrUnsupportedProject indicates a project's language is not supported.
+var ErrUnsupportedProject = errors.New("unsupported project type")
+
+// ResolveProjectType determines the type of a project, returning an
+// error if it's not supported.
+func ResolveProjectType(language string) (ProjectType, error) {
+	lang := strings.ToLower(language)
+
+	switch lang {
+	case "golang", "go":
+		return Golang, nil
+	case "python", "py":
+		return Python, nil
+	default:
+		return "", fmt.Errorf("%w: recieved type %s", ErrUnsupportedProject, language)
+	}
+}
+
+// ResultsFormatter provides utility for formatting sets of results.
 
 // ExtraTags generates '<Major>, '<Major>.<Minor>', and 'latest' tags based
 // on a target tag and a set of existing tags.
