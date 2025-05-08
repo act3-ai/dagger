@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 
 	"golang.org/x/mod/semver"
 )
@@ -35,6 +36,42 @@ func ResolveProjectType(language string) (ProjectType, error) {
 }
 
 // ResultsFormatter provides utility for formatting sets of results.
+//
+//	e.g. adding a "Unit Test" header to unit test results, with a line separator before the next set of results
+type ResultsFormatter interface {
+	// Add appends the results content with a header.
+	Add(header, content string)
+	// String outputs the current state of added results.
+	String() string
+}
+
+// NewResultsBasicFmt initializes a ResultsFormatter with the given separator
+// used between sets of results.
+func NewResultsBasicFmt(sep string) ResultsFormatter {
+	return &resultsBasic{}
+}
+
+// resultsBasic is a simple implementation of ResultsFormatter.
+type resultsBasic struct {
+	// sep is a line separator between sets of results, e.g. '------------'.
+	sep string
+	// res is the running state of results, modified by Add.
+	res strings.Builder
+}
+
+func (r *resultsBasic) String() string {
+	return r.res.String()
+}
+
+func (r *resultsBasic) Add(header, content string) {
+	r.res.Grow((len(header) + 1 + len(content) + len(r.sep) + 1))
+
+	r.res.WriteString(header)
+	r.res.WriteString("\n")
+	r.res.WriteString(content)
+	r.res.WriteString(r.sep)
+	r.res.WriteString("\n")
+}
 
 // ExtraTags generates '<Major>, '<Major>.<Minor>', and 'latest' tags based
 // on a target tag and a set of existing tags.
