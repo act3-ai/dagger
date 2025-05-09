@@ -26,6 +26,8 @@ type Release struct {
 	// Source git repository
 	Source *dagger.Directory
 
+	// TODO: add optional overrides for disabling default behavior
+
 	// +private
 	ProjectType util.ProjectType
 	// +private

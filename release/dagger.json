@@ -1,6 +1,6 @@
 {
   "name": "release",
-  "engineVersion": "v0.18.5",
+  "engineVersion": "v0.18.6",
   "sdk": {
     "source": "go"
   },
@@ -10,9 +10,35 @@
       "source": "../git-cliff"
     },
     {
+      "name": "golangci-lint",
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@golangci-lint/v0.9.0",
+      "pin": "e6c14178bcaaff9e102e2a89173ca31479b80629"
+    },
+    {
+      "name": "govulncheck",
+      "source": "../govulncheck"
+    },
+    {
+      "name": "markdownlint",
+      "source": "../markdownlint"
+    },
+    {
+      "name": "python",
+      "source": "../python"
+    },
+    {
       "name": "registry-config",
       "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
       "pin": "126b5fbbdad70dbf2a8689600baec2eb78c05ef4"
+    },
+    {
+      "name": "shellcheck",
+      "source": "github.com/dagger/dagger/modules/shellcheck@v0.18.2",
+      "pin": "0b46ea3c49b5d67509f67747742e5d8b24be9ef7"
+    },
+    {
+      "name": "yamllint",
+      "source": "../yamllint"
     }
   ]
 }
