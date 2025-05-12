@@ -20,8 +20,8 @@ const (
 // ErrUnsupportedProject indicates a project's language is not supported.
 var ErrUnsupportedProject = errors.New("unsupported project type")
 
-// ResolveProjectType determines the type of a project, returning an
-// error if it's not supported.
+// ResolveProjectType determines the type of a project, returning a standard
+// projecty type identifier or an error if it's not supported.
 func ResolveProjectType(language string) (ProjectType, error) {
 	lang := strings.ToLower(language)
 

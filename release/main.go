@@ -26,14 +26,16 @@ type Release struct {
 	// Source git repository
 	Source *dagger.Directory
 
-	// TODO: add optional overrides for disabling default behavior
-
 	// +private
 	ProjectType util.ProjectType
 	// +private
 	RegistryConfig *dagger.RegistryConfig
 	// +private
 	Netrc *dagger.Secret
+
+	// TODO: add optional overrides for disabling default behavior
+	// +private
+	DisableUnitTests bool
 }
 
 func New(

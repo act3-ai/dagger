@@ -16,38 +16,43 @@ import (
 // TODO: helm chart version bumping, make it flexible to zero or more helm charts
 // TODO: add support for modifications to releases.md for images and helm chart table
 
-// Prepare performs sanity checks prior to releasing.
-func (r *Release) Prepare(ctx context.Context) (string, error) {
+// Check performs sanity checks prior to releasing, i.e. linters and unit tests.
+func (r *Release) Check(ctx context.Context) (string, error) {
+	if err := r.gitStatus(ctx); err != nil {
+		return "", fmt.Errorf("git repository is dirty, aborting check: %w", err)
+	}
+
 	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
 
 	if err := r.genericLint(ctx, results); err != nil {
 		return results.String(), fmt.Errorf("running generic linters: %w", err)
 	}
 
-	if err := r.prepByProjectType(ctx, results); err != nil {
+	if err := r.checkByProjectType(ctx, results); err != nil {
 		return results.String(), fmt.Errorf("preparing based on project type %s: %w", r.ProjectType, err)
 	}
 
-	return "", fmt.Errorf("not implemented")
+	return results.String(), nil
 }
 
-// prepareByProjectType performs language specific preparations.
-func (r *Release) prepByProjectType(ctx context.Context, results util.ResultsFormatter) error {
+// checkByProjectType performs language specific checks.
+func (r *Release) checkByProjectType(ctx context.Context, results util.ResultsFormatter) error {
 	switch r.ProjectType {
 	case util.Golang:
-		return r.prepGolang(ctx, results)
+		return r.checkGolang(ctx, results)
 	case util.Python:
-		return r.prepPython(ctx, results)
+		return r.checkPython(ctx, results)
 	default:
 		// sanity, should be impossible
 		return fmt.Errorf("unsupported project type %s", r.ProjectType)
 	}
 }
 
-// prepGolang runs go specific preparations.
-func (r *Release) prepGolang(ctx context.Context, results util.ResultsFormatter) error {
+// checkGolang runs go specific checks.
+func (r *Release) checkGolang(ctx context.Context, results util.ResultsFormatter) error {
 	var errs []error
 
+	// lint
 	res, err := dag.GolangciLint().
 		Run(r.Source, dagger.GolangciLintRunOpts{Timeout: "10m"}).
 		Stdout(ctx)
@@ -71,13 +76,32 @@ func (r *Release) prepGolang(ctx context.Context, results util.ResultsFormatter)
 		errs = append(errs, fmt.Errorf("running govulncheck: %w", err))
 	}
 
-	// TODO: go generate
+	// unit tests
+	if !r.DisableUnitTests {
+		res, err = dag.Go().
+			WithSource(r.Source).
+			Container().
+			With(func(ctr *dagger.Container) *dagger.Container {
+				if r.Netrc != nil {
+					ctr = ctr.WithMountedSecret("/root/.netrc", r.Netrc)
+				}
+				return ctr
+			}).
+			WithExec([]string{"go", "test", "./..."}).
+			Stdout(ctx)
+		results.Add("Go Unit Tests", res)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("running go unit tests: %w", err))
+		}
+	}
+
+	// TODO: go generate?
 
 	return errors.Join(errs...)
 }
 
-// prepPython runs python specific preparations.
-func (r *Release) prepPython(ctx context.Context, results util.ResultsFormatter) error {
+// checkPython runs python specific preparations.
+func (r *Release) checkPython(ctx context.Context, results util.ResultsFormatter) error {
 	// python linters
 	dag.Python(
 		dagger.PythonOpts{
@@ -160,4 +184,31 @@ func (r *Release) shellcheck(ctx context.Context, concurrency int) (string, erro
 
 	res, err := p.Wait()
 	return strings.Join(res, "\n\n"), err
+}
+
+// gitStatus returns an error if a git repository contains uncommitted changes.
+func (r *Release) gitStatus(ctx context.Context) error {
+	ctr := dag.Wolfi().
+		Container(
+			dagger.WolfiContainerOpts{
+				Packages: []string{"git"},
+			},
+		).
+		WithMountedDirectory("/work/src", r.Source).
+		WithWorkdir("/work/src")
+
+	var errs []error
+
+	// check for unstaged changes
+	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}).Stdout(ctx)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("checking for unstaged git changes: %w", err))
+	}
+
+	// check for staged, but not committed changes
+	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}).Stdout(ctx)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("checking for staged git changes: %w", err))
+	}
+	return errors.Join(errs...)
 }
