@@ -10,7 +10,7 @@ import (
 )
 
 // Project is a programming language type.
-type ProjectType string
+type ProjectType = string
 
 const (
 	Golang ProjectType = "go"
