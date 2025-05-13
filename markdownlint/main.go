@@ -80,10 +80,6 @@ func (m *Markdownlint) WithConfig(
 }
 
 func defaultContainer(version string) *dagger.Container {
-	binary := dag.Container().
-		From(fmt.Sprintf("%s:%s", defaultImageRepository, version)).
-		File("/usr/local/bin/markdownlint-cli2")
-
 	return dag.Container().
-		WithFile("/usr/local/bin/markdownlint-cli2", binary, dagger.ContainerWithFileOpts{Permissions: 0755})
+		From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 }
