@@ -6,7 +6,6 @@ import (
 	"dagger/release/util"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/sourcegraph/conc/pool"
@@ -149,34 +148,32 @@ func (r *Release) genericLint(ctx context.Context, results util.ResultsFormatter
 //
 // Users who want custom functionality should use github.com/dagger/dagger/modules/shellcheck directly.
 func (r *Release) shellcheck(ctx context.Context, concurrency int) (string, error) {
-	srcFiltered := r.Source.Filter(
-		dagger.DirectoryFilterOpts{
-			Include: []string{"*.sh", "*.bash"}, // only supports bash/sh
-		},
-	)
 
-	entries, err := srcFiltered.Entries(ctx)
+	// TODO: Consider adding an option for specifying script files that don't have the extension, such as WithShellScripts.
+	shEntries, err := r.Source.Glob(ctx, "**/*.sh")
 	if err != nil {
-		return "", fmt.Errorf("retrieving entries from filtered source directory: %w", err)
+		return "", fmt.Errorf("globbing shell scripts with *.sh extension: %w", err)
+	}
+
+	bashEntries, err := r.Source.Glob(ctx, "**/*.bash")
+	if err != nil {
+		return "", fmt.Errorf("globbing shell scripts with *.bash extension: %w", err)
 	}
 
 	p := pool.NewWithResults[string]().
 		WithMaxGoroutines(concurrency).
 		WithErrors().
 		WithContext(ctx)
-	for _, entry := range entries {
-		fi, err := os.Stat(entry)
-		if err != nil {
-			return "", fmt.Errorf("retrieving file info for %s: %w", entry, err)
-		}
-		if fi.IsDir() {
-			continue
-		}
 
+	entries := append(shEntries, bashEntries...)
+	for _, entry := range entries {
 		p.Go(func(ctx context.Context) (string, error) {
 			r, err := dag.Shellcheck().
-				Check(srcFiltered.File(entry)).
+				Check(r.Source.File(entry)).
 				Report(ctx)
+			if r == "" {
+				r = "No reported issues."
+			}
 			r = fmt.Sprintf("Results for file %s:\n%s", entry, r)
 			return r, err
 		})
