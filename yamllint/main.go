@@ -52,8 +52,8 @@ func (y *Yamllint) Run(ctx context.Context,
 	// having a singular required arg avoids usage errors (optional dir or
 	// set of files)
 	srcPath := "src"
-	y.Container = y.Container.WithMountedDirectory(srcPath, src)
-	y.Flags = append(y.Flags, srcPath)
+	y.Container = y.Container.WithMountedDirectory(srcPath, src).WithWorkdir(srcPath)
+	y.Flags = append(y.Flags, ".")
 
 	return y.Container.WithExec(y.Flags)
 }
