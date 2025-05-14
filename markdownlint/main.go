@@ -49,12 +49,13 @@ func (m *Markdownlint) Run(ctx context.Context,
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
-) *dagger.Container {
+) (string, error) {
 	m.Flags = append(m.Flags, extraArgs...)
 	return m.Container.
 		WithWorkdir("/work/src").
 		WithMountedDirectory(".", source).
-		WithExec(m.Flags)
+		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		Stdout(ctx)
 }
 
 // WithFix updates files to resolve fixable issues (can be overriden in configuration).
