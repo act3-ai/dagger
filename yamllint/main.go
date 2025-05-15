@@ -64,14 +64,25 @@ func New(ctx context.Context,
 //
 // May be used as a "catch-all" in case functions are not implemented.
 func (y *Yamllint) Run(ctx context.Context,
-	// flags, without 'yamllint'
+	// Additional arguments to pass to yamllint, without 'yamllint' itself.
 	// +optional
-	extraFlags []string,
-) *dagger.Container {
-	y.Flags = append(y.Flags, extraFlags...)
+	extraArgs []string,
+
+	// Output results, without an error.
+	// +optional
+	results bool,
+) (string, error) {
+	y.Flags = append(y.Flags, extraArgs...)
 	y.Flags = append(y.Flags, ".")
 
-	return y.Container.WithExec(y.Flags)
+	expect := dagger.ReturnTypeSuccess
+	if results {
+		expect = dagger.ReturnTypeAny
+	}
+
+	return y.Container.
+		WithExec(y.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+		Stdout(ctx)
 }
 
 // List YAML files that can be linted.
