@@ -31,7 +31,7 @@ func New(ctx context.Context,
 	// +default="latest"
 	Version string,
 
-	// '.markdownlint-cli2.*' configuration file.
+	// Configuration file.
 	// +optional
 	Config *dagger.File,
 ) *Markdownlint {
