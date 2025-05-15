@@ -59,14 +59,6 @@ func (r *Release) WithClean() *Release {
 	return r
 }
 
-// WithConfig loads a .goreleaser.yaml configuration file.
-func (r *Release) WithConfig(config *dagger.File) *Release {
-	cfgPath := "/work/.goreleaser.yaml"
-	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(cfgPath, config)
-	r.Flags = append(r.Flags, "--config", cfgPath)
-	return r
-}
-
 // Timeout to the entire release process.
 //
 // e.g. `goreleaser build --timeout <duration>`.
