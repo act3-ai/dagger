@@ -64,16 +64,21 @@ func New(ctx context.Context,
 //
 // May be used as a "catch-all" in case functions are not implemented.
 func (y *Yamllint) Run(ctx context.Context,
-	// Additional arguments to pass to yamllint, without 'yamllint' itself.
-	// +optional
-	extraArgs []string,
-
 	// Output results, without an error.
 	// +optional
 	results bool,
+
+	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
+	// +optional
+	// +default="auto"
+	format string,
+
+	// Additional arguments to pass to yamllint, without 'yamllint' itself.
+	// +optional
+	extraArgs []string,
 ) (string, error) {
 	y.Flags = append(y.Flags, extraArgs...)
-	y.Flags = append(y.Flags, ".")
+	y.Flags = append(y.Flags, "--format", format, ".")
 
 	expect := dagger.ReturnTypeSuccess
 	if results {
@@ -96,17 +101,6 @@ func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
 		return nil, fmt.Errorf("listing yaml files: %w", err)
 	}
 	return strings.Split(out, "\n"), nil
-}
-
-// Specify output format.
-//
-// e.g. 'yamllint --format <format>'.
-func (y *Yamllint) WithFormat(
-	// output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
-	format string,
-) *Yamllint {
-	y.Flags = append(y.Flags, "--format", format)
-	return y
 }
 
 // Return non-zero exit code on warnings as well as errors.
