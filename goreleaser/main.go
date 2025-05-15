@@ -138,15 +138,6 @@ func (gr *Goreleaser) WithSecretVariable(
 	return gr
 }
 
-// Add netrc credentials.
-func (gr *Goreleaser) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Goreleaser {
-	gr.Container = gr.Container.WithMountedSecret("/root/.netrc", netrc)
-	return gr
-}
-
 // Add registry credentials.
 func (gr *Goreleaser) WithRegistryAuth(
 	// registry's hostname
@@ -199,11 +190,18 @@ func (gr *Goreleaser) WithGoBuildCache(
 // Run goreleaser.
 //
 // Run is a "catch-all" in case functions are not implemented.
-func (gr *Goreleaser) Run(
+func (gr *Goreleaser) Run(ctx context.Context,
 	// arguments and flags, without `goreleaser`.
 	args []string,
-) *dagger.Container {
-	return gr.Container.WithExec(append([]string{"goreleaser"}, args...))
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+) (string, error) {
+	expect := dagger.ReturnTypeSuccess
+	if ignoreError {
+		expect = dagger.ReturnTypeAny
+	}
+	return gr.Container.WithExec(append([]string{"goreleaser"}, args...), dagger.ContainerWithExecOpts{Expect: expect}).Stdout(ctx)
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.

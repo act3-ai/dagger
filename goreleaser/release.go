@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"dagger/goreleaser/internal/dagger"
 	"strconv"
 )
@@ -26,13 +27,22 @@ func (gr *Goreleaser) Release() *Release {
 // Run `goreleaser release` with all options previously provided.
 //
 // Run MAY be used as a "catch-all" in case functions are not implemented.
-func (gr *Release) Run(
+func (gr *Release) Run(ctx context.Context,
 	// arguments and flags, without `git-cliff`
 	// +optional
 	args []string,
-) *dagger.Container {
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+) (string, error) {
+	expect := dagger.ReturnTypeSuccess
+	if ignoreError {
+		expect = dagger.ReturnTypeAny
+	}
 	gr.Flags = append(gr.Flags, args...)
-	return gr.Goreleaser.Container.WithExec(gr.Flags)
+	return gr.Goreleaser.Container.
+		WithExec(gr.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+		Stdout(ctx)
 }
 
 // Generate an unversioned snapshot release, skipping all validations and without publishing any artifacts.
