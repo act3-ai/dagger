@@ -62,17 +62,18 @@ func New(ctx context.Context,
 	}
 }
 
-// Run markdownlint-cli2. Typical usage is to run to detect an error, and, if an
-// error is returned, re-run with `--results` to return the output.
+// Run markdownlint-cli2. Typical usage is to run to detect linting errors, and, if an
+// error is returned, re-run with `--results` to return the output file or `--results contents`
+// to output to stdout.
 func (m *Markdownlint) Run(ctx context.Context,
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
 
-	// Output results, without an error.
+	// Output results, ignoring errors.
 	// +optional
 	results bool,
-) (string, error) {
+) *dagger.File {
 	m.Flags = append(m.Flags, extraArgs...)
 
 	expect := dagger.ReturnTypeSuccess
@@ -80,12 +81,19 @@ func (m *Markdownlint) Run(ctx context.Context,
 		expect = dagger.ReturnTypeAny
 	}
 
+	outFile := "markdownlint-cli2-out.txt"
 	return m.Container.
-		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
-		Stdout(ctx)
+		WithExec(m.Flags,
+			dagger.ContainerWithExecOpts{
+				Expect:         expect,
+				RedirectStdout: outFile,
+			}).
+		File(outFile)
 }
 
 // AutoFix updates files to resolve fixable issues (can be overriden in configuration).
+// It returns the entire source directory, use `export --path=<path-to-source>` to
+// write the updates to the host.
 //
 // e.g. 'markdownlint-cli2 --fix'.
 func (m *Markdownlint) AutoFix() *dagger.Directory {
