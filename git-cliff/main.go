@@ -26,6 +26,11 @@ func New(ctx context.Context,
 	// +optional
 	Container *dagger.Container,
 
+	// Version (image tag) to use as a git-cliff binary source.
+	// +optional
+	// +default="latest"
+	Version string,
+
 	// Configuration file.
 	// +optional
 	Config *dagger.File,
@@ -33,11 +38,6 @@ func New(ctx context.Context,
 	// Mount netrc credentials for a private git repository.
 	// +optional
 	Netrc *dagger.Secret,
-
-	// Version (image tag) to use as a git-cliff binary source.
-	// +optional
-	// +default="latest"
-	Version string,
 ) *GitCliff {
 	if Container == nil {
 		Container = defaultContainer(Version)
