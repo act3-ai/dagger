@@ -50,6 +50,10 @@ func New(ctx context.Context,
 	// +optional
 	Config *dagger.File,
 
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
+
 	// Disable mounting cache volumes.
 	//
 	// +optional
@@ -73,14 +77,19 @@ func New(ctx context.Context,
 			}
 			return c
 		}).
-		With(
-			func(c *dagger.Container) *dagger.Container {
-				if !DisableCache {
-					c = withGoModuleCacheFn(dag.CacheVolume("go-mod"), nil, "")(c)
-					c = withGoBuildCacheFn(dag.CacheVolume("go-build"), nil, "")(c)
-				}
-				return c
-			}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if !DisableCache {
+				c = withGoModuleCacheFn(dag.CacheVolume("go-mod"), nil, "")(c)
+				c = withGoBuildCacheFn(dag.CacheVolume("go-build"), nil, "")(c)
+			}
+			return c
+		}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		}).
 		WithWorkdir(srcDir).
 		WithMountedDirectory(srcDir, Src)
 
