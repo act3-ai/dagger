@@ -89,7 +89,7 @@ func (y *Yamllint) Run(ctx context.Context,
 //
 // e.g. 'yamllint --list-files'.
 func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
-	y.Flags = append(y.Flags, "--list-files")
+	y.Flags = append(y.Flags, "--list-files", ".")
 	out, err := y.Container.WithExec(y.Flags).
 		Stdout(ctx)
 	if err != nil {
