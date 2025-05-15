@@ -72,23 +72,21 @@ func (m *Markdownlint) Run(ctx context.Context,
 
 	// Output results, ignoring errors.
 	// +optional
-	results bool,
-) *dagger.File {
+	ignoreError bool,
+) (string, error) {
 	m.Flags = append(m.Flags, extraArgs...)
 
 	expect := dagger.ReturnTypeSuccess
-	if results {
+	if ignoreError {
 		expect = dagger.ReturnTypeAny
 	}
 
-	outFile := "markdownlint-cli2-out.txt"
 	return m.Container.
 		WithExec(m.Flags,
 			dagger.ContainerWithExecOpts{
-				Expect:         expect,
-				RedirectStdout: outFile,
+				Expect: expect,
 			}).
-		File(outFile)
+		Stdout(ctx)
 }
 
 // AutoFix updates files to resolve fixable issues (can be overriden in configuration).
