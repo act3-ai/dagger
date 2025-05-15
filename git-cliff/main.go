@@ -18,13 +18,17 @@ type GitCliff struct {
 	Flags []string
 }
 
-func New(
+func New(ctx context.Context,
 	// Git repository source.
 	Src *dagger.Directory,
 
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	// +optional
 	Container *dagger.Container,
+
+	// Configuration file.
+	// +optional
+	Config *dagger.File,
 
 	// Mount netrc credentials for a private git repository.
 	// +optional
@@ -42,6 +46,17 @@ func New(
 	flags := []string{"git-cliff"}
 	srcDir := "/work/src"
 	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Config != nil {
+				cfgPath, err := Config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, Config)
+				flags = append(flags, "--config", cfgPath)
+			}
+			return c
+		}).With(
 		func(c *dagger.Container) *dagger.Container {
 			if Netrc != nil {
 				c = c.WithMountedSecret("/root/.netrc", Netrc)
@@ -91,19 +106,6 @@ func (gc *GitCliff) WithSecretVariable(
 	secret *dagger.Secret,
 ) *GitCliff {
 	gc.Container = gc.Container.WithSecretVariable(name, secret)
-	return gc
-}
-
-// Sets the configuration file.
-//
-// e.g. `git-cliff --config <config>`.
-func (gc *GitCliff) WithConfig(
-	// git-cliff configuration file, i.e. cliff.toml.
-	config *dagger.File,
-) *GitCliff {
-	configPath := "/work/cliff.toml"
-	gc.Container = gc.Container.WithMountedFile(configPath, config)
-	gc.Flags = append(gc.Flags, "--config", configPath)
 	return gc
 }
 
