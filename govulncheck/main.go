@@ -65,14 +65,14 @@ func (gv *Govulncheck) ScanSource(ctx context.Context,
 	source *dagger.Directory,
 	// Output results, without an error.
 	// +optional
-	results bool,
+	ignoreError bool,
 	// file patterns to include,
 	// +optional
 	// +default="./..."
 	patterns string,
 ) (string, error) {
 	expect := dagger.ReturnTypeSuccess
-	if results {
+	if ignoreError {
 		expect = dagger.ReturnTypeAny
 	}
 
