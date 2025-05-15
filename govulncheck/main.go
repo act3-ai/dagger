@@ -31,6 +31,10 @@ func New(
 	// +optional
 	// +default="latest"
 	Version string,
+
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
 ) *Govulncheck {
 	if Container == nil {
 		Container = defaultContainer(Version)
@@ -38,22 +42,21 @@ func New(
 		Container = Container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, Version)})
 	}
 
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		})
+
 	return &Govulncheck{
 		Container: Container,
 		Flags:     []string{"govulncheck"},
 	}
 }
 
-// Mount netrc credentials for a private git repository.
-func (gv *Govulncheck) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Govulncheck {
-	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc)
-	return gv
-}
-
-// Run govulncheck with a source directory.
+// Run govulncheck on a source directory.
 //
 // e.g. `govulncheck -mode=source`.
 func (gv *Govulncheck) ScanSource(
