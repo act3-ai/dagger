@@ -1,4 +1,4 @@
-// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker. See https://github.com/DavidAnson/markdownlint-cli2 for more info.
+// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker. See https://github.com/DavidAnson/markdownlint-cli2 for more info. Most configuration should be done in '.markdownlint-cli2.yaml' within the source directory, or provided using 'WithConfig'.
 
 package main
 
@@ -38,32 +38,47 @@ func New(
 	}
 }
 
-// Run markdownlint-cli2. Use the dagger native stdout to get the output, or export if the WithFix option was used.
+// Run markdownlint-cli2. Typical usage is to run to detect an error, and, if an
+// error is returned, re-run with `--results` to return the output.
 func (m *Markdownlint) Run(ctx context.Context,
 	// Source directory containing markdown files to be linted.
 	source *dagger.Directory,
 
-	// Glob expressions (from the globby library), for identifying files in source to lint.
-	globs []string,
-
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
+
+	// Output results, without an error.
+	// +optional
+	results bool,
 ) (string, error) {
 	m.Flags = append(m.Flags, extraArgs...)
+
+	expect := dagger.ReturnTypeSuccess
+	if results {
+		expect = dagger.ReturnTypeFailure
+	}
+
 	return m.Container.
 		WithWorkdir("/work/src").
 		WithMountedDirectory(".", source).
-		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
 		Stdout(ctx)
 }
 
-// WithFix updates files to resolve fixable issues (can be overriden in configuration).
+// AutoFix updates files to resolve fixable issues (can be overriden in configuration).
 //
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) WithFix() *Markdownlint {
+func (m *Markdownlint) AutoFix(
+	// Source directory containing markdown files to be linted.
+	source *dagger.Directory,
+) *dagger.Directory {
 	m.Flags = append(m.Flags, "--fix")
-	return m
+	return m.Container.
+		WithWorkdir("/work/src").
+		WithMountedDirectory(".", source).
+		WithExec(m.Flags).
+		Directory("/work/src")
 }
 
 // Specify a custom configuration file.
