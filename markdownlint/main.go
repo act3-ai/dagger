@@ -42,7 +42,7 @@ func New(
 // error is returned, re-run with `--results` to return the output.
 func (m *Markdownlint) Run(ctx context.Context,
 	// Source directory containing markdown files to be linted.
-	source *dagger.Directory,
+	src *dagger.Directory,
 
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
@@ -61,7 +61,7 @@ func (m *Markdownlint) Run(ctx context.Context,
 
 	return m.Container.
 		WithWorkdir("/work/src").
-		WithMountedDirectory(".", source).
+		WithMountedDirectory(".", src).
 		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
 		Stdout(ctx)
 }
@@ -71,12 +71,12 @@ func (m *Markdownlint) Run(ctx context.Context,
 // e.g. 'markdownlint-cli2 --fix'.
 func (m *Markdownlint) AutoFix(
 	// Source directory containing markdown files to be linted.
-	source *dagger.Directory,
+	src *dagger.Directory,
 ) *dagger.Directory {
 	m.Flags = append(m.Flags, "--fix")
 	return m.Container.
 		WithWorkdir("/work/src").
-		WithMountedDirectory(".", source).
+		WithMountedDirectory(".", src).
 		WithExec(m.Flags).
 		Directory("/work/src")
 }
