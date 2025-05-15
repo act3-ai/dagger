@@ -66,7 +66,7 @@ func New(ctx context.Context,
 func (y *Yamllint) Run(ctx context.Context,
 	// Output results, without an error.
 	// +optional
-	results bool,
+	ignoreError bool,
 
 	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
 	// +optional
@@ -81,7 +81,7 @@ func (y *Yamllint) Run(ctx context.Context,
 	y.Flags = append(y.Flags, "--format", format, ".")
 
 	expect := dagger.ReturnTypeSuccess
-	if results {
+	if ignoreError {
 		expect = dagger.ReturnTypeAny
 	}
 
