@@ -77,7 +77,7 @@ func (m *Markdownlint) Run(ctx context.Context,
 
 	expect := dagger.ReturnTypeSuccess
 	if results {
-		expect = dagger.ReturnTypeFailure
+		expect = dagger.ReturnTypeAny
 	}
 
 	return m.Container.
