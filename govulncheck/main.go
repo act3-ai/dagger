@@ -2,6 +2,7 @@
 package main
 
 import (
+	"context"
 	"dagger/govulncheck/internal/dagger"
 	"fmt"
 	"strings"
@@ -59,35 +60,52 @@ func New(
 // Run govulncheck on a source directory.
 //
 // e.g. `govulncheck -mode=source`.
-func (gv *Govulncheck) ScanSource(
+func (gv *Govulncheck) ScanSource(ctx context.Context,
 	// Go source directory
 	source *dagger.Directory,
+	// Output results, without an error.
+	// +optional
+	results bool,
 	// file patterns to include,
 	// +optional
 	// +default="./..."
 	patterns string,
-) *dagger.Container {
+) (string, error) {
+	expect := dagger.ReturnTypeSuccess
+	if results {
+		expect = dagger.ReturnTypeAny
+	}
+
+	srcPath := "/work/src"
 	gv.Flags = append(gv.Flags, patterns)
-	return gv.Container.WithWorkdir("/work/src").
-		WithMountedDirectory("/work/src", source).
-		WithExec(gv.Flags)
+	return gv.Container.WithWorkdir(srcPath).
+		WithMountedDirectory(srcPath, source).
+		WithExec(gv.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+		Stdout(ctx)
 }
 
-// Run govulncheck with a binary.
+// Run govulncheck on a binary.
 //
 // e.g. `govulncheck -mode=binary <binary>`.
-func (gv *Govulncheck) ScanBinary(
+func (gv *Govulncheck) ScanBinary(ctx context.Context,
 	// binary file
 	binary *dagger.File,
-) *dagger.Container {
-	binaryPath := "/work/binary"
-	gv.Container = gv.Container.WithMountedFile(binaryPath, binary)
+	// Output results, without an error.
+	// +optional
+	results bool,
+) (string, error) {
 
-	// perhaps unnecessary, but matches the usage docs in `govulncheck --help`
+	expect := dagger.ReturnTypeSuccess
+	if results {
+		expect = dagger.ReturnTypeAny
+	}
+
+	binaryPath := "/work/binary"
 	args := append([]string{"-mode=binary"}, gv.Flags...)
 	args = append(args, binaryPath)
-
-	return gv.Container.WithExec(args)
+	return gv.Container.WithMountedFile(binaryPath, binary).
+		WithExec(args, dagger.ContainerWithExecOpts{Expect: expect}).
+		Stdout(ctx)
 }
 
 // Specify a vulnerability database url.
