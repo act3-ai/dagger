@@ -20,16 +20,30 @@ type GitCliff struct {
 
 func New(
 	// Git repository source.
-	Source *dagger.Directory,
+	Src *dagger.Directory,
+
+	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
+	// +optional
+	Container *dagger.Container,
 
 	// Version (image tag) to use as a git-cliff binary source.
 	// +optional
 	// +default="latest"
-	version string,
+	Version string,
 ) *GitCliff {
+	if Container == nil {
+		Container = defaultContainer(Version)
+	}
+
+	flags := []string{"git-cliff"}
+	srcDir := "/work/src"
+	Container = Container.
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, Src)
+
 	return &GitCliff{
-		Container: defaultContainer(Source, version),
-		Flags:     []string{"git-cliff"},
+		Container: Container,
+		Flags:     flags,
 	}
 }
 
@@ -246,9 +260,7 @@ func (gc *GitCliff) WithStrip(
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.
-func defaultContainer(source *dagger.Directory, version string) *dagger.Container {
+func defaultContainer(version string) *dagger.Container {
 	return dag.Container().
-		From(fmt.Sprintf("%s:%s", imageGitCliff, version)).
-		WithWorkdir("/work/src").
-		WithMountedDirectory("/work/src", source)
+		From(fmt.Sprintf("%s:%s", imageGitCliff, version))
 }
