@@ -18,7 +18,10 @@ type Markdownlint struct {
 	Flags []string
 }
 
-func New(
+func New(ctx context.Context,
+	// Source directory containing markdown files to be linted.
+	Src *dagger.Directory,
+
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
 	// +optional
 	Container *dagger.Container,
@@ -27,23 +30,41 @@ func New(
 	// +optional
 	// +default="latest"
 	Version string,
+
+	// '.markdownlint-cli2.*' configuration file.
+	// +optional
+	Config *dagger.File,
 ) *Markdownlint {
 	if Container == nil {
 		Container = defaultContainer(Version)
 	}
 
+	flags := []string{"markdownlint-cli2"}
+	srcDir := "/work/src"
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Config != nil {
+				cfgPath, err := Config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, Config)
+				flags = append(flags, "--config", cfgPath)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, Src)
+
 	return &Markdownlint{
 		Container: Container,
-		Flags:     []string{"markdownlint-cli2"},
+		Flags:     flags,
 	}
 }
 
 // Run markdownlint-cli2. Typical usage is to run to detect an error, and, if an
 // error is returned, re-run with `--results` to return the output.
 func (m *Markdownlint) Run(ctx context.Context,
-	// Source directory containing markdown files to be linted.
-	src *dagger.Directory,
-
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
@@ -60,8 +81,6 @@ func (m *Markdownlint) Run(ctx context.Context,
 	}
 
 	return m.Container.
-		WithWorkdir("/work/src").
-		WithMountedDirectory(".", src).
 		WithExec(m.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
 		Stdout(ctx)
 }
@@ -69,30 +88,11 @@ func (m *Markdownlint) Run(ctx context.Context,
 // AutoFix updates files to resolve fixable issues (can be overriden in configuration).
 //
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) AutoFix(
-	// Source directory containing markdown files to be linted.
-	src *dagger.Directory,
-) *dagger.Directory {
+func (m *Markdownlint) AutoFix() *dagger.Directory {
 	m.Flags = append(m.Flags, "--fix")
 	return m.Container.
-		WithWorkdir("/work/src").
-		WithMountedDirectory(".", src).
 		WithExec(m.Flags).
 		Directory("/work/src")
-}
-
-// Specify a custom configuration file.
-//
-// e.g. 'markdownlint-cli2 --config <config>'.
-func (m *Markdownlint) WithConfig(
-	// Custom configuration file
-	config *dagger.File,
-) *Markdownlint {
-	// we cannot assume the file extension, and resolving it is fruitless
-	cfgPath := ".markdownlint-cli2"
-	m.Container = m.Container.WithMountedFile(cfgPath, config)
-	m.Flags = append(m.Flags, "--config", cfgPath)
-	return m
 }
 
 func defaultContainer(version string) *dagger.Container {
