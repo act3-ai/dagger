@@ -26,6 +26,10 @@ func New(
 	// +optional
 	Container *dagger.Container,
 
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
+
 	// Version (image tag) to use as a git-cliff binary source.
 	// +optional
 	// +default="latest"
@@ -37,7 +41,13 @@ func New(
 
 	flags := []string{"git-cliff"}
 	srcDir := "/work/src"
-	Container = Container.
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		}).
 		WithWorkdir(srcDir).
 		WithMountedDirectory(srcDir, Src)
 
@@ -81,15 +91,6 @@ func (gc *GitCliff) WithSecretVariable(
 	secret *dagger.Secret,
 ) *GitCliff {
 	gc.Container = gc.Container.WithSecretVariable(name, secret)
-	return gc
-}
-
-// Add netrc credentials.
-func (gc *GitCliff) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *GitCliff {
-	gc.Container = gc.Container.WithMountedSecret("/root/.netrc", netrc)
 	return gc
 }
 
