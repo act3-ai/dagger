@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"dagger/yamllint/internal/dagger"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -80,14 +81,26 @@ func (y *Yamllint) Run(ctx context.Context,
 	y.Flags = append(y.Flags, extraArgs...)
 	y.Flags = append(y.Flags, "--format", format, ".")
 
-	expect := dagger.ReturnTypeSuccess
-	if ignoreError {
-		expect = dagger.ReturnTypeAny
-	}
-
-	return y.Container.
-		WithExec(y.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+	out, err := y.Container.
+		WithExec(y.Flags).
 		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // List YAML files that can be linted.

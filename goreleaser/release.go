@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"dagger/goreleaser/internal/dagger"
+	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -35,14 +37,27 @@ func (gr *Release) Run(ctx context.Context,
 	// +optional
 	ignoreError bool,
 ) (string, error) {
-	expect := dagger.ReturnTypeSuccess
-	if ignoreError {
-		expect = dagger.ReturnTypeAny
-	}
 	gr.Flags = append(gr.Flags, args...)
-	return gr.Goreleaser.Container.
-		WithExec(gr.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+	out, err := gr.Goreleaser.Container.
+		WithExec(gr.Flags).
 		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Generate an unversioned snapshot release, skipping all validations and without publishing any artifacts.

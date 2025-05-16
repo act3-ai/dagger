@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	"dagger/govulncheck/internal/dagger"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -71,17 +72,29 @@ func (gv *Govulncheck) ScanSource(ctx context.Context,
 	// +default="./..."
 	patterns string,
 ) (string, error) {
-	expect := dagger.ReturnTypeSuccess
-	if ignoreError {
-		expect = dagger.ReturnTypeAny
-	}
-
 	srcPath := "/work/src"
 	gv.Flags = append(gv.Flags, patterns)
-	return gv.Container.WithWorkdir(srcPath).
+	out, err := gv.Container.WithWorkdir(srcPath).
 		WithMountedDirectory(srcPath, source).
-		WithExec(gv.Flags, dagger.ContainerWithExecOpts{Expect: expect}).
+		WithExec(gv.Flags).
 		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Run govulncheck on a binary.
@@ -92,20 +105,31 @@ func (gv *Govulncheck) ScanBinary(ctx context.Context,
 	binary *dagger.File,
 	// Output results, without an error.
 	// +optional
-	results bool,
+	ignoreError bool,
 ) (string, error) {
-
-	expect := dagger.ReturnTypeSuccess
-	if results {
-		expect = dagger.ReturnTypeAny
-	}
-
 	binaryPath := "/work/binary"
 	args := append([]string{"-mode=binary"}, gv.Flags...)
 	args = append(args, binaryPath)
-	return gv.Container.WithMountedFile(binaryPath, binary).
-		WithExec(args, dagger.ContainerWithExecOpts{Expect: expect}).
+	out, err := gv.Container.WithMountedFile(binaryPath, binary).
+		WithExec(args).
 		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Specify a vulnerability database url.

@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"dagger/markdownlint/internal/dagger"
+	"errors"
 	"fmt"
 )
 
@@ -76,17 +77,23 @@ func (m *Markdownlint) Run(ctx context.Context,
 ) (string, error) {
 	m.Flags = append(m.Flags, extraArgs...)
 
-	expect := dagger.ReturnTypeSuccess
-	if ignoreError {
-		expect = dagger.ReturnTypeAny
+	out, err := m.Container.WithExec(m.Flags).Stdout(ctx)
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
 	}
-
-	return m.Container.
-		WithExec(m.Flags,
-			dagger.ContainerWithExecOpts{
-				Expect: expect,
-			}).
-		Stdout(ctx)
 }
 
 // AutoFix updates files to resolve fixable issues (can be overriden in configuration).
