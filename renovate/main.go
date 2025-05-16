@@ -225,6 +225,6 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		Stdout(ctx)
 
 	/*
-	  The error from OpenTelemetry is because OTEL_EXPORTER_OTLP_ENDPOINT env is set by Dagger and renovate used OpenTelemetry https://docs.renovatebot.com/opentelemetry/ so it tries to publish telemetroy to Dagger's OTEL stuff and fails (for an unknown reason).  The error is not fatal.
+	  The error from OpenTelemetry is because OTEL_EXPORTER_OTLP_ENDPOINT env is set by Dagger and renovate used OpenTelemetry https://docs.renovatebot.com/opentelemetry/ so it tries to publish telemetry to Dagger's OTEL stuff and fails (for an unknown reason).  The error is not fatal.
 	*/
 }
