@@ -15,7 +15,7 @@ type GitCliff struct {
 	Container *dagger.Container
 
 	// +private
-	Flags []string
+	Args []string
 }
 
 func New(
@@ -29,7 +29,7 @@ func New(
 ) *GitCliff {
 	return &GitCliff{
 		Container: defaultContainer(Source, version),
-		Flags:     []string{"git-cliff"},
+		Args:      []string{"git-cliff"},
 	}
 }
 
@@ -88,7 +88,23 @@ func (gc *GitCliff) WithConfig(
 ) *GitCliff {
 	configPath := "/work/cliff.toml"
 	gc.Container = gc.Container.WithMountedFile(configPath, config)
-	gc.Flags = append(gc.Flags, "--config", configPath)
+	return gc.WithArgs("--config", configPath)
+}
+
+// Add a generic argument to pass to git-cliff.
+func (gc *GitCliff) WithArg(
+	// argument to pass to git-cliff
+	arg string,
+) *GitCliff {
+	return gc.WithArgs(arg)
+}
+
+// Add generic arguments to pass to git-cliff.
+func (gc *GitCliff) WithArgs(
+	// arguments to pass to git-cliff
+	args ...string,
+) *GitCliff {
+	gc.Args = append(gc.Args, args...)
 	return gc
 }
 
@@ -100,14 +116,16 @@ func (gc *GitCliff) Run(
 	// +optional
 	args []string,
 ) *dagger.Container {
-	gc.Flags = append(gc.Flags, args...)
-	return gc.Container.WithExec(gc.Flags)
+	gc = gc.WithArgs(args...)
+	return gc.Container.WithExec(gc.Args)
 }
 
 // Prints bumped version for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context) (string, error) {
-	gc.Flags = append(gc.Flags, "--bumped-version")
-	return gc.Container.WithExec(gc.Flags).
+	return gc.
+		WithArgs("--bumped-version").
+		Container.
+		WithExec(gc.Args).
 		Stdout(ctx)
 }
 
@@ -145,13 +163,14 @@ func (gc *GitCliff) WithGiteaToken(
 //
 // e.g. `git-cliff --bump`.
 func (gc *GitCliff) WithBump(
-	// specified version
+	// specified version bump. git-cliff defaults to "auto"
+	// possible values: auto, major, minor, patch.
 	// +optional
 	version string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--bump")
+	gc = gc.WithArgs("--bump")
 	if version != "" {
-		gc.Flags = append(gc.Flags, version)
+		gc = gc.WithArgs(version)
 	}
 	return gc
 }
@@ -160,32 +179,28 @@ func (gc *GitCliff) WithBump(
 //
 // e.g. `git-cliff --latest`.
 func (gc *GitCliff) WithLatest() *GitCliff {
-	gc.Flags = append(gc.Flags, "--latest")
-	return gc
+	return gc.WithArgs("--latest")
 }
 
 // Processes the commits that belog to the current tag.
 //
 // e.g. `git-cliff --current`
 func (gc *GitCliff) WithCurrent() *GitCliff {
-	gc.Flags = append(gc.Flags, "--current")
-	return gc
+	return gc.WithArgs("--current")
 }
 
 // Processes the commits that do not belog to a tag.
 //
 // e.g. `git-cliff --unreleased`.
 func (gc *GitCliff) WithUnreleased() *GitCliff {
-	gc.Flags = append(gc.Flags, "--unreleased")
-	return gc
+	return gc.WithArgs("--unreleased")
 }
 
 // Sorts the tags topologically.
 //
 // e.g. `git-cliff --topo-order`.
 func (gc *GitCliff) WithTopoOrder() *GitCliff {
-	gc.Flags = append(gc.Flags, "--topo-order")
-	return gc
+	return gc.WithArgs("--topo-order")
 }
 
 // Sets the git repository.
@@ -195,9 +210,9 @@ func (gc *GitCliff) WithRepository(
 	// git repository (one or more)
 	repo []string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--repository")
-	gc.Flags = append(gc.Flags, repo...)
-	return gc
+	return gc.
+		WithArgs("--repository").
+		WithArgs(repo...)
 }
 
 // Sets comits that will be skipped in the changelog.
@@ -207,9 +222,9 @@ func (gc *GitCliff) WithSkipCommit(
 	// Commits
 	sha1 []string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--skip-commit")
-	gc.Flags = append(gc.Flags, sha1...)
-	return gc
+	return gc.
+		WithArgs("--skip-commit").
+		WithArgs(sha1...)
 }
 
 // Prepends entries to the given changelog file.
@@ -219,8 +234,7 @@ func (gc *GitCliff) WithPrepend(
 	// Path to changelog, relative to source git directory
 	changelog string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--prepend", changelog)
-	return gc
+	return gc.WithArgs("--prepend", changelog)
 }
 
 // Writes output to the fiven file.
@@ -230,8 +244,7 @@ func (gc *GitCliff) WithOutput(
 	// Write output to file, relative to source git directory.
 	path string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--output", path)
-	return gc
+	return gc.WithArgs("--output", path)
 }
 
 // Strips the given parts from the changelog.
@@ -241,8 +254,7 @@ func (gc *GitCliff) WithStrip(
 	// Part of changelog to strip. Possible values: header, footer, all.
 	part string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--strip", part)
-	return gc
+	return gc.WithArgs("--strip", part)
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.
