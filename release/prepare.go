@@ -12,23 +12,24 @@ import (
 )
 
 // genericLint runs generic linters, e.g. markdown, yaml, etc.
-func (r *Release) genericLint(ctx context.Context, results util.ResultsFormatter) error {
+func (r *Release) genericLint(ctx context.Context, results util.ResultsFormatter, base *dagger.Container) error {
 	var errs []error
 
+	// TODO: this module does not support a custom base container.
 	res, err := r.shellcheck(ctx, 4) // TODO: plumb concurrency?
 	results.Add("Shellcheck", res)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("running shellcheck: %w", err))
 	}
 
-	res, err = dag.Yamllint(r.Source).
+	res, err = dag.Yamllint(r.Source, dagger.YamllintOpts{Base: base}).
 		Run(ctx)
 	results.Add("Yamllint", res)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("running yamllint: %w", err))
 	}
 
-	res, err = dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Globs: []string{"."}}).
+	res, err = dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Base: base}).
 		Run(ctx)
 	results.Add("Markdownlint", res)
 	if err != nil {
