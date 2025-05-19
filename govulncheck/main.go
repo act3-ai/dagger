@@ -63,6 +63,7 @@ func New(
 // e.g. `govulncheck -mode=source`.
 func (gv *Govulncheck) ScanSource(ctx context.Context,
 	// Go source directory
+	// +ignore=["**", "!**/go.mod", "!**/go.sum", "!**/*.go"]
 	source *dagger.Directory,
 	// Output results, without an error.
 	// +optional
