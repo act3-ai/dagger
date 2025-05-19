@@ -42,7 +42,8 @@ func New(
 // Run markdownlint-cli2. Use the dagger native stdout to get the output, or export if the WithFix option was used.
 func (m *Markdownlint) Run(ctx context.Context,
 	// Source directory containing markdown files to be linted.
-	source *dagger.Directory,
+	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
+	src *dagger.Directory,
 
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
@@ -52,13 +53,7 @@ func (m *Markdownlint) Run(ctx context.Context,
 	args = append(args, extraArgs...)
 	return m.Base.
 		WithWorkdir("/work/src").
-		WithMountedDirectory(".", source.Filter(dagger.DirectoryFilterOpts{
-			Include: []string{
-				"**/*.md",
-				".markdownlint*",
-				"package.json",
-			},
-		})).
+		WithMountedDirectory(".", src).
 		WithExec(args)
 }
 

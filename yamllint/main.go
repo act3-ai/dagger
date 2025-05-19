@@ -51,6 +51,7 @@ func New(
 // May be used as a "catch-all" in case functions are not implemented.
 func (y *Yamllint) Run(ctx context.Context,
 	// directory containing, but not limited to, YAML files to be linted.
+	// +ignore=["**", "!**/*.yaml", "!**/*.yml"]
 	src *dagger.Directory,
 	// extra command line arguments
 	// +optional
@@ -61,9 +62,7 @@ func (y *Yamllint) Run(ctx context.Context,
 	args = append(args, ".")
 
 	srcPath := "src"
-	return y.Base.WithMountedDirectory(srcPath, src.Filter(dagger.DirectoryFilterOpts{
-		Include: []string{"**/*.yaml", "**/*.yml"},
-	})).
+	return y.Base.WithMountedDirectory(srcPath, src).
 		WithWorkdir(srcPath).
 		WithExec(args)
 }
