@@ -13,53 +13,55 @@ import (
 const defaultImageRepository = "docker.io/davidanson/markdownlint-cli2"
 
 type Markdownlint struct {
-	Container *dagger.Container
+	Base *dagger.Container
 
 	// +private
-	Flags []string
+	Command []string
 }
 
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
-	Src *dagger.Directory,
+	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
+	src *dagger.Directory,
 
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
 	// +optional
-	Container *dagger.Container,
+	base *dagger.Container,
 
 	// Version (image tag) to use as a markdownlint-cli2 binary source.
 	// +optional
 	// +default="latest"
-	Version string,
+	version string,
 
 	// Configuration file.
 	// +optional
-	Config *dagger.File,
+	config *dagger.File,
 ) *Markdownlint {
-	if Container == nil {
-		Container = defaultContainer(Version)
+	if base == nil {
+		base = dag.Container().
+			From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 	}
 
-	flags := []string{"markdownlint-cli2"}
+	cmd := []string{"markdownlint-cli2"}
 	srcDir := "/work/src"
-	Container = Container.With(
+	base = base.With(
 		func(c *dagger.Container) *dagger.Container {
-			if Config != nil {
-				cfgPath, err := Config.Name(ctx)
+			if config != nil {
+				cfgPath, err := config.Name(ctx)
 				if err != nil {
 					panic(fmt.Errorf("resolving configuration file name: %w", err))
 				}
-				c = c.WithMountedFile(cfgPath, Config)
-				flags = append(flags, "--config", cfgPath)
+				c = c.WithMountedFile(cfgPath, config)
+				cmd = append(cmd, "--config", cfgPath)
 			}
 			return c
 		}).
 		WithWorkdir(srcDir).
-		WithMountedDirectory(srcDir, Src)
+		WithMountedDirectory(srcDir, src)
 
 	return &Markdownlint{
-		Container: Container,
-		Flags:     flags,
+		Base:    base,
+		Command: cmd,
 	}
 }
 
@@ -75,9 +77,10 @@ func (m *Markdownlint) Run(ctx context.Context,
 	// +optional
 	ignoreError bool,
 ) (string, error) {
-	m.Flags = append(m.Flags, extraArgs...)
+	cmd := m.Command
+	cmd = append(cmd, extraArgs...)
 
-	out, err := m.Container.WithExec(m.Flags).Stdout(ctx)
+	out, err := m.Base.WithExec(cmd).Stdout(ctx)
 	var e *dagger.ExecError
 	switch {
 	case errors.As(err, &e):
@@ -102,13 +105,9 @@ func (m *Markdownlint) Run(ctx context.Context,
 //
 // e.g. 'markdownlint-cli2 --fix'.
 func (m *Markdownlint) AutoFix() *dagger.Directory {
-	m.Flags = append(m.Flags, "--fix")
-	return m.Container.
-		WithExec(m.Flags).
+	cmd := m.Command
+	cmd = append(cmd, "--fix")
+	return m.Base.
+		WithExec(cmd).
 		Directory("/work/src")
-}
-
-func defaultContainer(version string) *dagger.Container {
-	return dag.Container().
-		From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 }
