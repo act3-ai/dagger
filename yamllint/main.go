@@ -10,29 +10,39 @@ import (
 )
 
 type Yamllint struct {
-	Container *dagger.Container
+	Base *dagger.Container
 
 	// +private
-	Flags []string
+	Args []string
 }
 
 func New(
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	// +optional
-	Container *dagger.Container,
+	base *dagger.Container,
 
 	// Version of yamllint to use, defaults to latest version available to apk.
 	// +optional
 	// +default="latest"
-	Version string,
+	version string,
 ) *Yamllint {
-	if Container == nil {
-		Container = defaultContainer(Version)
+	if base == nil {
+		// https://pkgs.alpinelinux.org/package/edge/community/x86_64/yamllint
+		pkg := "yamllint"
+		if version != "latest" {
+			pkg = fmt.Sprintf("%s=%s", pkg, version)
+		}
+		base = dag.Wolfi().
+			Container(
+				dagger.WolfiContainerOpts{
+					Packages: []string{pkg},
+				},
+			)
 	}
 
 	return &Yamllint{
-		Container: Container,
-		Flags:     []string{"yamllint"},
+		Base: base,
+		Args: []string{"yamllint"},
 	}
 }
 
@@ -42,28 +52,29 @@ func New(
 func (y *Yamllint) Run(ctx context.Context,
 	// directory containing, but not limited to, YAML files to be linted.
 	src *dagger.Directory,
-	// flags, without 'yamllint'
+	// extra command line arguments
 	// +optional
-	extraFlags []string,
+	extraArgs []string,
 ) *dagger.Container {
-	y.Flags = append(y.Flags, extraFlags...)
+	args := y.Args
+	args = append(args, extraArgs...)
+	args = append(args, ".")
 
-	// we could support a set of files, in addition to a directory, but
-	// having a singular required arg avoids usage errors (optional dir or
-	// set of files)
 	srcPath := "src"
-	y.Container = y.Container.WithMountedDirectory(srcPath, src).WithWorkdir(srcPath)
-	y.Flags = append(y.Flags, ".")
-
-	return y.Container.WithExec(y.Flags)
+	return y.Base.WithMountedDirectory(srcPath, src.Filter(dagger.DirectoryFilterOpts{
+		Include: []string{"**/*.yaml", "**/*.yml"},
+	})).
+		WithWorkdir(srcPath).
+		WithExec(args)
 }
 
 // List YAML files that can be linted.
 //
 // e.g. 'yamllint --list-files'.
 func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
-	y.Flags = append(y.Flags, "--list-files")
-	out, err := y.Container.WithExec(y.Flags).
+	args := y.Args
+	args = append(args, "--list-files")
+	out, err := y.Base.WithExec(args).
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing yaml files: %w", err)
@@ -79,8 +90,8 @@ func (y *Yamllint) WithConfig(
 	config *dagger.File,
 ) *Yamllint {
 	cfgPath := ".yamllint.yaml"
-	y.Container = y.Container.WithMountedFile(cfgPath, config)
-	y.Flags = append(y.Flags, "--config-file", cfgPath)
+	y.Base = y.Base.WithMountedFile(cfgPath, config)
+	y.Args = append(y.Args, "--config-file", cfgPath)
 	return y
 }
 
@@ -91,7 +102,7 @@ func (y *Yamllint) WithFormat(
 	// output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
 	format string,
 ) *Yamllint {
-	y.Flags = append(y.Flags, "--format", format)
+	y.Args = append(y.Args, "--format", format)
 	return y
 }
 
@@ -99,7 +110,7 @@ func (y *Yamllint) WithFormat(
 //
 // e.g. 'yamllint --strict'.
 func (y *Yamllint) WithStrict() *Yamllint {
-	y.Flags = append(y.Flags, "--strict")
+	y.Args = append(y.Args, "--strict")
 	return y
 }
 
@@ -107,20 +118,6 @@ func (y *Yamllint) WithStrict() *Yamllint {
 //
 // e.g. 'yamllint --no-warnings'.
 func (y *Yamllint) WithNoWarnings() *Yamllint {
-	y.Flags = append(y.Flags, "--no-warnings")
+	y.Args = append(y.Args, "--no-warnings")
 	return y
-}
-
-func defaultContainer(version string) *dagger.Container {
-	// https://pkgs.alpinelinux.org/package/edge/community/x86_64/yamllint
-	pkg := "yamllint"
-	if version != "latest" {
-		pkg = fmt.Sprintf("%s=%s", pkg, version)
-	}
-	return dag.Wolfi().
-		Container(
-			dagger.WolfiContainerOpts{
-				Packages: []string{pkg},
-			},
-		)
 }

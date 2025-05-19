@@ -12,29 +12,30 @@ import (
 const defaultImageRepository = "docker.io/davidanson/markdownlint-cli2"
 
 type Markdownlint struct {
-	Container *dagger.Container
+	Base *dagger.Container
 
 	// +private
-	Flags []string
+	Args []string
 }
 
 func New(
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
 	// +optional
-	Container *dagger.Container,
+	base *dagger.Container,
 
 	// Version (image tag) to use as a markdownlint-cli2 binary source.
 	// +optional
 	// +default="latest"
-	Version string,
+	version string,
 ) *Markdownlint {
-	if Container == nil {
-		Container = defaultContainer(Version)
+	if base == nil {
+		base = dag.Container().
+			From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 	}
 
 	return &Markdownlint{
-		Container: Container,
-		Flags:     []string{"markdownlint-cli2"},
+		Base: base,
+		Args: []string{"markdownlint-cli2"},
 	}
 }
 
@@ -50,18 +51,25 @@ func (m *Markdownlint) Run(ctx context.Context,
 	// +optional
 	extraArgs []string,
 ) *dagger.Container {
-	m.Flags = append(m.Flags, extraArgs...)
-	return m.Container.
+	args := m.Args
+	args = append(args, extraArgs...)
+	return m.Base.
 		WithWorkdir("/work/src").
-		WithMountedDirectory(".", source).
-		WithExec(m.Flags)
+		WithMountedDirectory(".", source.Filter(dagger.DirectoryFilterOpts{
+			Include: []string{
+				"**/*.md",
+				".markdownlint*",
+				"package.json",
+			},
+		})).
+		WithExec(args)
 }
 
 // WithFix updates files to resolve fixable issues (can be overriden in configuration).
 //
 // e.g. 'markdownlint-cli2 --fix'.
 func (m *Markdownlint) WithFix() *Markdownlint {
-	m.Flags = append(m.Flags, "--fix")
+	m.Args = append(m.Args, "--fix")
 	return m
 }
 
@@ -74,12 +82,7 @@ func (m *Markdownlint) WithConfig(
 ) *Markdownlint {
 	// we cannot assume the file extension, and resolving it is fruitless
 	cfgPath := ".markdownlint-cli2"
-	m.Container = m.Container.WithMountedFile(cfgPath, config)
-	m.Flags = append(m.Flags, "--config", cfgPath)
+	m.Base = m.Base.WithMountedFile(cfgPath, config)
+	m.Args = append(m.Args, "--config", cfgPath)
 	return m
-}
-
-func defaultContainer(version string) *dagger.Container {
-	return dag.Container().
-		From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 }
