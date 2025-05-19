@@ -61,15 +61,8 @@ func (r *Release) checkGolang(ctx context.Context, results util.ResultsFormatter
 	}
 
 	// govulncheck
-	res, err = dag.Govulncheck().
-		With(func(v *dagger.Govulncheck) *dagger.Govulncheck {
-			if r.Netrc != nil {
-				v = v.WithNetrc(r.Netrc)
-			}
-			return v
-		}).
-		ScanSource(r.Source).
-		Stdout(ctx)
+	res, err = dag.Govulncheck(dagger.GovulncheckOpts{Netrc: r.Netrc}).
+		ScanSource(ctx, r.Source)
 	results.Add("Govulncheck", res)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("running govulncheck: %w", err))
@@ -125,17 +118,15 @@ func (r *Release) genericLint(ctx context.Context, results util.ResultsFormatter
 		errs = append(errs, fmt.Errorf("running shellcheck: %w", err))
 	}
 
-	res, err = dag.Yamllint().
-		Run(r.Source).
-		Stdout(ctx)
+	res, err = dag.Yamllint(r.Source).
+		Run(ctx)
 	results.Add("Yamllint", res)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("running yamllint: %w", err))
 	}
 
-	res, err = dag.Markdownlint().
-		Run(r.Source, []string{"."}).
-		Stdout(ctx)
+	res, err = dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Globs: []string{"."}}).
+		Run(ctx)
 	results.Add("Markdownlint", res)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("running markdownlint: %w", err))
