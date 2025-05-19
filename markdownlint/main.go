@@ -38,7 +38,7 @@ func New(ctx context.Context,
 	config *dagger.File,
 
 	// Glob expressions for markdown file identification.
-	// +optional.
+	// +optional
 	globs []string,
 ) *Markdownlint {
 	if base == nil {
