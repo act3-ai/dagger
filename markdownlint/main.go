@@ -17,6 +17,9 @@ type Markdownlint struct {
 
 	// +private
 	Command []string
+
+	// +private
+	disableDefaultGlobs bool
 }
 
 func New(ctx context.Context,
@@ -36,18 +39,23 @@ func New(ctx context.Context,
 	// Configuration file.
 	// +optional
 	config *dagger.File,
-
-	// Glob expressions for markdown file identification.
-	// +optional
-	globs []string,
 ) *Markdownlint {
 	if base == nil {
 		base = dag.Container().
 			From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 	}
 
+	var disableDefaultGlobs bool
+	cfgFiles, err := src.Filter(dagger.DirectoryFilterOpts{Include: []string{".markdownlint*"}}).
+		Entries(ctx)
+	if err != nil {
+		panic(fmt.Errorf("discovering config files: %w", err))
+	}
+	if len(cfgFiles) > 0 {
+		disableDefaultGlobs = true
+	}
+
 	cmd := []string{"markdownlint-cli2"}
-	cmd = append(cmd, globs...)
 	srcDir := "/work/src"
 	base = base.With(
 		func(c *dagger.Container) *dagger.Container {
@@ -58,6 +66,7 @@ func New(ctx context.Context,
 				}
 				c = c.WithMountedFile(cfgPath, config)
 				cmd = append(cmd, "--config", cfgPath)
+				disableDefaultGlobs = true
 			}
 			return c
 		}).
@@ -65,8 +74,9 @@ func New(ctx context.Context,
 		WithMountedDirectory(srcDir, src)
 
 	return &Markdownlint{
-		Base:    base,
-		Command: cmd,
+		Base:                base,
+		Command:             cmd,
+		disableDefaultGlobs: disableDefaultGlobs,
 	}
 }
 
@@ -84,6 +94,11 @@ func (m *Markdownlint) Run(ctx context.Context,
 ) (string, error) {
 	cmd := m.Command
 	cmd = append(cmd, extraArgs...)
+
+	if !m.disableDefaultGlobs || len(extraArgs) <= 0 {
+		// match all markdown files, see "Dot-only glob" https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#command-line
+		cmd = append(cmd, ".")
+	}
 
 	out, err := m.Base.WithExec(cmd).Stdout(ctx)
 	var e *dagger.ExecError
