@@ -1,7 +1,10 @@
 package main
 
 import (
+	"context"
 	"dagger/goreleaser/internal/dagger"
+	"errors"
+	"fmt"
 	"strconv"
 )
 
@@ -26,13 +29,35 @@ func (gr *Goreleaser) Release() *Release {
 // Run `goreleaser release` with all options previously provided.
 //
 // Run MAY be used as a "catch-all" in case functions are not implemented.
-func (gr *Release) Run(
+func (gr *Release) Run(ctx context.Context,
 	// arguments and flags, without `git-cliff`
 	// +optional
 	args []string,
-) *dagger.Container {
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+) (string, error) {
 	gr.Flags = append(gr.Flags, args...)
-	return gr.Goreleaser.Container.WithExec(gr.Flags)
+	out, err := gr.Goreleaser.Container.
+		WithExec(gr.Flags).
+		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Generate an unversioned snapshot release, skipping all validations and without publishing any artifacts.
@@ -56,14 +81,6 @@ func (r *Release) WithAutoSnapshot() *Release {
 // e.g. `goreleaser release --clean`.
 func (r *Release) WithClean() *Release {
 	r.Flags = append(r.Flags, "--clean")
-	return r
-}
-
-// WithConfig loads a .goreleaser.yaml configuration file.
-func (r *Release) WithConfig(config *dagger.File) *Release {
-	cfgPath := "/work/.goreleaser.yaml"
-	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(cfgPath, config)
-	r.Flags = append(r.Flags, "--config", cfgPath)
 	return r
 }
 

@@ -1,10 +1,11 @@
-// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker. See https://github.com/DavidAnson/markdownlint-cli2 for more info.
+// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker. See https://github.com/DavidAnson/markdownlint-cli2 for more info. Most configuration should be done in '.markdownlint-cli2.yaml' within the source directory, or provided using 'WithConfig'.
 
 package main
 
 import (
 	"context"
 	"dagger/markdownlint/internal/dagger"
+	"errors"
 	"fmt"
 )
 
@@ -15,10 +16,14 @@ type Markdownlint struct {
 	Base *dagger.Container
 
 	// +private
-	Args []string
+	Command []string
 }
 
-func New(
+func New(ctx context.Context,
+	// Source directory containing markdown files to be linted.
+	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
+	src *dagger.Directory,
+
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
 	// +optional
 	base *dagger.Container,
@@ -27,54 +32,82 @@ func New(
 	// +optional
 	// +default="latest"
 	version string,
+
+	// Configuration file.
+	// +optional
+	config *dagger.File,
 ) *Markdownlint {
 	if base == nil {
 		base = dag.Container().
 			From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
 	}
 
+	cmd := []string{"markdownlint-cli2"}
+	srcDir := "/work/src"
+	base = base.With(
+		func(c *dagger.Container) *dagger.Container {
+			if config != nil {
+				cfgPath, err := config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, config)
+				cmd = append(cmd, "--config", cfgPath)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, src)
+
 	return &Markdownlint{
-		Base: base,
-		Args: []string{"markdownlint-cli2"},
+		Base:    base,
+		Command: cmd,
 	}
 }
 
-// Run markdownlint-cli2. Use the dagger native stdout to get the output, or export if the WithFix option was used.
+// Run markdownlint-cli2. Typical usage is to run to detect linting errors, and, if an
+// error is returned, re-run with `--results` to return the output file or `--results contents`
+// to output to stdout.
 func (m *Markdownlint) Run(ctx context.Context,
-	// Source directory containing markdown files to be linted.
-	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
-	src *dagger.Directory,
-
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
-) *dagger.Container {
-	args := m.Args
-	args = append(args, extraArgs...)
-	return m.Base.
-		WithWorkdir("/work/src").
-		WithMountedDirectory(".", src).
-		WithExec(args)
+
+	// Output results, ignoring errors.
+	// +optional
+	ignoreError bool,
+) (string, error) {
+	cmd := m.Command
+	cmd = append(cmd, extraArgs...)
+
+	out, err := m.Base.WithExec(cmd).Stdout(ctx)
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
-// WithFix updates files to resolve fixable issues (can be overriden in configuration).
+// AutoFix updates files to resolve fixable issues (can be overriden in configuration).
+// It returns the entire source directory, use `export --path=<path-to-source>` to
+// write the updates to the host.
 //
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) WithFix() *Markdownlint {
-	m.Args = append(m.Args, "--fix")
-	return m
-}
-
-// Specify a custom configuration file.
-//
-// e.g. 'markdownlint-cli2 --config <config>'.
-func (m *Markdownlint) WithConfig(
-	// Custom configuration file
-	config *dagger.File,
-) *Markdownlint {
-	// we cannot assume the file extension, and resolving it is fruitless
-	cfgPath := ".markdownlint-cli2"
-	m.Base = m.Base.WithMountedFile(cfgPath, config)
-	m.Args = append(m.Args, "--config", cfgPath)
-	return m
+func (m *Markdownlint) AutoFix() *dagger.Directory {
+	cmd := m.Command
+	cmd = append(cmd, "--fix")
+	return m.Base.
+		WithExec(cmd).
+		Directory("/work/src")
 }

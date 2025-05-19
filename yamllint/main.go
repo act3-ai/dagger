@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"dagger/yamllint/internal/dagger"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -13,10 +14,14 @@ type Yamllint struct {
 	Base *dagger.Container
 
 	// +private
-	Args []string
+	Command []string
 }
 
-func New(
+func New(ctx context.Context,
+	// Source directory containing markdown files to be linted.
+	// +ignore=["**", "!**/*.yaml", "!**/*.yml"]
+	src *dagger.Directory,
+
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	// +optional
 	base *dagger.Container,
@@ -25,6 +30,10 @@ func New(
 	// +optional
 	// +default="latest"
 	version string,
+
+	// Configuration file.
+	// +optional
+	config *dagger.File,
 ) *Yamllint {
 	if base == nil {
 		// https://pkgs.alpinelinux.org/package/edge/community/x86_64/yamllint
@@ -40,9 +49,26 @@ func New(
 			)
 	}
 
+	args := []string{"yamllint"}
+	srcDir := "/work/src"
+	base = base.With(
+		func(c *dagger.Container) *dagger.Container {
+			if config != nil {
+				cfgPath, err := config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, config)
+				args = append(args, "--config", cfgPath)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, src)
+
 	return &Yamllint{
-		Base: base,
-		Args: []string{"yamllint"},
+		Base:    base,
+		Command: []string{"yamllint"},
 	}
 }
 
@@ -50,30 +76,52 @@ func New(
 //
 // May be used as a "catch-all" in case functions are not implemented.
 func (y *Yamllint) Run(ctx context.Context,
-	// directory containing, but not limited to, YAML files to be linted.
-	// +ignore=["**", "!**/*.yaml", "!**/*.yml"]
-	src *dagger.Directory,
-	// extra command line arguments
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+
+	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
+	// +optional
+	// +default="auto"
+	format string,
+
+	// Additional arguments to pass to yamllint, without 'yamllint' itself.
 	// +optional
 	extraArgs []string,
-) *dagger.Container {
-	args := y.Args
-	args = append(args, extraArgs...)
-	args = append(args, ".")
+) (string, error) {
+	cmd := y.Command
+	cmd = append(cmd, extraArgs...)
+	cmd = append(cmd, "--format", format, ".")
 
-	srcPath := "src"
-	return y.Base.WithMountedDirectory(srcPath, src).
-		WithWorkdir(srcPath).
-		WithExec(args)
+	out, err := y.Base.
+		WithExec(cmd).
+		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // List YAML files that can be linted.
 //
 // e.g. 'yamllint --list-files'.
 func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
-	args := y.Args
-	args = append(args, "--list-files")
-	out, err := y.Base.WithExec(args).
+	cmd := y.Command
+	cmd = append(cmd, "--list-files", ".")
+	out, err := y.Base.WithExec(cmd).
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing yaml files: %w", err)
@@ -81,35 +129,11 @@ func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
 	return strings.Split(out, "\n"), nil
 }
 
-// Mount a custom configuration file.
-//
-// e.g. 'yamllint --config-file <config>'.
-func (y *Yamllint) WithConfig(
-	// configuration file
-	config *dagger.File,
-) *Yamllint {
-	cfgPath := ".yamllint.yaml"
-	y.Base = y.Base.WithMountedFile(cfgPath, config)
-	y.Args = append(y.Args, "--config-file", cfgPath)
-	return y
-}
-
-// Specify output format.
-//
-// e.g. 'yamllint --format <format>'.
-func (y *Yamllint) WithFormat(
-	// output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
-	format string,
-) *Yamllint {
-	y.Args = append(y.Args, "--format", format)
-	return y
-}
-
 // Return non-zero exit code on warnings as well as errors.
 //
 // e.g. 'yamllint --strict'.
 func (y *Yamllint) WithStrict() *Yamllint {
-	y.Args = append(y.Args, "--strict")
+	y.Command = append(y.Command, "--strict")
 	return y
 }
 
@@ -117,6 +141,6 @@ func (y *Yamllint) WithStrict() *Yamllint {
 //
 // e.g. 'yamllint --no-warnings'.
 func (y *Yamllint) WithNoWarnings() *Yamllint {
-	y.Args = append(y.Args, "--no-warnings")
+	y.Command = append(y.Command, "--no-warnings")
 	return y
 }

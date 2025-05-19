@@ -6,6 +6,7 @@
 package main
 
 import (
+	"context"
 	"dagger/goreleaser/internal/dagger"
 	"fmt"
 	"os"
@@ -32,28 +33,69 @@ type Goreleaser struct {
 	RegistryConfig *dagger.RegistryConfig
 }
 
-func New(
+func New(ctx context.Context,
 	// Git repository source.
-	Source *dagger.Directory,
+	Src *dagger.Directory,
+
+	// Custom container to use as a base container. Must have 'goreleaser' available on PATH.
+	// +optional
+	Container *dagger.Container,
 
 	// Version (image tag) to use as a goreleaser binary source.
 	// +optional
 	// +default="latest"
 	Version string,
 
+	// Configuration file.
+	// +optional
+	Config *dagger.File,
+
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
+
 	// Disable mounting cache volumes.
 	//
 	// +optional
-	disableCache bool,
+	DisableCache bool,
 ) *Goreleaser {
-	gr := &Goreleaser{
-		Container:      defaultContainer(Source, Version),
-		RegistryConfig: dag.RegistryConfig(),
+	if Container == nil {
+		Container = defaultContainer(Version)
 	}
 
-	if !disableCache {
-		gr = gr.WithGoModuleCache(dag.CacheVolume("go-mod"), nil, "").
-			WithGoBuildCache(dag.CacheVolume("go-build"), nil, "")
+	flags := []string{"goreleaser"}
+	srcDir := "/work/src"
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Config != nil {
+				cfgPath, err := Config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, Config)
+				flags = append(flags, "--config", cfgPath)
+			}
+			return c
+		}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if !DisableCache {
+				c = withGoModuleCacheFn(dag.CacheVolume("go-mod"), nil, "")(c)
+				c = withGoBuildCacheFn(dag.CacheVolume("go-build"), nil, "")(c)
+			}
+			return c
+		}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, Src)
+
+	gr := &Goreleaser{
+		Container:      Container,
+		RegistryConfig: dag.RegistryConfig(),
 	}
 
 	return gr
@@ -96,15 +138,6 @@ func (gr *Goreleaser) WithSecretVariable(
 	return gr
 }
 
-// Add netrc credentials.
-func (gr *Goreleaser) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Goreleaser {
-	gr.Container = gr.Container.WithMountedSecret("/root/.netrc", netrc)
-	return gr
-}
-
 // Add registry credentials.
 func (gr *Goreleaser) WithRegistryAuth(
 	// registry's hostname
@@ -132,15 +165,7 @@ func (gr *Goreleaser) WithGoModuleCache(
 	// +optional
 	sharing dagger.CacheSharingMode,
 ) *Goreleaser {
-	gr.Container = gr.Container.WithMountedCache(
-		"/go/pkg/mod",
-		cache,
-		dagger.ContainerWithMountedCacheOpts{
-			Source:  source,
-			Sharing: sharing,
-		},
-	)
-
+	gr.Container = withGoModuleCacheFn(cache, source, sharing)(gr.Container)
 	return gr
 }
 
@@ -158,34 +183,31 @@ func (gr *Goreleaser) WithGoBuildCache(
 	// +optional
 	sharing dagger.CacheSharingMode,
 ) *Goreleaser {
-	gr.Container = gr.Container.WithMountedCache(
-		"/root/.cache/go-build",
-		cache,
-		dagger.ContainerWithMountedCacheOpts{
-			Source:  source,
-			Sharing: sharing,
-		},
-	)
-
+	gr.Container = withGoBuildCacheFn(cache, source, sharing)(gr.Container)
 	return gr
 }
 
 // Run goreleaser.
 //
 // Run is a "catch-all" in case functions are not implemented.
-func (gr *Goreleaser) Run(
+func (gr *Goreleaser) Run(ctx context.Context,
 	// arguments and flags, without `goreleaser`.
 	args []string,
-) *dagger.Container {
-	return gr.Container.WithExec(append([]string{"goreleaser"}, args...))
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+) (string, error) {
+	expect := dagger.ReturnTypeSuccess
+	if ignoreError {
+		expect = dagger.ReturnTypeAny
+	}
+	return gr.Container.WithExec(append([]string{"goreleaser"}, args...), dagger.ContainerWithExecOpts{Expect: expect}).Stdout(ctx)
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.
-func defaultContainer(source *dagger.Directory, version string) *dagger.Container {
+func defaultContainer(version string) *dagger.Container {
 	return dag.Container().
 		From(fmt.Sprintf("%s:%s", imageGoReleaser, version)).
-		WithWorkdir("/work/src").
-		WithMountedDirectory("/work/src", source).
 		With(func(r *dagger.Container) *dagger.Container {
 			// inherit from host, overriden by WithEnvVariable
 			val, ok := os.LookupEnv(envGOMAXPROCS)
@@ -202,4 +224,44 @@ func defaultContainer(source *dagger.Directory, version string) *dagger.Containe
 			}
 			return r
 		})
+}
+
+// withGoModuleCacheFn is a helper func, allowing us to use it directly on containrs and easily expose it with 'WithGoModuleCache'.
+func withGoModuleCacheFn(
+	cache *dagger.CacheVolume,
+	source *dagger.Directory,
+	sharing dagger.CacheSharingMode,
+) func(c *dagger.Container) *dagger.Container {
+	return func(c *dagger.Container) *dagger.Container {
+		c = c.WithMountedCache(
+			"/go/pkg/mod",
+			cache,
+			dagger.ContainerWithMountedCacheOpts{
+				Source:  source,
+				Sharing: sharing,
+			},
+		)
+
+		return c
+	}
+}
+
+// withGoBuildCacheFn is a helper func, allowing us to use it directly on containrs and easily expose it with 'WithGoBuildCache'.
+func withGoBuildCacheFn(
+	cache *dagger.CacheVolume,
+	source *dagger.Directory,
+	sharing dagger.CacheSharingMode,
+) func(c *dagger.Container) *dagger.Container {
+	return func(c *dagger.Container) *dagger.Container {
+		c = c.WithMountedCache(
+			"/root/.cache/go-build",
+			cache,
+			dagger.ContainerWithMountedCacheOpts{
+				Source:  source,
+				Sharing: sharing,
+			},
+		)
+
+		return c
+	}
 }
