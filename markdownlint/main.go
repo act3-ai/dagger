@@ -36,6 +36,10 @@ func New(ctx context.Context,
 	// Configuration file.
 	// +optional
 	config *dagger.File,
+
+	// Glob expressions for markdown file identification.
+	// +optional.
+	globs []string,
 ) *Markdownlint {
 	if base == nil {
 		base = dag.Container().
@@ -43,6 +47,7 @@ func New(ctx context.Context,
 	}
 
 	cmd := []string{"markdownlint-cli2"}
+	cmd = append(cmd, globs...)
 	srcDir := "/work/src"
 	base = base.With(
 		func(c *dagger.Container) *dagger.Container {
