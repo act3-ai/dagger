@@ -2,7 +2,9 @@
 package main
 
 import (
+	"context"
 	"dagger/govulncheck/internal/dagger"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -31,6 +33,10 @@ func New(
 	// +optional
 	// +default="latest"
 	Version string,
+
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
 ) *Govulncheck {
 	if Container == nil {
 		Container = defaultContainer(Version)
@@ -38,53 +44,92 @@ func New(
 		Container = Container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, Version)})
 	}
 
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		})
+
 	return &Govulncheck{
 		Container: Container,
 		Flags:     []string{"govulncheck"},
 	}
 }
 
-// Mount netrc credentials for a private git repository.
-func (gv *Govulncheck) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Govulncheck {
-	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc)
-	return gv
-}
-
-// Run govulncheck with a source directory.
+// Run govulncheck on a source directory.
 //
 // e.g. `govulncheck -mode=source`.
-func (gv *Govulncheck) ScanSource(
+func (gv *Govulncheck) ScanSource(ctx context.Context,
 	// Go source directory
 	source *dagger.Directory,
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
 	// file patterns to include,
 	// +optional
 	// +default="./..."
 	patterns string,
-) *dagger.Container {
+) (string, error) {
+	srcPath := "/work/src"
 	gv.Flags = append(gv.Flags, patterns)
-	return gv.Container.WithWorkdir("/work/src").
-		WithMountedDirectory("/work/src", source).
-		WithExec(gv.Flags)
+	out, err := gv.Container.WithWorkdir(srcPath).
+		WithMountedDirectory(srcPath, source).
+		WithExec(gv.Flags).
+		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
-// Run govulncheck with a binary.
+// Run govulncheck on a binary.
 //
 // e.g. `govulncheck -mode=binary <binary>`.
-func (gv *Govulncheck) ScanBinary(
+func (gv *Govulncheck) ScanBinary(ctx context.Context,
 	// binary file
 	binary *dagger.File,
-) *dagger.Container {
+	// Output results, without an error.
+	// +optional
+	ignoreError bool,
+) (string, error) {
 	binaryPath := "/work/binary"
-	gv.Container = gv.Container.WithMountedFile(binaryPath, binary)
-
-	// perhaps unnecessary, but matches the usage docs in `govulncheck --help`
 	args := append([]string{"-mode=binary"}, gv.Flags...)
 	args = append(args, binaryPath)
+	out, err := gv.Container.WithMountedFile(binaryPath, binary).
+		WithExec(args).
+		Stdout(ctx)
 
-	return gv.Container.WithExec(args)
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Specify a vulnerability database url.

@@ -65,14 +65,6 @@ func (b *Build) All() *dagger.Directory {
 		Directory("dist")
 }
 
-// WithConfig loads a .goreleaser.yaml configuration file.
-func (b *Build) WithConfig(config *dagger.File) *Build {
-	cfgPath := "/work/.goreleaser.yaml"
-	b.Goreleaser.Container = b.Goreleaser.Container.WithMountedFile(cfgPath, config)
-	b.Flags = append(b.Flags, "--config", cfgPath)
-	return b
-}
-
 // Build an unversioned snapshot, skipping all validations.
 //
 // e.g. `goreleaser build --snapshot`.

@@ -18,18 +18,57 @@ type GitCliff struct {
 	Flags []string
 }
 
-func New(
+func New(ctx context.Context,
 	// Git repository source.
-	Source *dagger.Directory,
+	Src *dagger.Directory,
+
+	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
+	// +optional
+	Container *dagger.Container,
 
 	// Version (image tag) to use as a git-cliff binary source.
 	// +optional
 	// +default="latest"
-	version string,
+	Version string,
+
+	// Configuration file.
+	// +optional
+	Config *dagger.File,
+
+	// Mount netrc credentials for a private git repository.
+	// +optional
+	Netrc *dagger.Secret,
 ) *GitCliff {
+	if Container == nil {
+		Container = defaultContainer(Version)
+	}
+
+	flags := []string{"git-cliff"}
+	srcDir := "/work/src"
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Config != nil {
+				cfgPath, err := Config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, Config)
+				flags = append(flags, "--config", cfgPath)
+			}
+			return c
+		}).With(
+		func(c *dagger.Container) *dagger.Container {
+			if Netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, Src)
+
 	return &GitCliff{
-		Container: defaultContainer(Source, version),
-		Flags:     []string{"git-cliff"},
+		Container: Container,
+		Flags:     flags,
 	}
 }
 
@@ -67,28 +106,6 @@ func (gc *GitCliff) WithSecretVariable(
 	secret *dagger.Secret,
 ) *GitCliff {
 	gc.Container = gc.Container.WithSecretVariable(name, secret)
-	return gc
-}
-
-// Add netrc credentials.
-func (gc *GitCliff) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *GitCliff {
-	gc.Container = gc.Container.WithMountedSecret("/root/.netrc", netrc)
-	return gc
-}
-
-// Sets the configuration file.
-//
-// e.g. `git-cliff --config <config>`.
-func (gc *GitCliff) WithConfig(
-	// git-cliff configuration file, i.e. cliff.toml.
-	config *dagger.File,
-) *GitCliff {
-	configPath := "/work/cliff.toml"
-	gc.Container = gc.Container.WithMountedFile(configPath, config)
-	gc.Flags = append(gc.Flags, "--config", configPath)
 	return gc
 }
 
@@ -246,9 +263,7 @@ func (gc *GitCliff) WithStrip(
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.
-func defaultContainer(source *dagger.Directory, version string) *dagger.Container {
+func defaultContainer(version string) *dagger.Container {
 	return dag.Container().
-		From(fmt.Sprintf("%s:%s", imageGitCliff, version)).
-		WithWorkdir("/work/src").
-		WithMountedDirectory("/work/src", source)
+		From(fmt.Sprintf("%s:%s", imageGitCliff, version))
 }

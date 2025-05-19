@@ -110,24 +110,39 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 
 // Return the result of all lint checks
 func (python *Python) Lint(ctx context.Context,
-	//output format of ruff check, valid values: full, concise, gitlab, json, stdout, text
+	// ignore errors and return result
 	// +optional
-	// +default="full"
-	ruffCheckFormat RuffCheckFormat,
-
+	ignoreError bool,
 	// +optional
 	skip []string,
 ) (*dagger.Directory, error) {
+
 	checks := map[string]func(context.Context) (*dagger.File, error){
 		"ruff-check": func(ctx context.Context) (*dagger.File, error) {
-			return python.RuffCheck(ctx, ruffCheckFormat), nil
+			results, err := python.RuffCheck(ctx, "full", ignoreError)
+
+			return dag.Directory().WithNewFile("ruff-check.txt", results).File("ruff-check.txt"), err
 		},
 		"ruff-format": func(ctx context.Context) (*dagger.File, error) {
-			return python.RuffCheck(ctx, ruffCheckFormat), nil
+			results, err := python.RuffFormat(ctx, ignoreError)
+
+			return dag.Directory().WithNewFile("ruff-format.txt", results).File("ruff-format.txt"), err
 		},
-		"mypy":    python.Mypy,
-		"pylint":  python.Pylint,
-		"pyright": python.Pyright,
+		"mypy": func(ctx context.Context) (*dagger.File, error) {
+			results, err := python.Mypy(ctx, "", ignoreError)
+
+			return dag.Directory().WithNewFile("mypy.txt", results).File("mypy.txt"), err
+		},
+		"pylint": func(ctx context.Context) (*dagger.File, error) {
+			results, err := python.Pylint(ctx, "text", ignoreError)
+
+			return dag.Directory().WithNewFile("pylint.txt", results).File("pylint.txt"), err
+		},
+		"pyright": func(ctx context.Context) (*dagger.File, error) {
+			results, err := python.Pyright(ctx, ignoreError)
+
+			return dag.Directory().WithNewFile("pyright.txt", results).File("pyright.txt"), err
+		},
 	}
 
 	for _, check := range skip {
@@ -145,20 +160,16 @@ func (python *Python) Lint(ctx context.Context,
 
 	// Wait for all goroutines to finish
 	files, err := p.Wait()
-	if err != nil {
-		return nil, err
-	}
 
 	//create new directory with result files
-	return dag.Directory().WithFiles("/", files), nil
+	return dag.Directory().WithFiles("/", files), err
 }
 
 // Return the result of running all tests(lint and unit test)
 func (python *Python) Test(ctx context.Context,
-	// Output format of ruff check, valid values: gitlab, json, table, stdout, text
+	// ignore errors and return result
 	// +optional
-	// +default="full"
-	ruffCheckFormat RuffCheckFormat,
+	ignoreError bool,
 	// unit test directoy
 	// +optional
 	// +default="test"
@@ -171,7 +182,7 @@ func (python *Python) Test(ctx context.Context,
 	var combinedErr []string // To aggregate errors
 
 	// Run Lint
-	lintResultsDirectory, lintErr := python.Lint(ctx, ruffCheckFormat, skip)
+	lintResultsDirectory, lintErr := python.Lint(ctx, ignoreError, skip)
 
 	if lintErr != nil {
 		combinedErr = append(combinedErr, "Lint Error: "+lintErr.Error())

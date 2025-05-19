@@ -3,54 +3,51 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
+	"errors"
 	"fmt"
-)
-
-type RuffCheckFormat string
-
-const (
-	text       RuffCheckFormat = "text"
-	stdout     RuffCheckFormat = "stdout"
-	jsonFormat RuffCheckFormat = "json"
-	gitlab     RuffCheckFormat = "gitlab"
-	concise    RuffCheckFormat = "concise"
-	full       RuffCheckFormat = "full"
-	junit      RuffCheckFormat = "junit"
-	pylint     RuffCheckFormat = "pylint"
 )
 
 // Return the result of running ruff check
 func (python *Python) RuffCheck(ctx context.Context,
-	//output format of ruff lint check, valid values: concise, full, json, json-lines, junit, grouped, github, gitlab
 	// +optional
 	// +default="full"
-	ruffCheckFormat RuffCheckFormat,
-) *dagger.File {
-
-	outputFile := fmt.Sprintf("ruff-check.%s", ruffCheckFormat)
-
-	c := python.Container()
+	outputFormat string,
+	// +optional
+	ignoreError bool,
+) (string, error) {
 	// Run the Ruff linter with the provided output format
-	// The output format is passed to the --ruff-check-format flag
-	ruffResults := c.WithExec(
+	out, err := python.Container().WithExec(
 		[]string{
 			"uv",
 			"run",
 			"--with=ruff",
 			"ruff",
 			"check", ".",
-			"--output-file", outputFile,
-			"--output-format", string(ruffCheckFormat)})
+			"--output-format", outputFormat}).Stdout(ctx)
+	var e *dagger.ExecError
 
-	// Return the formatted output of the Ruff check as a string
-	// The output could include details about any code formatting issues.
-	return ruffResults.File(outputFile)
+	switch {
+	case errors.As(err, &e):
+		if ignoreError {
+			return fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr), nil
+		}
+		return "", fmt.Errorf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", fmt.Errorf("Stout:\n%w", err)
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // Return the result of running ruff format
-func (python *Python) RuffFormat(ctx context.Context) (*dagger.File, error) {
+func (python *Python) RuffFormat(ctx context.Context,
+	// ignore errors and return result
+	// +optional
+	ignoreError bool) (string, error) {
 
-	c := python.Container().
+	out, err := python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -59,13 +56,21 @@ func (python *Python) RuffFormat(ctx context.Context) (*dagger.File, error) {
 				"ruff",
 				"format",
 				"--check",
-				"--diff", "."})
+				"--diff", "."}).Stdout(ctx)
 
-	// Return the formatted output of Ruff format as a string
-	// The output could include details about any code formatting issues.
-	results, err := c.Stdout(ctx)
-	if err != nil {
-		return nil, err
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		if ignoreError {
+			return fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr), nil
+		}
+		return "", fmt.Errorf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
 	}
-	return dag.Directory().WithNewFile("ruff-format.txt", results).File("ruff-format.txt"), nil
+
 }

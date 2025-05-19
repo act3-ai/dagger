@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"dagger/yamllint/internal/dagger"
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -16,7 +17,10 @@ type Yamllint struct {
 	Flags []string
 }
 
-func New(
+func New(ctx context.Context,
+	// Source directory containing markdown files to be linted.
+	Src *dagger.Directory,
+
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	// +optional
 	Container *dagger.Container,
@@ -25,10 +29,31 @@ func New(
 	// +optional
 	// +default="latest"
 	Version string,
+
+	// Configuration file.
+	// +optional
+	Config *dagger.File,
 ) *Yamllint {
 	if Container == nil {
 		Container = defaultContainer(Version)
 	}
+
+	flags := []string{"yamllint"}
+	srcDir := "/work/src"
+	Container = Container.With(
+		func(c *dagger.Container) *dagger.Container {
+			if Config != nil {
+				cfgPath, err := Config.Name(ctx)
+				if err != nil {
+					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				}
+				c = c.WithMountedFile(cfgPath, Config)
+				flags = append(flags, "--config", cfgPath)
+			}
+			return c
+		}).
+		WithWorkdir(srcDir).
+		WithMountedDirectory(srcDir, Src)
 
 	return &Yamllint{
 		Container: Container,
@@ -40,59 +65,55 @@ func New(
 //
 // May be used as a "catch-all" in case functions are not implemented.
 func (y *Yamllint) Run(ctx context.Context,
-	// directory containing, but not limited to, YAML files to be linted.
-	src *dagger.Directory,
-	// flags, without 'yamllint'
+	// Output results, without an error.
 	// +optional
-	extraFlags []string,
-) *dagger.Container {
-	y.Flags = append(y.Flags, extraFlags...)
+	ignoreError bool,
 
-	// we could support a set of files, in addition to a directory, but
-	// having a singular required arg avoids usage errors (optional dir or
-	// set of files)
-	srcPath := "src"
-	y.Container = y.Container.WithMountedDirectory(srcPath, src)
-	y.Flags = append(y.Flags, srcPath)
+	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
+	// +optional
+	// +default="auto"
+	format string,
 
-	return y.Container.WithExec(y.Flags)
+	// Additional arguments to pass to yamllint, without 'yamllint' itself.
+	// +optional
+	extraArgs []string,
+) (string, error) {
+	y.Flags = append(y.Flags, extraArgs...)
+	y.Flags = append(y.Flags, "--format", format, ".")
+
+	out, err := y.Container.
+		WithExec(y.Flags).
+		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		// linter exit code != 0
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// stdout of the linter with exit code 0
+		return out, nil
+	}
 }
 
 // List YAML files that can be linted.
 //
 // e.g. 'yamllint --list-files'.
 func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
-	y.Flags = append(y.Flags, "--list-files")
+	y.Flags = append(y.Flags, "--list-files", ".")
 	out, err := y.Container.WithExec(y.Flags).
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("listing yaml files: %w", err)
 	}
 	return strings.Split(out, "\n"), nil
-}
-
-// Mount a custom configuration file.
-//
-// e.g. 'yamllint --config-file <config>'.
-func (y *Yamllint) WithConfig(
-	// configuration file
-	config *dagger.File,
-) *Yamllint {
-	cfgPath := ".yamllint.yaml"
-	y.Container = y.Container.WithMountedFile(cfgPath, config)
-	y.Flags = append(y.Flags, "--config-file", cfgPath)
-	return y
-}
-
-// Specify output format.
-//
-// e.g. 'yamllint --format <format>'.
-func (y *Yamllint) WithFormat(
-	// output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
-	format string,
-) *Yamllint {
-	y.Flags = append(y.Flags, "--format", format)
-	return y
 }
 
 // Return non-zero exit code on warnings as well as errors.
