@@ -28,6 +28,10 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	base *dagger.Container,
 ) (*dagger.Directory, error) {
+	if err := r.gitStatus(ctx); err != nil {
+		return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
+	}
+
 	targetVersion, err := r.version(ctx, base)
 	if err != nil {
 		return nil, fmt.Errorf("resolving next release versin: %w", err)
