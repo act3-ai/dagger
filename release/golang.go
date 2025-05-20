@@ -77,5 +77,9 @@ func (g *Golang) Check(ctx context.Context,
 		errs = append(errs, fmt.Errorf("running go unit tests: %w", err))
 	}
 
+	if err := g.Release.gitStatus(ctx); err != nil {
+		errs = append(errs, fmt.Errorf("git repository is dirty, aborting check: %w", err))
+	}
+
 	return results.String(), errors.Join(errs...)
 }
