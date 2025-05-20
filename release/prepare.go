@@ -6,13 +6,61 @@ import (
 	"dagger/release/util"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/sourcegraph/conc/pool"
 )
 
-// genericLint runs generic linters, e.g. markdown, yaml, etc.
-func (r *Release) genericLint(ctx context.Context, results util.ResultsFormatter, base *dagger.Container) error {
+// TODO: consider adding the release string formmatter to release struct itself
+// TODO: helm chart version bumping, make it flexible to zero or more helm charts
+// TODO: add support for modifications to releases.md for images and helm chart table
+// TODO: unit test specific image base plumbing
+// TODO: generate image base plumbing
+
+// Generate release notes, changelog, and target release version.
+func (r *Release) Prepare(ctx context.Context,
+	// Changelog file path, relative to source directory
+	// +optional
+	// +default="CHANGELOG.md"
+	changelog string,
+	// Release notes file path, relative to source directory. Default: releases/v<version>.md.
+	// +optional
+	notesPath string,
+	// base image for git-cliff
+	// +optional
+	base *dagger.Container,
+) (*dagger.Directory, error) {
+	targetVersion, err := r.version(ctx, base)
+	if err != nil {
+		return nil, fmt.Errorf("resolving next release versin: %w", err)
+	}
+
+	notesDir := "releases"
+	notesName := targetVersion + ".md"
+	if notesPath != "" {
+		notesDir = filepath.Dir(notesPath)
+		notesName = filepath.Base(notesPath)
+	}
+
+	releaseNotesFile, err := r.notes(ctx, notesName, base)
+	if err != nil {
+		return nil, fmt.Errorf("generating release notes: %w", err)
+	}
+	changelogFile := r.changelog(ctx, changelog, base)
+
+	return dag.Directory().
+		WithFile(changelog, changelogFile).
+		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
+		WithNewFile("VERSION", strings.TrimPrefix(targetVersion+"\n", "v")), nil
+
+}
+
+// genericLint runs geneic linters, e.g. markdown, yaml, etc.
+func (r *Release) genericLint(ctx context.Context,
+	results util.ResultsFormatter,
+	base *dagger.Container,
+) error {
 	var errs []error
 
 	// TODO: this module does not support a custom base container.
@@ -124,8 +172,12 @@ func (r *Release) gitStatus(ctx context.Context) error {
 // Generate the next version from conventional commit messages (see cliff.toml).
 //
 // Includes 'v' prefix.
-func (r *Release) Version(ctx context.Context) (string, error) {
-	targetVersion, err := dag.GitCliff(r.Source).
+func (r *Release) version(ctx context.Context,
+	// base image for git-cliff
+	// +optional
+	base *dagger.Container,
+) (string, error) {
+	targetVersion, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
 		BumpedVersion(ctx)
 	if err != nil {
 		return "", fmt.Errorf("resolving release target version: %w", err)
@@ -135,14 +187,19 @@ func (r *Release) Version(ctx context.Context) (string, error) {
 }
 
 // Generate the change log from conventional commit messages.
-func (r *Release) Changelog(ctx context.Context,
+//
+// changelog is a default changelog generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom changelogs.
+func (r *Release) changelog(ctx context.Context,
 	// Changelog file path, relative to source directory
 	// +optional
 	// +default="CHANGELOG.md"
 	changelog string,
+	// base image for git-cliff
+	// +optional
+	base *dagger.Container,
 ) *dagger.File {
 	// generate and prepend to changelog
-	return dag.GitCliff(r.Source).
+	return dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
 		WithBump().
 		WithStrip("footer").
 		WithUnreleased().
@@ -152,13 +209,18 @@ func (r *Release) Changelog(ctx context.Context,
 }
 
 // Generate release notes.
-func (r *Release) Notes(ctx context.Context,
-	// Add custom data to the release notes.
+//
+// notes are default release notes generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom release notes.
+func (r *Release) notes(ctx context.Context,
+	// Custom release notes file name. Default: v<version>.md
 	// +optional
-	prepend string,
+	name string,
+	// base image for git-cliff
+	// +optional
+	base *dagger.Container,
 ) (*dagger.File, error) {
 	// generate and export release notes
-	notes, err := dag.GitCliff(r.Source).
+	notes, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
 		WithBump().
 		WithUnreleased().
 		WithStrip("all").
@@ -168,8 +230,15 @@ func (r *Release) Notes(ctx context.Context,
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
 
-	notesFilePath := "release-notes.md"
+	if name == "" {
+		version, err := r.version(ctx, base)
+		if err != nil {
+			return nil, fmt.Errorf("resolving release version for notes file name: %w", err)
+		}
+		name = fmt.Sprintf("%s.md", version)
+	}
+
 	return dag.Directory().
-		WithNewFile(notesFilePath, notes).
-		File(notesFilePath), nil
+		WithNewFile(name, notes).
+		File(name), nil
 }
