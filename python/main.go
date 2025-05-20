@@ -113,6 +113,7 @@ func (python *Python) Lint(ctx context.Context,
 	// ignore errors and return result
 	// +optional
 	ignoreError bool,
+	// skip any provided lint tests
 	// +optional
 	skip []string,
 ) (*dagger.Directory, error) {
@@ -174,7 +175,7 @@ func (python *Python) Test(ctx context.Context,
 	// +optional
 	// +default="test"
 	unitTestDir string,
-
+	// skip any provided lint tests
 	// +optional
 	skip []string,
 ) (*dagger.Directory, error) {
