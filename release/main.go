@@ -15,10 +15,7 @@
 package main
 
 import (
-	"context"
 	"dagger/release/internal/dagger"
-	"fmt"
-	"strings"
 )
 
 type Release struct {
@@ -74,15 +71,11 @@ func (r *Release) WithoutRegistryAuth(
 	return r
 }
 
-// Generate the next version from conventional commit messages (see cliff.toml).
-//
-// Includes 'v' prefix.
-func (r *Release) Version(ctx context.Context) (string, error) {
-	targetVersion, err := dag.GitCliff(r.Source).
-		BumpedVersion(ctx)
-	if err != nil {
-		return "", fmt.Errorf("resolving release target version: %w", err)
-	}
-
-	return strings.TrimSpace(targetVersion), err
+// Add netrc credentials for a private git repository.
+func (r *Release) WithNetrc(
+	// NETRC credentials
+	netrc *dagger.Secret,
+) *Release {
+	r.Netrc = netrc
+	return r
 }

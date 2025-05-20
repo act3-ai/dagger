@@ -120,3 +120,56 @@ func (r *Release) gitStatus(ctx context.Context) error {
 
 	return errors.Join(errs...)
 }
+
+// Generate the next version from conventional commit messages (see cliff.toml).
+//
+// Includes 'v' prefix.
+func (r *Release) Version(ctx context.Context) (string, error) {
+	targetVersion, err := dag.GitCliff(r.Source).
+		BumpedVersion(ctx)
+	if err != nil {
+		return "", fmt.Errorf("resolving release target version: %w", err)
+	}
+
+	return strings.TrimSpace(targetVersion), err
+}
+
+// Generate the change log from conventional commit messages.
+func (r *Release) Changelog(ctx context.Context,
+	// Changelog file path, relative to source directory
+	// +optional
+	// +default="CHANGELOG.md"
+	changelog string,
+) *dagger.File {
+	// generate and prepend to changelog
+	return dag.GitCliff(r.Source).
+		WithBump().
+		WithStrip("footer").
+		WithUnreleased().
+		WithPrepend(changelog).
+		Run().
+		File(changelog)
+}
+
+// Generate release notes.
+func (r *Release) Notes(ctx context.Context,
+	// Add custom data to the release notes.
+	// +optional
+	prepend string,
+) (*dagger.File, error) {
+	// generate and export release notes
+	notes, err := dag.GitCliff(r.Source).
+		WithBump().
+		WithUnreleased().
+		WithStrip("all").
+		Run().
+		Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("generating release notes: %w", err)
+	}
+
+	notesFilePath := "release-notes.md"
+	return dag.Directory().
+		WithNewFile(notesFilePath, notes).
+		File(notesFilePath), nil
+}
