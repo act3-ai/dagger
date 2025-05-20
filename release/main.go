@@ -70,12 +70,3 @@ func (r *Release) WithoutRegistryAuth(
 	r.RegistryConfig = r.RegistryConfig.WithoutRegistryAuth(address)
 	return r
 }
-
-// Add netrc credentials for a private git repository.
-func (r *Release) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Release {
-	r.Netrc = netrc
-	return r
-}
