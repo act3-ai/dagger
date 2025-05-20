@@ -34,10 +34,11 @@ func (p *Py) Check(ctx context.Context,
 	UnitTestDir string,
 	// skip any provided lint tests
 	// +optional
-	skip []string) (string, error) {
+	skip []string,
+) (string, error) {
 	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
 	var errs []error
-	if err := p.Release.genericLint(ctx, results); err != nil {
+	if err := p.Release.genericLint(ctx, results, Base); err != nil {
 		errs = append(errs, fmt.Errorf("running generic linters: %w", err))
 	}
 
