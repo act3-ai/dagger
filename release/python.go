@@ -21,7 +21,20 @@ func (r *Release) Python() *Py {
 }
 
 // Check performs sanity checks prior to releasing, i.e. linters and unit tests.
-func (p *Py) Check(ctx context.Context) (string, error) {
+func (p *Py) Check(ctx context.Context,
+	// base container for tests can be overwritten
+	// +optional
+	Base *dagger.Container,
+	// extra arguments for uv sync command
+	// +optional
+	SyncArgs []string,
+	// unit test directory
+	// +optional
+	// +default="test"
+	UnitTestDir string,
+	// skip any provided lint tests
+	// +optional
+	skip []string) (string, error) {
 	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
 	var errs []error
 	if err := p.Release.genericLint(ctx, results); err != nil {
@@ -31,11 +44,16 @@ func (p *Py) Check(ctx context.Context) (string, error) {
 	// python linters
 	_, err := dag.Python(
 		dagger.PythonOpts{
-			Src:   p.Release.Source,
-			Netrc: p.Release.Netrc,
+			Base:     Base,
+			Src:      p.Release.Source,
+			Netrc:    p.Release.Netrc,
+			SyncArgs: SyncArgs,
 		},
 	).
-		Test().Sync(ctx)
+		Test(dagger.PythonTestOpts{
+			UnitTestDir: UnitTestDir,
+			Skip:        skip,
+		}).Sync(ctx)
 	if err != nil {
 		errs = append(errs, fmt.Errorf("Python Linting Error: %w", err))
 	} else {
@@ -48,3 +66,7 @@ func (p *Py) Check(ctx context.Context) (string, error) {
 
 	return results.String(), errors.Join(errs...)
 }
+
+// func (p *Py) Publish(ctx context.Context) (string, error) {
+
+// }
