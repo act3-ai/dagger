@@ -17,22 +17,20 @@ package main
 import (
 	"context"
 	"dagger/release/internal/dagger"
-	"dagger/release/util"
 	"fmt"
 	"strings"
 )
 
 type Release struct {
 	// Source git repository
-	Source *dagger.Directory
-
 	// +private
-	ProjectType util.ProjectType
+	Source *dagger.Directory
 	// +private
 	RegistryConfig *dagger.RegistryConfig
+	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
+	// +optional
 	// +private
 	Netrc *dagger.Secret
-
 	// TODO: add optional overrides for disabling default behavior
 	// +private
 	DisableUnitTests bool
@@ -42,18 +40,15 @@ func New(
 	// top level source code directory
 	// +defaultPath="/"
 	src *dagger.Directory,
-	// source code language, e.g. 'go', 'python'.
-	lang string,
+	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
+	// +optional
+	netrc *dagger.Secret,
 ) (*Release, error) {
-	pt, err := util.ResolveProjectType(lang)
-	if err != nil {
-		return nil, err
-	}
 
 	return &Release{
-		ProjectType:    pt,
 		Source:         src,
 		RegistryConfig: dag.RegistryConfig(),
+		Netrc:          netrc,
 	}, nil
 }
 
@@ -76,15 +71,6 @@ func (r *Release) WithoutRegistryAuth(
 	address string,
 ) *Release {
 	r.RegistryConfig = r.RegistryConfig.WithoutRegistryAuth(address)
-	return r
-}
-
-// Add netrc credentials for a private git repository.
-func (r *Release) WithNetrc(
-	// NETRC credentials
-	netrc *dagger.Secret,
-) *Release {
-	r.Netrc = netrc
 	return r
 }
 
