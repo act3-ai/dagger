@@ -90,17 +90,33 @@ func (r *Release) gitStatus(ctx context.Context) error {
 		WithWorkdir("/work/src")
 
 	var errs []error
-
 	// check for unstaged changes
-	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}).Stdout(ctx)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("checking for unstaged git changes: %w", err))
+	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		Stdout(ctx)
+
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		// exit code != 0
+		errs = append(errs, fmt.Errorf("checking for unstaged git changes: %s", result))
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return err
 	}
 
 	// check for staged, but not committed changes
-	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}).Stdout(ctx)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("checking for staged git changes: %w", err))
+	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		Stdout(ctx)
+	switch {
+	case errors.As(err, &e):
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		// exit code != 0
+		errs = append(errs, fmt.Errorf("checking for staged git changes: %s", result))
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return err
 	}
+
 	return errors.Join(errs...)
 }
