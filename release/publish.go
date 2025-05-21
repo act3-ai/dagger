@@ -7,13 +7,6 @@ import (
 	"strings"
 )
 
-// Publish creates a release, uploading assets as appropriate.
-func (r *Release) Publish() (string, error) {
-	// use goreleaser to publish?
-
-	return "", fmt.Errorf("not implemented")
-}
-
 // Generate extra tags based on the provided target tag.
 //
 // Ex: Given the patch release 'v1.2.3', with an existing 'v1.3.0' release, it returns 'v1.2'.
