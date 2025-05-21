@@ -12,7 +12,6 @@ func Test_extraTags(t *testing.T) {
 		target   string
 		existing []string
 		want     []string
-		wantErr  bool
 	}{
 		// Basic behavior
 		{name: "New Major",
@@ -57,13 +56,19 @@ func Test_extraTags(t *testing.T) {
 			existing: []string{"v2.0.0", "v2.1.0", "v2.2.0", "v1.2.0", "v1.1.0"},
 			want:     []string{"v1", "v1.2"},
 		},
+		// Unlikely, but possible
+		{name: "Older Minor Release",
+			target:   "v1.1.0",
+			existing: []string{"v2.0.0", "v2.1.0", "v2.2.0", "v1.2.0"},
+			want:     []string{"v1.1"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ExtraTags(tt.target, tt.existing)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("extraTags() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			t.Logf("Want: %s\nGot: %s", tt.want, got)
+			if err != nil {
+				t.Errorf("extraTags() error = %v", err)
 			}
 
 			if !assert.ElementsMatch(t, got, tt.want) {
