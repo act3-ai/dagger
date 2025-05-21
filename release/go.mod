@@ -25,12 +25,9 @@ require (
 	golang.org/x/mod v0.24.0
 	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.72.0
-	oras.land/oras-go/v2 v2.6.0
 )
 
 require (
-	github.com/opencontainers/go-digest v1.0.0 // indirect
-	github.com/opencontainers/image-spec v1.1.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 )

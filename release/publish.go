@@ -4,8 +4,7 @@ import (
 	"context"
 	"dagger/release/util"
 	"fmt"
-
-	"oras.land/oras-go/v2/registry/remote"
+	"strings"
 )
 
 // Publish creates a release, uploading assets as appropriate.
@@ -21,8 +20,7 @@ func (r *Release) Publish() (string, error) {
 // Ex: Given the patch release 'v1.2.3', which is the latest and greatest, it returns 'v1', 'v1.2', 'latest'.
 //
 // Notice: current issue with SSH AUTH SOCK: https://docs.dagger.io/api/remote-repositories/#multiple-ssh-keys-may-cause-ssh-forwarding-to-fail
-func (r *Release) ExtraTags(
-	ctx context.Context,
+func (r *Release) ExtraTags(ctx context.Context,
 	// OCI repository, e.g. localhost:5000/helloworld
 	ref string,
 	// target version
@@ -41,19 +39,20 @@ func (r *Release) existingOCITags(ctx context.Context,
 	// OCI repository, e.g. localhost:5000/helloworld
 	ref string,
 ) ([]string, error) {
-	repo, err := remote.NewRepository(ref)
+	oras := dag.Container().
+		From("ghcr.io/oras-project/oras:v1.2.3").
+		File("/bin/oras")
+
+	out, err := dag.Wolfi().
+		Container().
+		WithMountedFile("/bin/oras", oras).
+		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret()).
+		WithExec([]string{"oras", "repo", "tags", ref}).
+		Terminal().
+		Stdout(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("initializing repository: %w", err)
+		return nil, fmt.Errorf("retrieving repository tags: %w", err)
 	}
 
-	var ociTags []string
-	err = repo.Tags(ctx, "", func(tags []string) error {
-		ociTags = append(ociTags, tags...)
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("fetching repository tags: %w", err)
-	}
-
-	return ociTags, nil
+	return strings.Fields(out), nil
 }
