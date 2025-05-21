@@ -17,6 +17,9 @@ import (
 
 // Generate release notes, changelog, and target release version.
 func (r *Release) Prepare(ctx context.Context,
+	// path to helm chart in source directory to bump chart version to release version.
+	// +optional
+	chartPath string,
 	// Changelog file path, relative to source directory
 	// +optional
 	// +default="CHANGELOG.md"
@@ -32,11 +35,13 @@ func (r *Release) Prepare(ctx context.Context,
 		return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
 	}
 
+	// update version file
 	targetVersion, err := r.version(ctx, base)
 	if err != nil {
 		return nil, fmt.Errorf("resolving next release versin: %w", err)
 	}
 
+	// update release notes file
 	notesDir := "releases"
 	notesName := targetVersion + ".md"
 	if notesPath != "" {
@@ -48,13 +53,26 @@ func (r *Release) Prepare(ctx context.Context,
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
+
+	// update changelog
 	changelogFile := r.changelog(ctx, changelog, base)
+
+	// set helm chart version
+	var chartFile *dagger.File
+	if chartPath != "" {
+		chartFile = r.setHelmChartVersion(targetVersion, chartPath)
+	}
 
 	return dag.Directory().
 		WithFile(changelog, changelogFile).
 		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
-		WithNewFile("VERSION", strings.TrimPrefix(targetVersion+"\n", "v")), nil
-
+		WithNewFile("VERSION", strings.TrimPrefix(targetVersion+"\n", "v")).
+		With(func(d *dagger.Directory) *dagger.Directory {
+			if chartFile != nil {
+				d = d.WithFile(chartPath, chartFile)
+			}
+			return d
+		}), nil
 }
 
 // gitStatus returns an error if a git repository contains uncommitted changes.
@@ -172,4 +190,27 @@ func (r *Release) notes(ctx context.Context,
 	return dag.Directory().
 		WithNewFile(name, notes).
 		File(name), nil
+}
+
+// Set the version and appVersion of a helm chart.
+func (r *Release) setHelmChartVersion(
+	// release version
+	version string,
+	// Chart.yaml path
+	chartPath string,
+) *dagger.File {
+	version = strings.TrimPrefix(version, "v")
+	updatedChart := dag.Wolfi().
+		Container(dagger.WolfiContainerOpts{
+			Packages: []string{"yq"},
+		}).
+		WithMountedDirectory("/src", r.Source).
+		WithWorkdir("/src").
+		WithEnvVariable("version", version).
+		WithExec([]string{"yq", "e",
+			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
+			"-i", chartPath}).
+		File(chartPath)
+
+	return updatedChart
 }
