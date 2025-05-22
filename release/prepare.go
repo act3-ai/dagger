@@ -28,6 +28,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	notesPath string,
 	// Additional information to include in release notes. Injected after header and before commit
+	// +optional
 	extraNotes string,
 	// base image for git-cliff
 	// +optional
