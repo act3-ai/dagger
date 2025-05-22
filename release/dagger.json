@@ -6,6 +6,11 @@
   },
   "dependencies": [
     {
+      "name": "gh",
+      "source": "github.com/sagikazarmark/daggerverse/gh@gh/v0.11.0",
+      "pin": "c1be27189ce47d28f84014b715f78e47db9fbadc"
+    },
+    {
       "name": "git-cliff",
       "source": "../git-cliff"
     },
