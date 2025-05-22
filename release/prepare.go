@@ -27,6 +27,8 @@ func (r *Release) Prepare(ctx context.Context,
 	// Release notes file path, relative to source directory. Default: releases/v<version>.md.
 	// +optional
 	notesPath string,
+	// Additional information to include in release notes. Injected after header and before commit
+	extraNotes string,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
@@ -49,7 +51,7 @@ func (r *Release) Prepare(ctx context.Context,
 		notesName = filepath.Base(notesPath)
 	}
 
-	releaseNotesFile, err := r.notes(ctx, notesName, base)
+	releaseNotesFile, err := r.notes(ctx, notesName, extraNotes, base)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
@@ -164,6 +166,9 @@ func (r *Release) notes(ctx context.Context,
 	// Custom release notes file name. Default: v<version>.md
 	// +optional
 	name string,
+	// Additional information to include in release notes. Injected after header and before commit
+	// +optional
+	extraNotes string,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
@@ -177,6 +182,14 @@ func (r *Release) notes(ctx context.Context,
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
+	}
+
+	// add extra notes section
+	if extraNotes != "" {
+		b := &strings.Builder{}
+		b.WriteString(extraNotes)
+		b.WriteString("###")
+		notes = strings.Replace(notes, "### ", b.String(), 1)
 	}
 
 	if name == "" {
