@@ -105,7 +105,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 func (r *Release) CreateGitlab(ctx context.Context,
 	// GitLab host
 	// +optional
-	// +default=gitlab.com
+	// +default="gitlab.com"
 	host string,
 	// GitLab repository, without host.
 	project string,
