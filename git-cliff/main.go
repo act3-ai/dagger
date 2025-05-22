@@ -43,7 +43,7 @@ func New(ctx context.Context,
 		Container = defaultContainer(Version)
 	}
 
-	flags := []string{"git-cliff"}
+	flags := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
 	Container = Container.With(
 		func(c *dagger.Container) *dagger.Container {
@@ -70,6 +70,42 @@ func New(ctx context.Context,
 		Container: Container,
 		Flags:     flags,
 	}
+}
+
+// WithPrivateGitlabHost provides conveneince for using git-cliff with a private GitLab host. Altenatively, use WithEnvVariable and WithSecretVariable as needed.
+//
+// Sets GITLAB_API_URL, GITLAB_REPO, and GITLAB_TOKEN.
+func (gc *GitCliff) WithPrivateGitlabHost(
+	// API URL, typically https://<host>/api/v4
+	apiURL string,
+	// Repository
+	repo string,
+	// Access token
+	token *dagger.Secret,
+) *GitCliff {
+	gc.Container = gc.Container.WithEnvVariable("GITLAB_API_URL", apiURL).
+		WithEnvVariable("GITLAB_REPO", repo).
+		WithSecretVariable("GITLAB_TOKEN", token)
+
+	return gc
+}
+
+// WithPrivateGiteaHost provides conveneince for using git-cliff with a private Gitea host.Altenatively, use WithEnvVariable and WithSecretVariable as needed.
+//
+// Sets GITEA_API_URL, GITEA_REPO, and GITEA_TOKEN.
+func (gc *GitCliff) WithPrivateGiteaHost(
+	// API URL, typically https://<host>/api/v4
+	apiURL string,
+	// Repository
+	repo string,
+	// Access token
+	token *dagger.Secret,
+) *GitCliff {
+	gc.Container = gc.Container.WithEnvVariable("GITEA_API_URL", apiURL).
+		WithEnvVariable("GITEA_REPO", repo).
+		WithSecretVariable("GITEA_TOKEN", token)
+
+	return gc
 }
 
 // WithEnvVariable adds an environment variable to the git-cliff container.
