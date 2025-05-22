@@ -43,10 +43,9 @@ func (p *Py) Check(ctx context.Context,
 	}
 
 	// python linters
-	_, err := dag.Python(
+	_, err := dag.Python(p.Release.Source,
 		dagger.PythonOpts{
 			Base:     Base,
-			Src:      p.Release.Source,
 			Netrc:    p.Release.Netrc,
 			SyncArgs: SyncArgs,
 		},
