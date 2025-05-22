@@ -62,7 +62,6 @@ func New(
 	// +optional
 	src *dagger.Directory,
 ) *Docker {
-
 	return &Docker{
 		Source: src,
 	}
