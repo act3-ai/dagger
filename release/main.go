@@ -35,7 +35,6 @@ type Release struct {
 
 func New(
 	// top level source code directory
-	// +defaultPath="/"
 	src *dagger.Directory,
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional

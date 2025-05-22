@@ -58,12 +58,13 @@ type Labels struct {
 }
 
 func New(
+	// top level source code directory
 	// +optional
-	// +defaultPath="/"
-	source *dagger.Directory) *Docker {
+	src *dagger.Directory,
+) *Docker {
 
 	return &Docker{
-		Source: source,
+		Source: src,
 	}
 }
 

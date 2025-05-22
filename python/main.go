@@ -32,19 +32,15 @@ type Python struct {
 }
 
 func New(
+	// top-level source code directory
+	// +ignore=["dist/"]
+	src *dagger.Directory,
 	// base development container
 	// +optional
 	base *dagger.Container,
-
-	// top-level source code directory
-	// +defaultPath="/"
-	// +ignore=["dist/"]
-	src *dagger.Directory,
-
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional
 	netrc *dagger.Secret,
-
 	// extra arguments for uv sync command
 	// +optional
 	syncArgs []string,
