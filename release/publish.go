@@ -62,8 +62,8 @@ func (r *Release) existingOCITags(ctx context.Context,
 	return strings.Fields(out), nil
 }
 
-// gitlabRelease creates a release in a public or private GitLab instance.
-func (r *Release) gitlabRelease(ctx context.Context,
+// gitlab creates a release in a public or private GitLab instance.
+func (r *Release) gitlab(ctx context.Context,
 	// GitLab host
 	// +optional
 	// +default=gitlab.com
@@ -165,8 +165,8 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 	return strings.Join(result, "\n"), err
 }
 
-// githubRelease creates a release in GitHub.
-func (r *Release) githubRelease(ctx context.Context,
+// github creates a release in GitHub.
+func (r *Release) github(ctx context.Context,
 	// GitHub project (repository)
 	project string,
 	// gitlab personal access token
