@@ -62,13 +62,52 @@ func (r *Release) existingOCITags(ctx context.Context,
 	return strings.Fields(out), nil
 }
 
-// gitlab creates a release in a public or private GitLab instance.
-func (r *Release) gitlab(ctx context.Context,
+// CreateGithub creates a release in GitHub.
+func (r *Release) CreateGithub(ctx context.Context,
+	// GitHub repository, without "github.com"
+	repo string,
+	// gitlab personal access token
+	token *dagger.Secret,
+	// Release version
+	version string,
+	// Release notes file
+	notes *dagger.File,
+	// Release title. Default: version
+	// +optional
+	title string,
+	// Release assets
+	// +optional
+	assets []*dagger.File,
+) (string, error) {
+	if title == "" {
+		title = version
+	}
+
+	err := dag.Gh(
+		dagger.GhOpts{
+			Token:  token,
+			Repo:   repo,
+			Source: r.Source,
+		}).
+		Release().
+		Create(ctx, version, title,
+			dagger.GhReleaseCreateOpts{
+				NotesFile: notes,
+				Files:     assets,
+			})
+	if err != nil {
+		return "", fmt.Errorf("publishing release to 'github.com/%s': %w", repo, err)
+	}
+	return fmt.Sprintf("Successfully published release to 'github.com/%s'", repo), nil
+}
+
+// CreateGitlab creates a release in a public or private GitLab instance.
+func (r *Release) CreateGitlab(ctx context.Context,
 	// GitLab host
 	// +optional
 	// +default=gitlab.com
 	host string,
-	// GitLab project (repository)
+	// GitLab repository, without host.
 	project string,
 	// GitLab personal access token
 	token *dagger.Secret,
@@ -119,7 +158,7 @@ func (r *Release) gitlab(ctx context.Context,
 	return fmt.Sprintf("Successfully published release to '%s'", hostRepo), nil
 }
 
-// gitlabUploadAssets publishes assets to an existing release tag to GitLab.
+// gitlabUploadAssets uploads assets to an existing release tag on GitLab.
 func (r *Release) gitlabUploadAssets(ctx context.Context,
 	// GitLab host
 	host string,
@@ -163,43 +202,4 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 
 	result, err := p.Wait()
 	return strings.Join(result, "\n"), err
-}
-
-// github creates a release in GitHub.
-func (r *Release) github(ctx context.Context,
-	// GitHub project (repository)
-	project string,
-	// gitlab personal access token
-	token *dagger.Secret,
-	// Release version
-	version string,
-	// Release notes file
-	notes *dagger.File,
-	// Release title. Default: version
-	// +optional
-	title string,
-	// Release assets
-	// +optional
-	assets []*dagger.File,
-) (string, error) {
-	if title == "" {
-		title = version
-	}
-
-	err := dag.Gh(
-		dagger.GhOpts{
-			Token:  token,
-			Repo:   project,
-			Source: r.Source,
-		}).
-		Release().
-		Create(ctx, version, title,
-			dagger.GhReleaseCreateOpts{
-				NotesFile: notes,
-				Files:     assets,
-			})
-	if err != nil {
-		return "", fmt.Errorf("publishing release to 'github.com/%s': %w", project, err)
-	}
-	return fmt.Sprintf("Successfully published release to 'github.com/%s'", project), nil
 }
