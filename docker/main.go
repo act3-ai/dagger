@@ -196,6 +196,7 @@ func (m *Docker) getSecrets(ctx context.Context) (map[string]*dagger.Secret, err
 	return secretMap, nil
 }
 
+// Build image from Dockerfile
 func (docker *Docker) Build(
 	ctx context.Context,
 	// target stage of image build
@@ -222,12 +223,16 @@ func (docker *Docker) Build(
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
 	for _, platform := range platforms {
 		// Create an instance of `Ctr` (container)
-		ctr := docker.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
+		ctr, err := docker.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
 			Target:    target,
 			Secrets:   secretSlice,
 			BuildArgs: docker.BuildArg,
 			Platform:  platform,
-		})
+		}).Sync(ctx)
+
+		if err != nil {
+			return nil, err
+		}
 
 		//Apply labels to each container
 		for _, label := range docker.Labels {
