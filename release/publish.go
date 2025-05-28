@@ -53,7 +53,6 @@ func (r *Release) existingOCITags(ctx context.Context,
 		WithMountedFile("/bin/oras", oras).
 		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret()).
 		WithExec([]string{"oras", "repo", "tags", ref}).
-		Terminal().
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving repository tags: %w", err)
@@ -139,9 +138,9 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		WithEnvVariable("GITLAB_HOST", host).
 		WithExec([]string{"glab", "release", "create",
 			"-R", project, // repository
-			"v" + version,                 // tag
-			"--name=" + version,           // title
-			"--notes-file", notesFileName, // description
+			"v" + version,                  // tag
+			"--name=" + version,            // title
+			"--notes-file=", notesFileName, // description
 		}).
 		Stdout(ctx)
 	if err != nil {

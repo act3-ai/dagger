@@ -66,7 +66,3 @@ func (p *Py) Check(ctx context.Context,
 
 	return results.String(), errors.Join(errs...)
 }
-
-// func (p *Py) Publish(ctx context.Context) (string, error) {
-
-// }
