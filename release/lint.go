@@ -13,7 +13,7 @@ import (
 
 // This file contains generic linters used in 'Check' commands for various project types. Language specific linters are used in their respective groups.
 
-// genericLint runs geneic linters, e.g. markdown, yaml, etc.
+// genericLint runs generic linters, e.g. markdown, yaml, etc.
 func (r *Release) genericLint(ctx context.Context,
 	results util.ResultsFormatter,
 	base *dagger.Container,
@@ -71,10 +71,12 @@ func (r *Release) shellcheck(ctx context.Context, concurrency int) (string, erro
 			r, err := dag.Shellcheck().
 				Check(r.Source.File(entry)).
 				Report(ctx)
-			if r == "" {
-				r = "No reported issues."
+			// this is needed because of weird error handling  in shellcheck here:
+			// https://github.com/dagger/dagger/blob/0b46ea3c49b5d67509f67747742e5d8b24be9ef7/modules/shellcheck/main.go#L137
+			if r != "" {
+				return "", fmt.Errorf("results for file %s:\n%s", entry, r)
 			}
-			r = fmt.Sprintf("Results for file %s:\n%s", entry, r)
+			// r = fmt.Sprintf("Results for file %s:\n%s", entry, r)
 			return r, err
 		})
 	}
