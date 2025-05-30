@@ -138,9 +138,9 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		WithEnvVariable("GITLAB_HOST", host).
 		WithExec([]string{"glab", "release", "create",
 			"-R", project, // repository
-			"v" + version,                  // tag
-			"--name=" + version,            // title
-			"--notes-file=", notesFileName, // description
+			version,                         // tag
+			"--name=" + version,             // title
+			"--notes-file=" + notesFileName, // description
 		}).
 		Stdout(ctx)
 	if err != nil {
