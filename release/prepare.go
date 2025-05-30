@@ -91,7 +91,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 
 	var errs []error
 	// check for unstaged changes
-	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
 		Stdout(ctx)
 
 	var e *dagger.ExecError
@@ -106,7 +106,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 	}
 
 	// check for staged, but not committed changes
-	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
 		Stdout(ctx)
 	switch {
 	case errors.As(err, &e):
