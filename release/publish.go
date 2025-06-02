@@ -19,6 +19,18 @@ const (
 	imageGlabCLI = "registry.gitlab.com/gitlab-org/cli:latest"
 )
 
+// Publish additional tags to a remote OCI artifact.
+func (r *Release) AddTags(ctx context.Context,
+	// Existing OCI reference
+	ref string,
+	// Additional tags
+	tags []string,
+) (string, error) {
+	return r.orasCtr().
+		WithExec(append([]string{"oras", "tag", ref}, tags...)).
+		Stdout(ctx)
+}
+
 // Generate extra tags based on the provided target tag.
 //
 // Ex: Given the patch release 'v1.2.3', with an existing 'v1.3.0' release, it returns 'v1.2'.
@@ -31,34 +43,27 @@ func (r *Release) ExtraTags(ctx context.Context,
 	// target version
 	version string,
 ) ([]string, error) {
-	existing, err := r.existingOCITags(ctx, ref)
+	out, err := r.orasCtr().
+		WithExec([]string{"oras", "repo", "tags", ref}).
+		Stdout(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("resolving existing OCI tags: %w", err)
+		return nil, fmt.Errorf("retrieving existing repository tags: %w", err)
 	}
+	existing := strings.Fields(out)
 
 	return util.ExtraTags(version, existing)
 }
 
-// existingOCITags returns the OCI tags in a repository.
-func (r *Release) existingOCITags(ctx context.Context,
-	// OCI repository, e.g. localhost:5000/helloworld
-	ref string,
-) ([]string, error) {
+// orasCtr returns a container with an oras executable, with mounted registry credentials.
+func (r *Release) orasCtr() *dagger.Container {
 	oras := dag.Container().
 		From(imageOras).
 		File("/bin/oras")
 
-	out, err := dag.Wolfi().
+	return dag.Wolfi().
 		Container().
 		WithMountedFile("/bin/oras", oras).
-		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret()).
-		WithExec([]string{"oras", "repo", "tags", ref}).
-		Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("retrieving repository tags: %w", err)
-	}
-
-	return strings.Fields(out), nil
+		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret())
 }
 
 // CreateGithub creates a release in GitHub.
