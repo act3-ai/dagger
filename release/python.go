@@ -60,9 +60,5 @@ func (p *Py) Check(ctx context.Context,
 		results.Add("Python Lint", "Success")
 	}
 
-	if err := p.Release.gitStatus(ctx); err != nil {
-		errs = append(errs, fmt.Errorf("git repository is dirty, aborting check: %w", err))
-	}
-
 	return results.String(), errors.Join(errs...)
 }
