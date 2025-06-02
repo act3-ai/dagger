@@ -33,9 +33,15 @@ func (r *Release) Prepare(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
+	// ignore git status errors
+	// +optional
+	ignoreError bool,
 ) (*dagger.Directory, error) {
-	if err := r.gitStatus(ctx); err != nil {
-		return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
+
+	if !ignoreError {
+		if err := r.gitStatus(ctx); err != nil {
+			return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
+		}
 	}
 
 	// update version file
