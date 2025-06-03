@@ -1,0 +1,59 @@
+{
+  "name": "release",
+  "engineVersion": "v0.18.9",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "gh",
+      "source": "github.com/sagikazarmark/daggerverse/gh@gh/v0.11.0",
+      "pin": "c1be27189ce47d28f84014b715f78e47db9fbadc"
+    },
+    {
+      "name": "git-cliff",
+      "source": "../git-cliff"
+    },
+    {
+      "name": "go",
+      "source": "github.com/sagikazarmark/daggerverse/go@go/v0.9.0",
+      "pin": "d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"
+    },
+    {
+      "name": "golangci-lint",
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@golangci-lint/v0.9.0",
+      "pin": "e6c14178bcaaff9e102e2a89173ca31479b80629"
+    },
+    {
+      "name": "govulncheck",
+      "source": "../govulncheck"
+    },
+    {
+      "name": "markdownlint",
+      "source": "../markdownlint"
+    },
+    {
+      "name": "python",
+      "source": "../python"
+    },
+    {
+      "name": "registry-config",
+      "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
+      "pin": "126b5fbbdad70dbf2a8689600baec2eb78c05ef4"
+    },
+    {
+      "name": "shellcheck",
+      "source": "github.com/dagger/dagger/modules/shellcheck@v0.18.2",
+      "pin": "0b46ea3c49b5d67509f67747742e5d8b24be9ef7"
+    },
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.5",
+      "pin": "7d2000eef21dcb3e42abe4e0c7bdf0633f297449"
+    },
+    {
+      "name": "yamllint",
+      "source": "../yamllint"
+    }
+  ]
+}

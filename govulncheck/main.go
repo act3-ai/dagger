@@ -27,33 +27,33 @@ type Govulncheck struct {
 func New(
 	// Custom container to use as a base container. Must have go available. It's recommended to use github.com/sagikazarmark/daggerverse/go for a custom container, excluding the source directory.
 	// +optional
-	Container *dagger.Container,
+	container *dagger.Container,
 
 	// Version of govulncheck to use as a binary source.
 	// +optional
 	// +default="latest"
-	Version string,
+	version string,
 
 	// Mount netrc credentials for a private git repository.
 	// +optional
-	Netrc *dagger.Secret,
+	netrc *dagger.Secret,
 ) *Govulncheck {
-	if Container == nil {
-		Container = defaultContainer(Version)
+	if container == nil {
+		container = defaultContainer(version)
 	} else {
-		Container = Container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, Version)})
+		container = container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, version)})
 	}
 
-	Container = Container.With(
+	container = container.With(
 		func(c *dagger.Container) *dagger.Container {
-			if Netrc != nil {
-				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			if netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", netrc)
 			}
 			return c
 		})
 
 	return &Govulncheck{
-		Container: Container,
+		Container: container,
 		Flags:     []string{"govulncheck"},
 	}
 }

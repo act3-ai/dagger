@@ -20,54 +20,54 @@ type GitCliff struct {
 
 func New(ctx context.Context,
 	// Git repository source.
-	Src *dagger.Directory,
+	src *dagger.Directory,
 
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	// +optional
-	Container *dagger.Container,
+	container *dagger.Container,
 
 	// Version (image tag) to use as a git-cliff binary source.
 	// +optional
 	// +default="latest"
-	Version string,
+	version string,
 
 	// Configuration file.
 	// +optional
-	Config *dagger.File,
+	config *dagger.File,
 
 	// Mount netrc credentials for a private git repository.
 	// +optional
-	Netrc *dagger.Secret,
+	netrc *dagger.Secret,
 ) *GitCliff {
-	if Container == nil {
-		Container = defaultContainer(Version)
+	if container == nil {
+		container = defaultContainer(version)
 	}
 
 	flags := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
-	Container = Container.With(
+	container = container.With(
 		func(c *dagger.Container) *dagger.Container {
-			if Config != nil {
-				cfgPath, err := Config.Name(ctx)
+			if config != nil {
+				cfgPath, err := config.Name(ctx)
 				if err != nil {
 					panic(fmt.Errorf("resolving configuration file name: %w", err))
 				}
-				c = c.WithMountedFile(cfgPath, Config)
+				c = c.WithMountedFile(cfgPath, config)
 				flags = append(flags, "--config", cfgPath)
 			}
 			return c
 		}).With(
 		func(c *dagger.Container) *dagger.Container {
-			if Netrc != nil {
-				c = c.WithMountedSecret("/root/.netrc", Netrc)
+			if netrc != nil {
+				c = c.WithMountedSecret("/root/.netrc", netrc)
 			}
 			return c
 		}).
 		WithWorkdir(srcDir).
-		WithMountedDirectory(srcDir, Src)
+		WithMountedDirectory(srcDir, src)
 
 	return &GitCliff{
-		Container: Container,
+		Container: container,
 		Flags:     flags,
 	}
 }
