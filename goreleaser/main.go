@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"dagger/goreleaser/internal/dagger"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -197,11 +198,30 @@ func (gr *Goreleaser) Run(ctx context.Context,
 	// +optional
 	ignoreError bool,
 ) (string, error) {
-	expect := dagger.ReturnTypeSuccess
-	if ignoreError {
-		expect = dagger.ReturnTypeAny
+	// We could validate the config within New(), failing slightly earlier, but
+	// running dagger with '--silent' returns a vague error and a panic is too harsh.
+	// So we choose here so we can be a bit more informative.
+	if err := gr.checkConfig(ctx); err != nil {
+		return "", err
 	}
-	return gr.Container.WithExec(append([]string{"goreleaser"}, args...), dagger.ContainerWithExecOpts{Expect: expect}).Stdout(ctx)
+
+	out, err := gr.Container.WithExec(append([]string{"goreleaser"}, args...)).Stdout(ctx)
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		// exit code != 0
+		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
+		if ignoreError {
+			return result, nil
+		}
+		return "", fmt.Errorf("%s", result)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return "", err
+	default:
+		// exit code 0
+		return out, nil
+	}
 }
 
 // defaultContainer constructs a minimal container containing a source git repository.
@@ -263,5 +283,25 @@ func withGoBuildCacheFn(
 		)
 
 		return c
+	}
+}
+
+// checkConfig validates a goreleaser config. This is mostly to keep the user sane.
+// Given an invalid config goreleaser will throw an error for the problematic line
+// but reports it as an error for the command being run, e.g. a build error.
+func (gr *Goreleaser) checkConfig(ctx context.Context) error {
+	// results of check always on stderr
+	_, err := gr.Container.WithExec([]string{"goreleaser", "check"}).Stdout(ctx)
+	// "parse" the error for useful info
+	var e *dagger.ExecError
+	switch {
+	case errors.As(err, &e):
+		return fmt.Errorf("%s", e.Stderr)
+	case err != nil:
+		// some other dagger error, e.g. graphql
+		return err
+	default:
+		// exit code 0, no issues found
+		return nil
 	}
 }

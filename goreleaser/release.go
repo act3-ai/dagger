@@ -37,6 +37,13 @@ func (gr *Release) Run(ctx context.Context,
 	// +optional
 	ignoreError bool,
 ) (string, error) {
+	// We could validate the config within New(), failing slightly earlier, but
+	// running dagger with '--silent' returns a vague error and a panic is too harsh.
+	// So we choose here so we can be a bit more informative.
+	if err := gr.Goreleaser.checkConfig(ctx); err != nil {
+		return "", err
+	}
+
 	gr.Flags = append(gr.Flags, args...)
 	out, err := gr.Goreleaser.Container.
 		WithExec(gr.Flags).
