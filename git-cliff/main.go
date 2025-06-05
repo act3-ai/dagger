@@ -164,6 +164,17 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context) (string, error) {
 		Stdout(ctx)
 }
 
+// Generate a changelog for a specific version, ignoring configured method of version bumping.
+//
+// e.g. `git-cliff --tag <version>`.
+func (gc *GitCliff) WithTag(ctx context.Context,
+	// Specific tag
+	version string,
+) *GitCliff {
+	gc.Flags = append(gc.Flags, "--tag", version)
+	return gc
+}
+
 // Sets the GitHub API token.
 //
 // e.g. `GITHUB_TOKEN=<token> git-cliff`.
@@ -194,17 +205,17 @@ func (gc *GitCliff) WithGiteaToken(
 	return gc.WithSecretVariable("GITEA_TOKEN", token)
 }
 
-// Bump the version for unreleased changes. Optionally with specified version.
+// Bump the version for unreleased changes. Optionally with specified bump method/type.
 //
 // e.g. `git-cliff --bump`.
 func (gc *GitCliff) WithBump(
-	// specified version
+	// bump method/type. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
-	version string,
+	method string,
 ) *GitCliff {
 	gc.Flags = append(gc.Flags, "--bump")
-	if version != "" {
-		gc.Flags = append(gc.Flags, version)
+	if method != "" {
+		gc.Flags = append(gc.Flags, method)
 	}
 	return gc
 }
@@ -291,7 +302,7 @@ func (gc *GitCliff) WithOutput(
 //
 // e.g. `git-cliff --strip <part>`.
 func (gc *GitCliff) WithStrip(
-	// Part of changelog to strip. Possible values: header, footer, all.
+	// Part of changelog to strip. Supported values: header, footer, all.
 	part string,
 ) *GitCliff {
 	gc.Flags = append(gc.Flags, "--strip", part)
