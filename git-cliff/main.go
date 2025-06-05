@@ -22,7 +22,7 @@ func New(ctx context.Context,
 	// Git repository source.
 	src *dagger.Directory,
 
-	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
+	// Custom container to use as a base container. Must have 'git-cliff' available on PATH.
 	// +optional
 	container *dagger.Container,
 
