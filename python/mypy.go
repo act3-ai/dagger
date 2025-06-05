@@ -44,7 +44,7 @@ func (python *Python) Mypy(ctx context.Context,
 		// some other dagger error, e.g. graphql
 		return "", err
 	default:
-		// stdout of the linter with exit code 0
+		// exit code 0
 		return out, nil
 	}
 
