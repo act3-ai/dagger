@@ -42,6 +42,9 @@ func (r *Release) Prepare(ctx context.Context,
 	// ignore git status errors
 	// +optional
 	ignoreError bool,
+	// additional arguments to git-cliff --bumped version
+	// +optional
+	args []string,
 ) (*dagger.Directory, error) {
 	if !ignoreError {
 		if err := r.gitStatus(ctx); err != nil {
@@ -52,9 +55,9 @@ func (r *Release) Prepare(ctx context.Context,
 	// bump version if not specified
 	var err error
 	if version == "" {
-		version, err = r.version(ctx, method, base)
+		version, err = r.version(ctx, method, base, args)
 		if err != nil {
-			return nil, fmt.Errorf("resolving next release versin: %w", err)
+			return nil, fmt.Errorf("resolving next release version: %w", err)
 		}
 	}
 
@@ -143,6 +146,9 @@ func (r *Release) version(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
+	// additional arguments and flags for git-cliff --bumped-version
+	// +optional
+	args []string,
 ) (string, error) {
 	version, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
@@ -152,7 +158,7 @@ func (r *Release) version(ctx context.Context,
 			}
 			return r
 		}).
-		BumpedVersion(ctx)
+		BumpedVersion(ctx, dagger.GitCliffBumpedVersionOpts{Args: args})
 
 	return strings.TrimSpace(version), err
 }
