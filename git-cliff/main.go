@@ -158,8 +158,13 @@ func (gc *GitCliff) Run(
 }
 
 // Prints bumped version for unreleased changes.
-func (gc *GitCliff) BumpedVersion(ctx context.Context) (string, error) {
+func (gc *GitCliff) BumpedVersion(ctx context.Context,
+	// additional arguments and flags for git-cliff
+	// +optional
+	args []string) (string, error) {
 	gc.Flags = append(gc.Flags, "--bumped-version")
+
+	gc.Flags = append(gc.Flags, args...)
 	return gc.Container.WithExec(gc.Flags).
 		Stdout(ctx)
 }
