@@ -264,8 +264,35 @@ func (gc *GitCliff) WithRepository(
 	// git repository (one or more)
 	repo []string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--repository")
-	gc.Flags = append(gc.Flags, repo...)
+	for _, r := range repo {
+		gc.Flags = append(gc.Flags, "--repository", r)
+	}
+	return gc
+}
+
+// Sets the path to include related commits.
+//
+// e.g. `git-cliff --include-pattern <pattern>...`.
+func (gc *GitCliff) WithIncludePath(
+	// glob pattern or direct path (one or more)
+	pattern []string,
+) *GitCliff {
+	for _, p := range pattern {
+		gc.Flags = append(gc.Flags, "--include-path", p)
+	}
+	return gc
+}
+
+// Sets the path to exclude related commits.
+//
+// e.g. `git-cliff --include-pattern <pattern>...`.
+func (gc *GitCliff) WithExcludePath(
+	// glob pattern or direct path (one or more)
+	pattern []string,
+) *GitCliff {
+	for _, p := range pattern {
+		gc.Flags = append(gc.Flags, "--exclude-path", p)
+	}
 	return gc
 }
 
@@ -273,11 +300,12 @@ func (gc *GitCliff) WithRepository(
 //
 // e.g. `git-cliff --skip-commit <sha1>...`.
 func (gc *GitCliff) WithSkipCommit(
-	// Commits
+	// Commits (one or more)
 	sha1 []string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--skip-commit")
-	gc.Flags = append(gc.Flags, sha1...)
+	for _, commit := range sha1 {
+		gc.Flags = append(gc.Flags, "--skip-commit", commit)
+	}
 	return gc
 }
 
