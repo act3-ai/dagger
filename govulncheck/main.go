@@ -21,7 +21,7 @@ type Govulncheck struct {
 	Container *dagger.Container
 
 	// +private
-	Flags []string
+	Command []string
 }
 
 func New(
@@ -54,7 +54,7 @@ func New(
 
 	return &Govulncheck{
 		Container: container,
-		Flags:     []string{"govulncheck"},
+		Command:   []string{"govulncheck"},
 	}
 }
 
@@ -74,10 +74,11 @@ func (gv *Govulncheck) ScanSource(ctx context.Context,
 	patterns string,
 ) (string, error) {
 	srcPath := "/work/src"
-	gv.Flags = append(gv.Flags, patterns)
+	cmd := gv.Command
+	cmd = append(cmd, patterns)
 	out, err := gv.Container.WithWorkdir(srcPath).
 		WithMountedDirectory(srcPath, source).
-		WithExec(gv.Flags).
+		WithExec(cmd).
 		Stdout(ctx)
 
 	var e *dagger.ExecError
@@ -109,10 +110,10 @@ func (gv *Govulncheck) ScanBinary(ctx context.Context,
 	ignoreError bool,
 ) (string, error) {
 	binaryPath := "/work/binary"
-	args := append([]string{"-mode=binary"}, gv.Flags...)
-	args = append(args, binaryPath)
+	cmd := append([]string{"-mode=binary"}, gv.Command...)
+	cmd = append(cmd, binaryPath)
 	out, err := gv.Container.WithMountedFile(binaryPath, binary).
-		WithExec(args).
+		WithExec(cmd).
 		Stdout(ctx)
 
 	var e *dagger.ExecError
@@ -142,7 +143,7 @@ func (gv *Govulncheck) WithDB(
 	// +default="https://vuln.go.dev"
 	url string,
 ) *Govulncheck {
-	gv.Flags = append(gv.Flags, "-db", url)
+	gv.Command = append(gv.Command, "-db", url)
 	return gv
 }
 
@@ -155,7 +156,7 @@ func (gv *Govulncheck) WithFormat(
 	// +default="text"
 	format string,
 ) *Govulncheck {
-	gv.Flags = append(gv.Flags, "-format", format)
+	gv.Command = append(gv.Command, "-format", format)
 	return gv
 }
 
@@ -168,7 +169,7 @@ func (gv *Govulncheck) WithScanLevel(
 	// +default="symbol"
 	level string,
 ) *Govulncheck {
-	gv.Flags = append(gv.Flags, "-scan", level)
+	gv.Command = append(gv.Command, "-scan", level)
 	return gv
 }
 
@@ -179,7 +180,7 @@ func (gv *Govulncheck) WithShow(
 	// Enable additional info. Supported values: 'traces', 'color', 'version', and 'verbose'.
 	enable []string,
 ) *Govulncheck {
-	gv.Flags = append(gv.Flags, "-show", strings.Join(enable, ","))
+	gv.Command = append(gv.Command, "-show", strings.Join(enable, ","))
 	return gv
 }
 
