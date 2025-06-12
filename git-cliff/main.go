@@ -15,7 +15,7 @@ type GitCliff struct {
 	Container *dagger.Container
 
 	// +private
-	Flags []string
+	Command []string
 }
 
 func New(ctx context.Context,
@@ -43,7 +43,7 @@ func New(ctx context.Context,
 		container = defaultContainer(version)
 	}
 
-	flags := []string{"git-cliff", "--use-native-tls"}
+	cmd := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
 	container = container.With(
 		func(c *dagger.Container) *dagger.Container {
@@ -53,7 +53,7 @@ func New(ctx context.Context,
 					panic(fmt.Errorf("resolving configuration file name: %w", err))
 				}
 				c = c.WithMountedFile(cfgPath, config)
-				flags = append(flags, "--config", cfgPath)
+				cmd = append(cmd, "--config", cfgPath)
 			}
 			return c
 		}).With(
@@ -68,7 +68,7 @@ func New(ctx context.Context,
 
 	return &GitCliff{
 		Container: container,
-		Flags:     flags,
+		Command:   cmd,
 	}
 }
 
@@ -153,19 +153,22 @@ func (gc *GitCliff) Run(
 	// +optional
 	args []string,
 ) *dagger.Container {
-	gc.Flags = append(gc.Flags, args...)
-	return gc.Container.WithExec(gc.Flags)
+	cmd := gc.Command
+	cmd = append(cmd, args...)
+	return gc.Container.WithExec(cmd)
 }
 
 // Prints bumped version for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	// additional arguments and flags for git-cliff
 	// +optional
-	args []string) (string, error) {
-	gc.Flags = append(gc.Flags, "--bumped-version")
+	args []string,
+) (string, error) {
+	cmd := gc.Command
+	cmd = append(cmd, "--bumped-version")
+	cmd = append(cmd, args...)
 
-	gc.Flags = append(gc.Flags, args...)
-	return gc.Container.WithExec(gc.Flags).
+	return gc.Container.WithExec(cmd).
 		Stdout(ctx)
 }
 
@@ -176,7 +179,7 @@ func (gc *GitCliff) WithTag(ctx context.Context,
 	// Specific tag
 	version string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--tag", version)
+	gc.Command = append(gc.Command, "--tag", version)
 	return gc
 }
 
@@ -218,9 +221,9 @@ func (gc *GitCliff) WithBump(
 	// +optional
 	method string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--bump")
+	gc.Command = append(gc.Command, "--bump")
 	if method != "" {
-		gc.Flags = append(gc.Flags, method)
+		gc.Command = append(gc.Command, method)
 	}
 	return gc
 }
@@ -229,7 +232,7 @@ func (gc *GitCliff) WithBump(
 //
 // e.g. `git-cliff --latest`.
 func (gc *GitCliff) WithLatest() *GitCliff {
-	gc.Flags = append(gc.Flags, "--latest")
+	gc.Command = append(gc.Command, "--latest")
 	return gc
 }
 
@@ -237,7 +240,7 @@ func (gc *GitCliff) WithLatest() *GitCliff {
 //
 // e.g. `git-cliff --current`
 func (gc *GitCliff) WithCurrent() *GitCliff {
-	gc.Flags = append(gc.Flags, "--current")
+	gc.Command = append(gc.Command, "--current")
 	return gc
 }
 
@@ -245,7 +248,7 @@ func (gc *GitCliff) WithCurrent() *GitCliff {
 //
 // e.g. `git-cliff --unreleased`.
 func (gc *GitCliff) WithUnreleased() *GitCliff {
-	gc.Flags = append(gc.Flags, "--unreleased")
+	gc.Command = append(gc.Command, "--unreleased")
 	return gc
 }
 
@@ -253,7 +256,7 @@ func (gc *GitCliff) WithUnreleased() *GitCliff {
 //
 // e.g. `git-cliff --topo-order`.
 func (gc *GitCliff) WithTopoOrder() *GitCliff {
-	gc.Flags = append(gc.Flags, "--topo-order")
+	gc.Command = append(gc.Command, "--topo-order")
 	return gc
 }
 
@@ -265,7 +268,7 @@ func (gc *GitCliff) WithRepository(
 	repo []string,
 ) *GitCliff {
 	for _, r := range repo {
-		gc.Flags = append(gc.Flags, "--repository", r)
+		gc.Command = append(gc.Command, "--repository", r)
 	}
 	return gc
 }
@@ -278,7 +281,7 @@ func (gc *GitCliff) WithIncludePath(
 	pattern []string,
 ) *GitCliff {
 	for _, p := range pattern {
-		gc.Flags = append(gc.Flags, "--include-path", p)
+		gc.Command = append(gc.Command, "--include-path", p)
 	}
 	return gc
 }
@@ -291,7 +294,7 @@ func (gc *GitCliff) WithExcludePath(
 	pattern []string,
 ) *GitCliff {
 	for _, p := range pattern {
-		gc.Flags = append(gc.Flags, "--exclude-path", p)
+		gc.Command = append(gc.Command, "--exclude-path", p)
 	}
 	return gc
 }
@@ -304,7 +307,7 @@ func (gc *GitCliff) WithSkipCommit(
 	sha1 []string,
 ) *GitCliff {
 	for _, commit := range sha1 {
-		gc.Flags = append(gc.Flags, "--skip-commit", commit)
+		gc.Command = append(gc.Command, "--skip-commit", commit)
 	}
 	return gc
 }
@@ -316,7 +319,7 @@ func (gc *GitCliff) WithPrepend(
 	// Path to changelog, relative to source git directory
 	changelog string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--prepend", changelog)
+	gc.Command = append(gc.Command, "--prepend", changelog)
 	return gc
 }
 
@@ -327,7 +330,7 @@ func (gc *GitCliff) WithOutput(
 	// Write output to file, relative to source git directory.
 	path string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--output", path)
+	gc.Command = append(gc.Command, "--output", path)
 	return gc
 }
 
@@ -338,7 +341,7 @@ func (gc *GitCliff) WithStrip(
 	// Part of changelog to strip. Supported values: header, footer, all.
 	part string,
 ) *GitCliff {
-	gc.Flags = append(gc.Flags, "--strip", part)
+	gc.Command = append(gc.Command, "--strip", part)
 	return gc
 }
 
