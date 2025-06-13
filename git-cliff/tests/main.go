@@ -42,7 +42,7 @@ func parseErr(err error) error {
 	}
 }
 
-// return container with a git repo
+// return container with a git repo and an initial commit with tag v1.0.0
 func (t *Tests) gitRepo() *dagger.Container {
 
 	return dag.Container().
@@ -75,6 +75,7 @@ func (t *Tests) All(ctx context.Context) error {
 // test bumped version
 func (t *Tests) BumpedVersion(ctx context.Context) error {
 
+	//version should be bumped with a fix: commit
 	gitDir := t.gitRepo().
 		WithNewFile("test.md", "test").
 		WithExec([]string{"git", "add", "test.md"}).
@@ -97,6 +98,7 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 
 func (t *Tests) BumpedVersionIncludePath(ctx context.Context) error {
 
+	//version should be bumped with a fix: commit.
 	gitDir := t.gitRepo().
 		WithNewFile("test/test.md", "test").
 		WithExec([]string{"git", "add", "test/test.md"}).
@@ -120,6 +122,7 @@ func (t *Tests) BumpedVersionIncludePath(ctx context.Context) error {
 
 func (t *Tests) BumpedVersionExcludePath(ctx context.Context) error {
 
+	//fix: commit is excluded so version should NOT be bumped.
 	gitDir := t.gitRepo().
 		WithNewFile("test/test.md", "test").
 		WithExec([]string{"git", "add", "test/test.md"}).
