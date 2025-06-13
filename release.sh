@@ -36,9 +36,13 @@ fi
 
 case "$cmd" in
 prepare)
+    #run git-cliff-tests
+    dagger -m git-cliff/tests call all
+
     version=$(dagger -m ../../github/dagger/git-cliff call --src="." bumped-version --args="--include-path=$module/**")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
+    
     #generate and export new version/release notes
     dagger -m ../../github/dagger/release call --src="." prepare \
     --changelog "$module/CHANGELOG.md" \
