@@ -33,7 +33,7 @@ type Docker struct {
 	// +private
 	Labels []Labels
 	// +private
-	Publish []string
+	PublishRef []string
 }
 
 type Secret struct {
@@ -68,21 +68,21 @@ func New(
 }
 
 // Add a docker secret to builds
-func (m *Docker) WithSecret(
+func (d *Docker) WithSecret(
 	// name of the secret
 	name string,
 	// value of the secret
 	value *dagger.Secret,
 ) *Docker {
-	m.Secrets = append(m.Secrets, Secret{
+	d.Secrets = append(d.Secrets, Secret{
 		Name:  name,
 		Value: value,
 	})
-	return m
+	return d
 }
 
 // Add docker registry creds to builds
-func (m *Docker) WithRegistryCreds(
+func (d *Docker) WithRegistryCreds(
 	// name of the registry
 	registry string,
 	// username for registry
@@ -90,16 +90,16 @@ func (m *Docker) WithRegistryCreds(
 	// password for registry
 	password *dagger.Secret,
 ) *Docker {
-	m.RegistryCreds = append(m.RegistryCreds, RegistryCreds{
+	d.RegistryCreds = append(d.RegistryCreds, RegistryCreds{
 		Registry: registry,
 		Username: username,
 		Password: password,
 	})
-	return m
+	return d
 }
 
 // Add docker registry creds to builds
-func (m *Docker) WithDockerConfig(
+func (d *Docker) WithDockerConfig(
 	ctx context.Context,
 	// file path to docker config json
 	file *dagger.File,
@@ -128,76 +128,112 @@ func (m *Docker) WithDockerConfig(
 	for registry, creds := range config.Auths {
 		daggerSecret := dag.SetSecret(registry, creds.Password)
 
-		m.RegistryCreds = append(m.RegistryCreds, RegistryCreds{
+		d.RegistryCreds = append(d.RegistryCreds, RegistryCreds{
 			Registry: registry,
 			Username: creds.Username,
 			Password: daggerSecret,
 		})
 	}
-	return m, err
+	return d, err
 }
 
 // Add docker build args to builds
-func (m *Docker) WithBuildArg(
+func (d *Docker) WithBuildArg(
 	// name of the secret
 	name string,
 	// value of the secret
 	value string,
 ) *Docker {
-	m.BuildArg = append(m.BuildArg, dagger.BuildArg{
+	d.BuildArg = append(d.BuildArg, dagger.BuildArg{
 		Name:  name,
 		Value: value,
 	})
-	return m
+	return d
 }
 
 // Add labels to builds
-func (m *Docker) WithLabel(
+func (d *Docker) WithLabel(
 	// name of the secret
 	name string,
 	// value of the secret
 	value string,
 ) *Docker {
-	m.Labels = append(m.Labels, Labels{
+	d.Labels = append(d.Labels, Labels{
 		Name:  name,
 		Value: value,
 	})
-	return m
+	return d
 }
 
 // publish with multiple tags to builds
-func (m *Docker) WithPublish(
+func (d *Docker) WithPublish(
 	// registry address to publish to
 	address string,
 	// comma separated list of tags to publish
 	tags []string) *Docker {
 	// For each tag, append the full address:tag to the Publish list
 	for _, tag := range tags {
-		m.Publish = append(m.Publish, fmt.Sprintf("%s:%s", address, tag))
+		d.PublishRef = append(d.PublishRef, fmt.Sprintf("%s:%s", address, tag))
 	}
-	return m
+	return d
 }
 
 // Retrieve secrets and set them in Dagger with dynamic names
-func (m *Docker) getSecrets(ctx context.Context) (map[string]*dagger.Secret, error) {
+func (d *Docker) getSecrets(ctx context.Context) ([]*dagger.Secret, error) {
+	var secretSlice []*dagger.Secret
 
-	secretMap := make(map[string]*dagger.Secret)
-
-	for _, s := range m.Secrets {
+	for _, s := range d.Secrets {
 		plaintext, err := s.Value.Plaintext(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get the secret value in plaintext for %s: %w", s.Name, err)
 		}
-
-		// Set secret dynamically based on the original name
-		secretMap[s.Name] = dag.SetSecret(s.Name, plaintext)
+		secret := dag.SetSecret(s.Name, plaintext)
+		secretSlice = append(secretSlice, secret)
 	}
 
-	return secretMap, nil
+	return secretSlice, nil
 }
 
 // Build image from Dockerfile
-func (docker *Docker) Build(
+func (d *Docker) Build(
+	ctx context.Context,
+	// target stage of image build
+	// +optional
+	// +default="ci"
+	target string,
+	// platform to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
+	// +default="linux/amd64"
+	platform dagger.Platform) (*dagger.Container, error) {
+
+	//get secrets
+	secrets, err := d.getSecrets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctr := d.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
+		Target:    target,
+		Secrets:   secrets,
+		BuildArgs: d.BuildArg,
+		Platform:  platform,
+	})
+
+	//Apply labels to container
+	for _, label := range d.Labels {
+		ctr = ctr.WithLabel(label.Name, label.Value)
+	}
+
+	//Apply registry authentication for each set of credentials
+	for _, creds := range d.RegistryCreds {
+		ctr = ctr.WithRegistryAuth(creds.Registry, creds.Username, creds.Password)
+	}
+
+	ctr, err = ctr.Sync(ctx)
+	return ctr, err
+}
+
+// Build image from Dockerfile and Publish to registry
+func (d *Docker) Publish(
 	ctx context.Context,
 	// target stage of image build
 	// +optional
@@ -207,41 +243,15 @@ func (docker *Docker) Build(
 	// +default=["linux/amd64"]
 	platforms []dagger.Platform) ([]string, error) {
 
-	//get secrets
-	secrets, err := docker.getSecrets(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert secret map to a slice
-	var secretSlice []*dagger.Secret
-	for _, secret := range secrets {
-		secretSlice = append(secretSlice, secret)
-	}
-
 	//check for platforms and build each one
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
+
 	for _, platform := range platforms {
 		// Create an instance of `Ctr` (container)
-		ctr, err := docker.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
-			Target:    target,
-			Secrets:   secretSlice,
-			BuildArgs: docker.BuildArg,
-			Platform:  platform,
-		}).Sync(ctx)
+		ctr, err := d.Build(ctx, target, platform)
 
 		if err != nil {
 			return nil, err
-		}
-
-		//Apply labels to each container
-		for _, label := range docker.Labels {
-			ctr = ctr.WithLabel(label.Name, label.Value)
-		}
-
-		//Apply registry authentication for each set of credentials
-		for _, creds := range docker.RegistryCreds {
-			ctr = ctr.WithRegistryAuth(creds.Registry, creds.Username, creds.Password)
 		}
 
 		platformVariants = append(platformVariants, ctr)
@@ -249,7 +259,7 @@ func (docker *Docker) Build(
 
 	// Publish tags to registry
 	var addr []string
-	for _, imageRef := range docker.Publish {
+	for _, imageRef := range d.PublishRef {
 		a, err := dag.Container().Publish(ctx, imageRef, dagger.ContainerPublishOpts{
 			PlatformVariants: platformVariants,
 		})
@@ -259,5 +269,5 @@ func (docker *Docker) Build(
 		addr = append(addr, a)
 	}
 
-	return addr, err
+	return addr, nil
 }
