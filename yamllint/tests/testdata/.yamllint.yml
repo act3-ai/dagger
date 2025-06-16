@@ -1,0 +1,9 @@
+---
+extends: default
+
+rules:
+  # err case for err.yaml
+  line-length: enable
+  trailing-spaces: disable
+  # differ from default config, for testing config mount
+  new-line-at-end-of-file: disable

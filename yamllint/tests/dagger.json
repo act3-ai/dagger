@@ -1,0 +1,18 @@
+{
+  "name": "tests",
+  "engineVersion": "v0.18.9",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.5",
+      "pin": "7d2000eef21dcb3e42abe4e0c7bdf0633f297449"
+    },
+    {
+      "name": "yamllint",
+      "source": ".."
+    }
+  ]
+}
