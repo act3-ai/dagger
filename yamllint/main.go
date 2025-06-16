@@ -7,10 +7,12 @@ import (
 	"dagger/yamllint/internal/dagger"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 )
 
 type Yamllint struct {
+	// +private
 	Base *dagger.Container
 
 	// +private
@@ -126,7 +128,11 @@ func (y *Yamllint) ListFiles(ctx context.Context) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("listing yaml files: %w", err)
 	}
-	return strings.Split(out, "\n"), nil
+
+	files := strings.Split(out, "\n")
+	return slices.DeleteFunc(files, func(s string) bool {
+		return s == ""
+	}), nil
 }
 
 // Return non-zero exit code on warnings as well as errors.
