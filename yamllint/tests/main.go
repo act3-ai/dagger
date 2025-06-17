@@ -90,10 +90,20 @@ func (t *Tests) Version(ctx context.Context) error {
 
 // Base tests the 'Base' option for 'New'.
 func (t *Tests) Base(ctx context.Context) error {
-	base := dag.Wolfi().Container(dagger.WolfiContainerOpts{Packages: []string{"yamllint"}})
+	version := "1.36.0"
+	base := dag.Wolfi().
+		Container(dagger.WolfiContainerOpts{Packages: []string{fmt.Sprintf("yamllint=%s", version)}})
 
-	_, err := dag.Yamllint(t.validSrc(), dagger.YamllintOpts{Base: base}).Run(ctx)
-	return err
+	out, err := dag.Yamllint(t.validSrc(), dagger.YamllintOpts{Base: base}).
+		Run(ctx, dagger.YamllintRunOpts{ExtraArgs: []string{"--version"}})
+	switch {
+	case err != nil:
+		return err
+	case !strings.Contains(out, version):
+		return fmt.Errorf("expected version %s used in base container, got %s", version, out)
+	default:
+		return nil
+	}
 }
 
 // IgnoreErr tests the 'IgnoreError' option for 'Run'.
