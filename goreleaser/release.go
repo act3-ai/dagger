@@ -13,23 +13,23 @@ type Release struct {
 	// +private
 	Goreleaser *Goreleaser
 
-	// build Flags
+	// release command
 	// +private
-	Flags []string
+	Command []string
 }
 
 // Release represents the `goreleaser release` command.
 func (gr *Goreleaser) Release() *Release {
 	return &Release{
 		Goreleaser: gr,
-		Flags:      []string{"goreleaser", "release"},
+		Command:    []string{"goreleaser", "release"},
 	}
 }
 
 // Run `goreleaser release` with all options previously provided.
 //
 // Run MAY be used as a "catch-all" in case functions are not implemented.
-func (gr *Release) Run(ctx context.Context,
+func (r *Release) Run(ctx context.Context,
 	// arguments and flags, without `git-cliff`
 	// +optional
 	args []string,
@@ -40,13 +40,14 @@ func (gr *Release) Run(ctx context.Context,
 	// We could validate the config within New(), failing slightly earlier, but
 	// running dagger with '--silent' returns a vague error and a panic is too harsh.
 	// So we choose here so we can be a bit more informative.
-	if err := gr.Goreleaser.checkConfig(ctx); err != nil {
+	if err := r.Goreleaser.checkConfig(ctx); err != nil {
 		return "", err
 	}
 
-	gr.Flags = append(gr.Flags, args...)
-	out, err := gr.Goreleaser.Container.
-		WithExec(gr.Flags).
+	cmd := r.Command
+	cmd = append(cmd, args...)
+	out, err := r.Goreleaser.Container.
+		WithExec(cmd).
 		Stdout(ctx)
 
 	var e *dagger.ExecError
@@ -71,7 +72,7 @@ func (gr *Release) Run(ctx context.Context,
 //
 // e.g. `goreleaser release --snapshot`.
 func (r *Release) WithSnapshot() *Release {
-	r.Flags = append(r.Flags, "--snapshot")
+	r.Command = append(r.Command, "--snapshot")
 	return r
 }
 
@@ -79,7 +80,7 @@ func (r *Release) WithSnapshot() *Release {
 //
 // e.g. `goreleaser build --auto-snapshot`.
 func (r *Release) WithAutoSnapshot() *Release {
-	r.Flags = append(r.Flags, "--auto-snapshot")
+	r.Command = append(r.Command, "--auto-snapshot")
 	return r
 }
 
@@ -87,7 +88,7 @@ func (r *Release) WithAutoSnapshot() *Release {
 //
 // e.g. `goreleaser release --clean`.
 func (r *Release) WithClean() *Release {
-	r.Flags = append(r.Flags, "--clean")
+	r.Command = append(r.Command, "--clean")
 	return r
 }
 
@@ -98,7 +99,7 @@ func (r *Release) WithTimeout(
 	// Timeout duration, e.g. 10m, 10m30s. Default is 30m.
 	duration string,
 ) *Release {
-	r.Flags = append(r.Flags, "--timeout", duration)
+	r.Command = append(r.Command, "--timeout", duration)
 	return r
 }
 
@@ -106,7 +107,7 @@ func (r *Release) WithTimeout(
 //
 // e.g. `goreleaser release --fail-fast`.
 func (r *Release) WithFailFast() *Release {
-	r.Flags = append(r.Flags, "--fail-fast")
+	r.Command = append(r.Command, "--fail-fast")
 	return r
 }
 
@@ -117,7 +118,7 @@ func (r *Release) WithParallelism(
 	// concurrent tasks
 	n int,
 ) *Release {
-	r.Flags = append(r.Flags, "--parallelism", strconv.Itoa(n))
+	r.Command = append(r.Command, "--parallelism", strconv.Itoa(n))
 	return r
 }
 
@@ -130,7 +131,7 @@ func (r *Release) WithNotes(
 ) *Release {
 	notesPath := "/work/notes.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(notesPath, notes)
-	r.Flags = append(r.Flags, "--release-notes", notesPath)
+	r.Command = append(r.Command, "--release-notes", notesPath)
 	return r
 }
 
@@ -143,7 +144,7 @@ func (r *Release) WithNotesTmpl(
 ) *Release {
 	notesPath := "/work/notes-tmpl.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(notesPath, notesTmpl)
-	r.Flags = append(r.Flags, "--release-notes-tmpl", notesPath)
+	r.Command = append(r.Command, "--release-notes-tmpl", notesPath)
 	return r
 }
 
@@ -153,7 +154,7 @@ func (r *Release) WithNotesTmpl(
 func (r *Release) WithNotesHeader(header *dagger.File) *Release {
 	headerPath := "/work/header.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(headerPath, header)
-	r.Flags = append(r.Flags, "--release-header", headerPath)
+	r.Command = append(r.Command, "--release-header", headerPath)
 	return r
 }
 
@@ -166,7 +167,7 @@ func (r *Release) WithNotesHeaderTmpl(
 ) *Release {
 	headerPath := "/work/header-tmpl.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(headerPath, headerTmpl)
-	r.Flags = append(r.Flags, "release-header-tmpl", headerPath)
+	r.Command = append(r.Command, "release-header-tmpl", headerPath)
 	return r
 }
 
@@ -176,7 +177,7 @@ func (r *Release) WithNotesHeaderTmpl(
 func (r *Release) WithNotesFooter(footer *dagger.File) *Release {
 	footerPath := "/work/header.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(footerPath, footer)
-	r.Flags = append(r.Flags, "--release-footer", footerPath)
+	r.Command = append(r.Command, "--release-footer", footerPath)
 	return r
 }
 
@@ -189,6 +190,6 @@ func (r *Release) WithNotesFooterTmpl(
 ) *Release {
 	footerPath := "/work/footer-tmpl.md"
 	r.Goreleaser.Container = r.Goreleaser.Container.WithMountedFile(footerPath, footerTmpl)
-	r.Flags = append(r.Flags, "--release-footer-tmpl", footerPath)
+	r.Command = append(r.Command, "--release-footer-tmpl", footerPath)
 	return r
 }

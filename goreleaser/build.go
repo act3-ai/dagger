@@ -13,16 +13,16 @@ type Build struct {
 	// +private
 	Goreleaser *Goreleaser
 
-	// build Flags
+	// build command
 	// +private
-	Flags []string
+	Command []string
 }
 
 // Build represents the `goreleaser build` command.
 func (gr *Goreleaser) Build() *Build {
 	return &Build{
 		Goreleaser: gr,
-		Flags:      []string{"goreleaser", "build"},
+		Command:    []string{"goreleaser", "build"},
 	}
 }
 
@@ -38,7 +38,9 @@ func (b *Build) Platform(
 	platform dagger.Platform,
 ) *dagger.File {
 	p := platforms.MustParse(string(platform))
-	b.Flags = append(b.Flags, "--single-target", "--output", outFile)
+
+	cmd := b.Command
+	cmd = append(cmd, "--single-target", "--output", outFile)
 
 	return b.Goreleaser.Container.
 		WithEnvVariable(envGOOS, p.OS).
@@ -50,7 +52,7 @@ func (b *Build) Platform(
 
 			return c
 		}).
-		WithExec(b.Flags).
+		WithExec(cmd).
 		File(outFile)
 }
 
@@ -61,7 +63,7 @@ func (b *Build) All() *dagger.Directory {
 	// TODO: Ideally, we would only return the executables. But that requires parsing the goreleaser
 	// config for the target platforms.
 	return b.Goreleaser.Container.
-		WithExec(b.Flags).
+		WithExec(b.Command).
 		Directory("dist")
 }
 
@@ -69,7 +71,7 @@ func (b *Build) All() *dagger.Directory {
 //
 // e.g. `goreleaser build --snapshot`.
 func (b *Build) WithSnapshot() *Build {
-	b.Flags = append(b.Flags, "--snapshot")
+	b.Command = append(b.Command, "--snapshot")
 	return b
 }
 
@@ -77,7 +79,7 @@ func (b *Build) WithSnapshot() *Build {
 //
 // e.g. `goreleaser build --auto-snapshot`.
 func (b *Build) WithAutoSnapshot() *Build {
-	b.Flags = append(b.Flags, "--auto-snapshot")
+	b.Command = append(b.Command, "--auto-snapshot")
 	return b
 }
 
@@ -85,7 +87,7 @@ func (b *Build) WithAutoSnapshot() *Build {
 //
 // e.g. `goreleaser build --clean`.
 func (b *Build) WithClean() *Build {
-	b.Flags = append(b.Flags, "--clean")
+	b.Command = append(b.Command, "--clean")
 	return b
 }
 
@@ -96,7 +98,7 @@ func (b *Build) WithTimeout(
 	// Timeout duration, e.g. 10m, 10m30s. Default is 30m.
 	duration string,
 ) *Build {
-	b.Flags = append(b.Flags, "--timeout", duration)
+	b.Command = append(b.Command, "--timeout", duration)
 	return b
 }
 
@@ -107,7 +109,7 @@ func (b *Build) WithOptionSkip(
 	// Skip options
 	skip []string,
 ) *Build {
-	b.Flags = append(b.Flags, "--skip", strings.Join(skip, ","))
+	b.Command = append(b.Command, "--skip", strings.Join(skip, ","))
 	return b
 }
 
@@ -118,7 +120,7 @@ func (b *Build) WithParallelism(
 	// concurrent tasks
 	n int,
 ) *Build {
-	b.Flags = append(b.Flags, "parallelism", strconv.Itoa(n))
+	b.Command = append(b.Command, "parallelism", strconv.Itoa(n))
 	return b
 }
 
