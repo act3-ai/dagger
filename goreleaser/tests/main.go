@@ -17,57 +17,85 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
-	"errors"
+	"fmt"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
-type Tests struct{}
+type Tests struct {
+	// +private
+	Source *dagger.Directory
+}
+
+func New(
+	// testdata source directory
+	// +defaultPath="testdata"
+	src *dagger.Directory,
+) *Tests {
+	return &Tests{
+		Source: src,
+	}
+}
 
 // Run all tests.
-func (m *Tests) All(ctx context.Context) error {
-	var errs []error
+func (t *Tests) All(ctx context.Context) error {
+	p := pool.New().WithErrors().WithContext(ctx)
 
-	// TODO: conc pkg will be useful once this grows, be sure to limit goroutines.
-	errs = append(errs, m.TestBuildAll(ctx))
-	errs = append(errs, m.TestBuildPlatform(ctx))
+	p.Go(t.BuildAll)
+	p.Go(t.BuildPlatform)
 
-	return errors.Join(errs...)
+	return p.Wait()
 }
 
 // Test build for all platforms defined in goreleaser config.
-func (m *Tests) TestBuildAll(ctx context.Context) error {
-
-	_, err := dag.Goreleaser(testDir()).
+func (t *Tests) BuildAll(ctx context.Context) error {
+	dist := dag.Goreleaser(t.gitRepoGo()).
 		Build().
-		All().
-		Stdout(ctx)
+		All()
 
-	return err
+	// goreleaser nests builds into subdirs, flatten and we'll multiply the expected builds
+	// by 2 to account for subdirs
+	distFlat, err := dist.Glob(ctx, "**/*")
+	if err != nil {
+		return err
+	}
+
+	expected := ((3 * 2) * 2) + 3 // [(len(goos) * len(goarch)) * 2 for subdirs] + 3 goreleaser files
+	if len(distFlat) != expected {
+		return fmt.Errorf("number of build results did not match build matrix, want %d, got %d", expected, len(distFlat))
+	}
+
+	return nil
 }
 
 // Test build for a specific platform.
-func (m *Tests) TestBuildPlatform(ctx context.Context) error {
-
-	_, err := dag.Goreleaser(testDir()).
+func (t *Tests) BuildPlatform(ctx context.Context) error {
+	bin := dag.Goreleaser(t.Source).
 		Build().
-		All().
-		Stdout(ctx)
+		Platform("hello-world-linux-amd64", dagger.GoreleaserBuildPlatformOpts{Platform: dagger.Platform("linux/amd64")})
+	if bin == nil {
+		return fmt.Errorf("got nil build executable")
+	}
 
-	return err
+	return nil
 }
 
-// testDir provides a git repository used for testing.
-func testDir() *dagger.Directory {
-	const (
-		// TODO: Relying on an outside repository may not a great practice.
-		// Note only is this repo external (relative to this repo), but
-		// a larger project takes longer to build.
-		testGitRepo    = "https://github.com/act3-ai/data-tool.git"
-		testGitRepoTag = "v1.15.33"
-	)
+// gitRepoGo loads the go subset of testdata, turning it into a git repository.
+// goreleaser requires a git repo for many of its functions.
+func (t *Tests) gitRepoGo() *dagger.Directory {
+	dir := "hello-world-go"
 
-	return dagger.Connect().
-		Git(testGitRepo).
-		Tag(testGitRepoTag).
-		Tree()
-
+	return dag.Wolfi().
+		Container(dagger.WolfiContainerOpts{Packages: []string{"git"}}).
+		WithMountedDirectory(dir, t.Source.Directory(dir)).
+		WithWorkdir(dir).
+		WithExec([]string{"git", "init"}).
+		WithExec([]string{"git", "config", "user.name", "test"}).
+		WithExec([]string{"git", "config", "user.email", "test@dagger.io"}).
+		// trick goreleaser into thinking we actually have a remote
+		WithExec([]string{"git", "remote", "add", "origin", "git@github.com:foo/bar.git"}).
+		WithExec([]string{"git", "add", "--all"}).
+		WithExec([]string{"git", "commit", "-m", "fix: Initial commit"}).
+		WithExec([]string{"git", "tag", "-a", "-m", "release(v0.2.0)", "v0.2.0"}).
+		Directory(".")
 }
