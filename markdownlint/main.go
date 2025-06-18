@@ -127,7 +127,7 @@ func (m *Markdownlint) Run(ctx context.Context,
 func (m *Markdownlint) AutoFix() *dagger.Directory {
 	cmd := m.Command
 	cmd = append(cmd, "--fix")
-	return m.Base.
+	return m.Base.WithUser("root").
 		WithExec(cmd).
 		Directory("/work/src")
 }
