@@ -59,7 +59,7 @@ prepare)
     --version "$version" \
     --version-path "$module/VERSION" \
     --ignore-error=$force \
-    --args="--include-path=$module/**" \
+    --args="--include-path=$module/**,--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$" \
     export --path="."
 
     echo "Please review the local changes, especially $module/releases/$version.md"
