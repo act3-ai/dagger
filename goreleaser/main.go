@@ -1,7 +1,8 @@
 // A module for running the Goreleaser CLI.
 //
-// This module aids in building executables and releasing. The bulk of configuration
-// should be done in a .goreleaser.yaml file.
+// This module aids in building executables and publishing releases to public
+// or private remotes. The bulk of configuration should be done in a .goreleaser.yaml
+// file.
 
 package main
 
