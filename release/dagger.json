@@ -12,7 +12,8 @@
     },
     {
       "name": "git-cliff",
-      "source": "../git-cliff"
+      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.1.0",
+      "pin": "202de438183f48bf667bce3d7e1a66a93d2ccfc1"
     },
     {
       "name": "go",
@@ -26,15 +27,18 @@
     },
     {
       "name": "govulncheck",
-      "source": "../govulncheck"
+      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.0",
+      "pin": "ab8312136bccd2439e9391a01d22de75e5c04b28"
     },
     {
       "name": "markdownlint",
-      "source": "../markdownlint"
+      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.0",
+      "pin": "289240d6f68b44de66165a8f92f6b56573d71b8f"
     },
     {
       "name": "python",
-      "source": "../python"
+      "source": "github.com/act3-ai/dagger/python@python/v0.1.0",
+      "pin": "449ff0a8914243118f1262a879ab2ec2466b5bf6"
     },
     {
       "name": "registry-config",
@@ -53,7 +57,8 @@
     },
     {
       "name": "yamllint",
-      "source": "../yamllint"
+      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.0",
+      "pin": "e2b36ca7c8cea63a6bc4de8379c1cb8a94794ff5"
     }
   ]
 }
