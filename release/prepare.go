@@ -23,13 +23,17 @@ func (r *Release) Prepare(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
 	method string,
+	// path to version file
+	// +optional
+	// +default="VERSION"
+	versionPath string,
 	// path to helm chart in source directory to bump chart version to release version.
 	// +optional
 	chartPath string,
 	// Changelog file path, relative to source directory
 	// +optional
 	// +default="CHANGELOG.md"
-	changelog string,
+	changelogPath string,
 	// Release notes file path, relative to source directory. Default: releases/v<version>.md.
 	// +optional
 	notesPath string,
@@ -73,7 +77,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// update changelog
-	changelogFile := r.changelog(ctx, version, changelog, base)
+	changelogFile := r.changelog(ctx, version, changelogPath, base)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -82,9 +86,9 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	return dag.Directory().
-		WithFile(changelog, changelogFile).
+		WithFile(changelogPath, changelogFile).
 		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
-		WithNewFile("VERSION", strings.TrimPrefix(version+"\n", "v")).
+		WithNewFile(versionPath, strings.TrimPrefix(version+"\n", "v")).
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
 				d = d.WithFile(chartPath, chartFile)
