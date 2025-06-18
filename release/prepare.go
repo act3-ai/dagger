@@ -71,13 +71,13 @@ func (r *Release) Prepare(ctx context.Context,
 	notesDir := filepath.Dir(notesPath)
 	notesName := filepath.Base(notesPath)
 
-	releaseNotesFile, err := r.notes(ctx, version, notesName, extraNotes, base)
+	releaseNotesFile, err := r.notes(ctx, version, notesName, extraNotes, base, args)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
 
 	// update changelog
-	changelogFile := r.changelog(ctx, version, changelogPath, base)
+	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -179,6 +179,9 @@ func (r *Release) changelog(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
+	// additional arguments and flags for git-cliff
+	// +optional
+	args []string,
 ) *dagger.File {
 	// generate and prepend to changelog
 	return dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
@@ -186,7 +189,7 @@ func (r *Release) changelog(ctx context.Context,
 		WithStrip("footer").
 		WithUnreleased().
 		WithPrepend(changelog).
-		Run().
+		Run(dagger.GitCliffRunOpts{Args: args}).
 		File(changelog)
 }
 
@@ -204,13 +207,16 @@ func (r *Release) notes(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
+	// additional arguments and flags for git-cliff
+	// +optional
+	args []string,
 ) (*dagger.File, error) {
 	// generate and export release notes
 	notes, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithUnreleased().
 		WithStrip("all").
-		Run().
+		Run(dagger.GitCliffRunOpts{Args: args}).
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
