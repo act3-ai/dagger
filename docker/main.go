@@ -165,23 +165,9 @@ func (d *Docker) WithLabel(
 	return d
 }
 
-// publish with multiple tags to builds
-func (d *Docker) WithPublish(
-	// registry address to publish to
-	address string,
-	// comma separated list of tags to publish
-	tags []string) *Docker {
-	// For each tag, append the full address:tag to the Publish list
-	for _, tag := range tags {
-		d.PublishRef = append(d.PublishRef, fmt.Sprintf("%s:%s", address, tag))
-	}
-	return d
-}
-
 // Retrieve secrets and set them in Dagger with dynamic names
 func (d *Docker) getSecrets(ctx context.Context) ([]*dagger.Secret, error) {
-	var secretSlice []*dagger.Secret
-
+	secretSlice := make([]*dagger.Secret, 0, len(d.Secrets))
 	for _, s := range d.Secrets {
 		plaintext, err := s.Value.Plaintext(ctx)
 		if err != nil {
@@ -203,7 +189,8 @@ func (d *Docker) Build(
 	target string,
 	// platform to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// +default="linux/amd64"
-	platform dagger.Platform) (*dagger.Container, error) {
+	platform dagger.Platform,
+) (*dagger.Container, error) {
 
 	//get secrets
 	secrets, err := d.getSecrets(ctx)
@@ -232,42 +219,47 @@ func (d *Docker) Build(
 	return ctr, err
 }
 
-// Build image from Dockerfile and Publish to registry
-func (d *Docker) Publish(
-	ctx context.Context,
+// Build a multi-arch image index from Dockerfile and Publish to an OCI registry, returning a slice of image digest references.
+func (d *Docker) Publish(ctx context.Context,
+	// registry address to publish to, without tag
+	address string,
+	// comma separated list of tags to publish
+	tags []string,
 	// target stage of image build
 	// +optional
 	// +default="ci"
 	target string,
 	// platforms to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// +default=["linux/amd64"]
-	platforms []dagger.Platform) ([]string, error) {
+	platforms []dagger.Platform,
+) ([]string, error) {
+	if len(tags) < 1 {
+		return nil, fmt.Errorf("no tags provided, please specify a registry address and a set of tags")
+	}
 
 	//check for platforms and build each one
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
-
 	for _, platform := range platforms {
-		// Create an instance of `Ctr` (container)
 		ctr, err := d.Build(ctx, target, platform)
-
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("building platform %s: %w", platform, err)
 		}
 
 		platformVariants = append(platformVariants, ctr)
 	}
 
 	// Publish tags to registry
-	var addr []string
-	for _, imageRef := range d.PublishRef {
-		a, err := dag.Container().Publish(ctx, imageRef, dagger.ContainerPublishOpts{
-			PlatformVariants: platformVariants,
-		})
+	dgstAddrs := make([]string, 0, len(tags))
+	for _, tag := range tags {
+		addr := fmt.Sprintf("%s:%s", address, tag)
+		a, err := dag.Container().Publish(ctx, addr,
+			dagger.ContainerPublishOpts{
+				PlatformVariants: platformVariants,
+			})
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("publishing image index to %s: %w", addr, err)
 		}
-		addr = append(addr, a)
+		dgstAddrs = append(dgstAddrs, a)
 	}
-
-	return addr, nil
+	return dgstAddrs, nil
 }
