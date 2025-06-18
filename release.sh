@@ -36,15 +36,16 @@ fi
 
 case "$cmd" in
 prepare)
-    #run git-cliff-tests
-    dagger -m git-cliff/tests call all
+    git fetch --tags
+    #run module tests
+    dagger -m "$module"/tests call all
 
-    version=$(dagger -m ../../github/dagger/git-cliff call --src="." bumped-version --args="--include-path=$module/**")
+    version=$(dagger -m git-cliff call --src="." bumped-version --args="--include-path=$module/**")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     
     #generate and export new version/release notes
-    dagger -m ../../github/dagger/release call --src="." prepare \
+    dagger -m release call --src="." prepare \
     --changelog "$module/CHANGELOG.md" \
     --notes-path "$module/releases/$stripped_version.md" \
     --ignore-error=$force \
@@ -55,7 +56,7 @@ prepare)
     ;;
 
 approve)
-    version=$(dagger -m ../../github/dagger/git-cliff call --src="." bumped-version --args="--include-path=$module/**")
+    version=$(dagger -m git-cliff call --src="." bumped-version --args="--include-path=$module/**")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
 
@@ -77,7 +78,7 @@ publish)
     notesPath="$module/releases/$stripped_version.md"
     
     # create release, upload artifacts
-    dagger -m ../../github/dagger/release --src=. call \
+    dagger -m release --src=. call \
         with-registry-auth --address="$registry" --username="$GITHUB_REG_USER" --secret=env://GITHUB_TOKEN  \
         create-github \
         --token=env://GITHUB_TOKEN \
