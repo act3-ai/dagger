@@ -52,8 +52,8 @@
     },
     {
       "name": "wolfi",
-      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.5",
-      "pin": "7d2000eef21dcb3e42abe4e0c7bdf0633f297449"
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.10",
+      "pin": "94398f28962a76056d9d8e9383a876af59ec954d"
     },
     {
       "name": "yamllint",
