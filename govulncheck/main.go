@@ -1,4 +1,7 @@
 // Govulncheck reports known vulnerabilities in dependencies.
+//
+// This module aids to run govulncheck anywhere, without managing it as a pipeline
+// dependency.
 package main
 
 import (
