@@ -1,4 +1,6 @@
-// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker. See https://github.com/DavidAnson/markdownlint-cli2 for more info. Most configuration should be done in '.markdownlint-cli2.yaml' within the source directory, or provided using 'WithConfig'.
+// Markdownlint provides utilities for running markdownlint-cli2 without installing locally with npm, brew, or docker.
+// See https://github.com/DavidAnson/markdownlint-cli2 for more info. Most configuration should be done in '.markdownlint-cli2.yaml'
+// within the source directory, or provided using 'WithConfig'.
 
 package main
 
