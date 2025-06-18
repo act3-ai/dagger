@@ -1,4 +1,6 @@
-// Yamllint provides utility to lint YAML files without needing to download locally with pip or homebrew. It provides nearly all functionality given by yamllint, only exluding stdin uses. See https://github.com/adrienverge/yamllint for more information.
+// Yamllint provides utility to lint YAML files without needing to download locally with pip or homebrew.
+// It provides nearly all functionality given by yamllint, only exluding stdin uses.
+//  See https://github.com/adrienverge/yamllint for more information.
 
 package main
 
