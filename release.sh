@@ -44,14 +44,12 @@ prepare)
     #run module tests
     dagger -m "$module"/tests call all
 
-    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
+    version=$(dagger -m git-cliff call --src="." \
     with-include-path --pattern "$module/**" \
     bumped-version)
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     
-    # TODO: REMOVE ME
-    touch "$module/CHANGELOG.md"
     #generate and export new version/release notes
     dagger -m release call --src="." prepare \
     --changelog-path "$module/CHANGELOG.md" \
@@ -66,9 +64,7 @@ prepare)
     ;;
 
 approve)
-    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
-    with-include-path --pattern "$module/**" \
-    bumped-version)
+    version=$(cat "$module/VERSION")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
 
@@ -86,9 +82,7 @@ publish)
     # push this branch and the associated tags
     git push --follow-tags
 
-    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
-    with-include-path --pattern "$module/**" \
-    bumped-version)
+    version=$(cat VERSION)
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     notesPath="$module/releases/$stripped_version.md"
