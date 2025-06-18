@@ -1,16 +1,21 @@
-// A generated module for Release functions
+// Release provides customizable release pipeline stages for Go and Python projects.
 //
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
+// Four stages are provided:
+// - release {go/python} check - runs general linters and {go/python} specific linters and unit tests.
+// - release prepare - generate changelog, release notes, and release version.
+// - release create-{github/gitlab} - create a release page on github.com, gitlab.com, or a private GitLab instance.
 //
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return rypes using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
+// This module does not support image publishing, as to be flexible to
+// other publishing methods; through dagger, ko, docker, etc. However, it does
+// provide a couple helper functions, add-tags and extra-tags, to aid in
+// publishing additional tags for an OCI image.
 //
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// This module does not support functional or integration testing, as such testing
+// often requires extensive customization that is not easily generalized.
+//
+// This module uses other act3-ai modules as components, with additional functionality.
+// Please refer to each modules' documentation if desired functionality is not
+// available in this module.
 
 package main
 
