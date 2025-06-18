@@ -40,29 +40,35 @@ prepare)
     #run module tests
     dagger -m "$module"/tests call all
 
-    version=$(dagger -m git-cliff call --src="." bumped-version --args="--include-path=$module/**")
+    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
+    with-include-path --pattern "$module/**" \
+    bumped-version)
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     
     #generate and export new version/release notes
     dagger -m release call --src="." prepare \
-    --changelog "$module/CHANGELOG.md" \
+    --changelog-path "$module/CHANGELOG.md" \
     --notes-path "$module/releases/$stripped_version.md" \
+    --version "$version" \
+    --version-path "$module/VERSION" \
     --ignore-error=$force \
-    --args="--include-path=./$module/**" \
+    --args="--include-path=$module/**" \
     export --path="."
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     ;;
 
 approve)
-    version=$(dagger -m git-cliff call --src="." bumped-version --args="--include-path=$module/**")
+    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
+    with-include-path --pattern "$module/**" \
+    bumped-version)
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
 
     notesPath="$module/releases/$stripped_version.md"
     # release material
-    git add "VERSION" "$module/CHANGELOG.md" "$notesPath"
+    git add "$module/VERSION" "$module/CHANGELOG.md" "$notesPath"
     # documentation changes (from make gendoc, apidoc, swagger)
     # git add \*.md # updated
     # signed commit
@@ -74,7 +80,11 @@ publish)
     # push this branch and the associated tags
     git push --follow-tags
 
-    version=$(dagger -m ../../github/dagger/git-cliff call --src="." bumped-version --args="--include-path=$module/**")
+    version=$(dagger -m git-cliff call --src="." with-tag --version "$module/v0.1.0" \
+    with-include-path --pattern "$module/**" \
+    bumped-version)
+    #needed because version tag is format of module/v1.0.0
+    stripped_version="${version#*/}"
     notesPath="$module/releases/$stripped_version.md"
     
     # create release, upload artifacts
@@ -82,8 +92,7 @@ publish)
         with-registry-auth --address="$registry" --username="$GITHUB_REG_USER" --secret=env://GITHUB_TOKEN  \
         create-github \
         --token=env://GITHUB_TOKEN \
-        --host="github.com" \
-        --project="act3-ai/dagger" \
+        --repo="act3-ai/dagger" \
         --version="$version" \
         --notes="$notesPath"
 
