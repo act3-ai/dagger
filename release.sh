@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+
+# Required env vars:
+# GITHUB_TOKEN - github repo api access
+
 force=false
 cmd=$1
 shift
@@ -89,7 +93,6 @@ publish)
     
     # create release, upload artifacts
     dagger -m release --src=. call \
-        with-registry-auth --address="$registry" --username="$GITHUB_REG_USER" --secret=env://GITHUB_TOKEN  \
         create-github \
         --token=env://GITHUB_TOKEN \
         --repo="act3-ai/dagger" \
