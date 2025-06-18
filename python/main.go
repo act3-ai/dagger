@@ -1,7 +1,6 @@
-// A generated module for Python testing functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
+// A module for Python lint/testing and publishing.
+// This module only supports python apps using UV for builds.
+// Current linters supported: pylint, ruff, mypy, pytest, pyright
 
 package main
 
