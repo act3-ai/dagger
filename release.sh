@@ -50,6 +50,8 @@ prepare)
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     
+    # TODO: REMOVE ME
+    touch "$module/CHANGELOG.md"
     #generate and export new version/release notes
     dagger -m release call --src="." prepare \
     --changelog-path "$module/CHANGELOG.md" \
