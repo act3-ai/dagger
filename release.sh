@@ -82,7 +82,7 @@ publish)
     # push this branch and the associated tags
     git push --follow-tags
 
-    version=$(cat VERSION)
+    version=$(cat "$module/VERSION")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     notesPath="$module/releases/$stripped_version.md"
