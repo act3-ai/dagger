@@ -42,6 +42,15 @@ type Renovate struct {
 
 	// +private
 	Secrets []Secret
+
+	// +private
+	GitPrivateKey *dagger.Secret
+
+	// +private
+	Author string
+
+	// +private
+	Email string
 }
 
 type Auth struct {
@@ -84,15 +93,33 @@ func New(
 	// renovate base image
 	// +optional
 	base *dagger.Container,
+
+	// private git key for signing commits
+	// note: Renovate does not support password protected keys
+	// +optional
+	gitPrivateKey *dagger.Secret,
+
+	// git author for creating branches/commits
+	// +optional
+	// +default="Renovate Bot"
+	author string,
+
+	// git email for creating branches/commits
+	// +optional
+	// +default="bot@example.com"
+	email string,
 ) *Renovate {
 	if base == nil {
-		base = dag.Container().From("renovate/renovate:39-full")
+		base = dag.Container().From("renovate/renovate:41.1.3-full")
 	}
 	return &Renovate{
-		Project:     project,
-		Base:        base,
-		Token:       token,
-		EndpointURL: endpointURL,
+		Project:       project,
+		Base:          base,
+		Token:         token,
+		EndpointURL:   endpointURL,
+		GitPrivateKey: gitPrivateKey,
+		Author:        author,
+		Email:         email,
 	}
 }
 
@@ -183,8 +210,8 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 
 // Run renovate to update dependencies on the remote Gitlab repository
 func (m *Renovate) Update(ctx context.Context) (string, error) {
-	const author = "Renovate Bot"
-	const email = "bot@example.com"
+	// const author = "Renovate Bot"
+	// const email = "bot@example.com"
 
 	hostRules, err := m.getHostRules(ctx)
 	if err != nil {
@@ -197,8 +224,8 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 	}
 
 	return m.Base.
-		WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
-		WithEnvVariable("RENOVATE_PLATFORM", "gitlab").
+		// WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
+		WithEnvVariable("RENOVATE_PLATFORM", "github").
 		WithSecretVariable("RENOVATE_TOKEN", m.Token).
 		WithEnvVariable("RENOVATE_USERNAME", "renovate-bot").
 		WithEnvVariable("RENOVATE_AUTODISCOVER", "false").
@@ -209,10 +236,13 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		// WithEnvVariable("GIT_AUTHOR_EMAIL", email).
 		// WithEnvVariable("GIT_COMMITTER_NAME", author).
 		// WithEnvVariable("GIT_COMMITTER_EMAIL", email).
-		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", author, email)).
+		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
+		WithSecretVariable("RENOVATE_GIT_PRIVATE_KEY", m.GitPrivateKey).
+		WithEnvVariable("GPG_TTY", "$(tty)").
 		// WithEnvVariable("RENOVATE_GIT_IGNORED_AUTHORS", email).
 		WithEnvVariable("RENOVATE_REQUIRE_CONFIG", "optional").
 		WithEnvVariable("RENOVATE_ONBOARDING", "false").
+		// WithEnvVariable("RENOVATE_ENABLED_MANAGERS", customManagers).
 		WithEnvVariable("RENOVATE_CUSTOM_MANAGERS", customManagers).
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
