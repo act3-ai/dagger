@@ -2,7 +2,7 @@
 	{
 		"customType": "regex",
 		"description": "Update images in GitLab CI files with the IMAGE_REPO_BASE prefix",
-		"fileMatch": [
+		"managerFilePatterns": [
 		"\\.gitlab-ci\\.ya?ml$"
 		],
 		"matchStrings": [
@@ -14,7 +14,7 @@
 	{
 		"customType": "regex",
 		"description": "Update index.docker.io images in GitLab CI files with the IMAGE_REPO_BASE prefix",
-		"fileMatch": [
+		"managerFilePatterns": [
 		"\\.gitlab-ci\\.ya?ml$"
 		],
 		"matchStrings": [
@@ -25,7 +25,7 @@
 	{
 		"customType": "regex",
 		"description": "Update *_VERSION fields in YAML files",
-		"fileMatch": [
+		"managerFilePatterns": [
 		"\\.ya?ml$"
 		],
 		"matchStrings": [
@@ -35,11 +35,22 @@
 	{
 		"customType": "regex",
 		"description": "Update *_VERSION variables in Makefiles",
-		"fileMatch": [
+		"managerFilePatterns": [
 		"(^|/)(GNUm|m|M)akefile$"
 		],
 		"matchStrings": [
 		"# renovate: datasource=(?<datasource>[a-z-.]+?) depName=(?<depName>[^\\s]+?)(?: (?:lookupName|packageName)=(?<packageName>[^\\s]+?))?(?: versioning=(?<versioning>[^\\s]+?))?(?: extractVersion=(?<extractVersion>[^\\s]+?))?\\s+[A-Za-z0-9_]+?_VERSION\\??=(?<currentValue>.+?)\\s"
 		]
-	}
+	},
+	{
+		"customType": "regex",
+		"description": "Update dagger module dependencies in dagger.json files",
+		"managerFilePatterns": ["**/dagger.json"],
+		"matchStrings": [
+		"\"source\":\\s*\"github\\.com\/(?<depName>[^/]+/[^/]+)/[^@]+@(?<currentValue>[^\"]+)"
+		],
+		"datasourceTemplate": "github-tags",
+		"versioningTemplate": "regex:^(?<compatibility>[^/]+/v)(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"
+  	}
+
 ]
