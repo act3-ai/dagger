@@ -24,17 +24,18 @@ body = """
 {% for group, commits in commits | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
     {% for commit in commits %}
-        - {{ commit.message | split(pat="\n") | first | upper_first | trim }} [{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}) \
-            {% if commit.remote and commit.remote.username %}
-            by @{{ commit.remote.username }}
-            {% else %}
-            by **{{ commit.author.name }}**
-            {% endif %}
+        - {{ commit.message | split(pat="\n") | first | upper_first | trim }} \
+          [{{ commit.id | truncate(length=7, end="") }}](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}) \
+          {% if commit.remote and commit.remote.username -%}
+            by @{{ commit.remote.username }}\
+          {%- else -%}
+            by **{{ commit.author.name }}**\
+          {%- endif -%}
           {% if commit.footers %}\
             {% for footer in commit.footers -%}
                 , {{ footer.token }}{{ footer.separator }}{{ footer.value }}\
             {% endfor %}\
-          {% endif %}\
+          {% endif %}
     {% endfor %}
 {% endfor %}\n
 """
