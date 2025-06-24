@@ -32,6 +32,9 @@ type Renovate struct {
 	EndpointURL string
 
 	// +private
+	Platform string
+
+	// +private
 	Base *dagger.Container
 
 	// +private
@@ -90,6 +93,11 @@ func New(
 	// Endpoint URL for example https://hostname/api/v4
 	endpointURL string,
 
+	// set platform for renovate to use. in ex. "gitlab"
+	// +optional
+	// +default="gitlab"
+	platform string,
+
 	// renovate base image
 	// +optional
 	base *dagger.Container,
@@ -117,6 +125,7 @@ func New(
 		Base:          base,
 		Token:         token,
 		EndpointURL:   endpointURL,
+		Platform:      platform,
 		GitPrivateKey: gitPrivateKey,
 		Author:        author,
 		Email:         email,
@@ -225,7 +234,7 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 
 	return m.Base.
 		// WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
-		WithEnvVariable("RENOVATE_PLATFORM", "github").
+		WithEnvVariable("RENOVATE_PLATFORM", m.Platform).
 		WithSecretVariable("RENOVATE_TOKEN", m.Token).
 		WithEnvVariable("RENOVATE_USERNAME", "renovate-bot").
 		WithEnvVariable("RENOVATE_AUTODISCOVER", "false").
