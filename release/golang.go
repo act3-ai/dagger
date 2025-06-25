@@ -105,13 +105,16 @@ func (g *Golang) Verify(ctx context.Context,
 		}
 	}
 
-	if !strings.HasPrefix("v", currentVersion) {
+	if !strings.HasPrefix(currentVersion, "v") {
 		currentVersion = "v" + currentVersion
 	}
 
 	_, err = g.goContainer(nil).
 		WithExec([]string{"go", "install", gorelease}).
-		WithExec([]string{"/work/src/tool/gorelease", fmt.Sprintf("-base=%s", currentVersion), fmt.Sprintf("-version=%s", targetVersion)}).
+		WithExec([]string{"/work/src/tool/gorelease",
+			fmt.Sprintf("-base=%s", strings.TrimSpace(currentVersion)),
+			fmt.Sprintf("-version=%s", strings.TrimSpace(targetVersion)),
+		}).
 		Stdout(ctx)
 
 	var e *dagger.ExecError
