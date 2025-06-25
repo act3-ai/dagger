@@ -33,9 +33,6 @@ type Release struct {
 	// +optional
 	// +private
 	Netrc *dagger.Secret
-	// TODO: add optional overrides for disabling default behavior
-	// +private
-	DisableUnitTests bool
 }
 
 func New(
