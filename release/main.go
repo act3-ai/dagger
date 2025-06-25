@@ -1,6 +1,6 @@
 // Release provides customizable release pipeline stages for Go and Python projects.
 //
-// Four stages are provided:
+// Three stages are provided:
 // - release {go/python} check - runs general linters and {go/python} specific linters and unit tests.
 // - release prepare - generate changelog, release notes, and release version.
 // - release create-{github/gitlab} - create a release page on github.com, gitlab.com, or a private GitLab instance.
