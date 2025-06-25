@@ -27,8 +27,8 @@
     },
     {
       "name": "govulncheck",
-      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.1",
-      "pin": "5579aa8f127350d77c970c98784f40f56d279fbd"
+      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.2",
+      "pin": "f7f8f2b5b6ce17ab8064349fbcb8cdf04a47a9ae"
     },
     {
       "name": "markdownlint",
