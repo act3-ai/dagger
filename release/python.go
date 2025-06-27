@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 type Py struct {
@@ -37,28 +39,45 @@ func (p *Py) Check(ctx context.Context,
 	skip []string,
 ) (string, error) {
 	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
-	var errs []error
-	if err := p.Release.genericLint(ctx, results, Base); err != nil {
-		errs = append(errs, fmt.Errorf("running generic linters: %w", err))
+
+	pl := pool.New().
+		WithErrors().
+		WithContext(ctx)
+
+	pl.Go(func(ctx context.Context) error {
+		// shellcheck, yamllint, markdownlint
+		if err := p.Release.genericLint(ctx, results, Base); err != nil {
+			return fmt.Errorf("running generic linters: %w", err)
+		}
+		return nil
+	})
+
+	pl.Go(func(ctx context.Context) error {
+		// python linters
+		_, err := dag.Python(p.Release.Source,
+			dagger.PythonOpts{
+				Base:     Base,
+				Netrc:    p.Release.Netrc,
+				SyncArgs: SyncArgs,
+			},
+		).
+			Test(dagger.PythonTestOpts{
+				UnitTestDir: UnitTestDir,
+				Skip:        skip,
+			}).Sync(ctx)
+		if err != nil {
+			return fmt.Errorf("Python Linting Error: %w", err)
+		} else {
+			results.Add("Python Lint", "Success")
+			return nil
+		}
+	})
+
+	err := pl.Wait()
+
+	if errStatus := p.Release.gitStatus(ctx); errStatus != nil {
+		err = errors.Join(err, fmt.Errorf("git repository is dirty after running linters and unit tests: %w", errStatus))
 	}
 
-	// python linters
-	_, err := dag.Python(p.Release.Source,
-		dagger.PythonOpts{
-			Base:     Base,
-			Netrc:    p.Release.Netrc,
-			SyncArgs: SyncArgs,
-		},
-	).
-		Test(dagger.PythonTestOpts{
-			UnitTestDir: UnitTestDir,
-			Skip:        skip,
-		}).Sync(ctx)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("Python Linting Error: %w", err))
-	} else {
-		results.Add("Python Lint", "Success")
-	}
-
-	return results.String(), errors.Join(errs...)
+	return results.String(), err
 }

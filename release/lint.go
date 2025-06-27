@@ -4,7 +4,6 @@ import (
 	"context"
 	"dagger/release/internal/dagger"
 	"dagger/release/util"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -18,30 +17,40 @@ func (r *Release) genericLint(ctx context.Context,
 	results util.ResultsFormatter,
 	base *dagger.Container,
 ) error {
-	var errs []error
+	p := pool.New().
+		WithErrors().
+		WithContext(ctx)
 
-	// TODO: this module does not support a custom base container.
-	res, err := r.shellcheck(ctx, 4) // TODO: plumb concurrency?
-	results.Add("Shellcheck", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running shellcheck: %w", err))
-	}
+	p.Go(func(ctx context.Context) error {
+		res, err := r.shellcheck(ctx, 4) // TODO: plumb concurrency?
+		results.Add("Shellcheck", res)
+		if err != nil {
+			return fmt.Errorf("running shellcheck: %w", err)
+		}
+		return nil
+	})
 
-	res, err = dag.Yamllint(r.Source, dagger.YamllintOpts{Base: base}).
-		Run(ctx)
-	results.Add("Yamllint", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running yamllint: %w", err))
-	}
+	p.Go(func(ctx context.Context) error {
+		res, err := dag.Yamllint(r.Source, dagger.YamllintOpts{Base: base}).
+			Run(ctx)
+		results.Add("Yamllint", res)
+		if err != nil {
+			return fmt.Errorf("running yamllint: %w", err)
+		}
+		return nil
+	})
 
-	res, err = dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Base: base}).
-		Run(ctx)
-	results.Add("Markdownlint", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running markdownlint: %w", err))
-	}
+	p.Go(func(ctx context.Context) error {
+		res, err := dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Base: base}).
+			Run(ctx)
+		results.Add("Markdownlint", res)
+		if err != nil {
+			return fmt.Errorf("running markdownlint: %w", err)
+		}
+		return nil
+	})
 
-	return errors.Join(errs...)
+	return p.Wait()
 }
 
 // shellcheck auto-detects and runs on all *.sh and *.bash files in the source directory.

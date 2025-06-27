@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/sourcegraph/conc/pool"
 )
 
 type Golang struct {
@@ -38,48 +40,66 @@ func (g *Golang) Check(ctx context.Context,
 	// +optional
 	unitTestBase *dagger.Container,
 ) (string, error) {
-	var errs []error
-	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
+	results := util.NewResultsBasicFmt(strings.Repeat("=", 15)) // must be concurrency safe
 
-	if err := g.Release.genericLint(ctx, results, base); err != nil {
-		errs = append(errs, fmt.Errorf("running generic linters: %w", err))
+	p := pool.New().
+		WithErrors().
+		WithContext(ctx)
+
+	p.Go(func(ctx context.Context) error {
+		// shellcheck, yamllint, markdownlint
+		if err := g.Release.genericLint(ctx, results, base); err != nil {
+			return fmt.Errorf("running generic linters: %w", err)
+		}
+		return nil
+	})
+
+	p.Go(func(ctx context.Context) error {
+		// lint *.go
+		res, err := dag.GolangciLint(dagger.GolangciLintOpts{Container: base}).
+			Run(g.Release.Source, dagger.GolangciLintRunOpts{Timeout: "10m"}).
+			Stdout(ctx)
+		results.Add("Golangci-lint", res)
+		if err != nil {
+			return fmt.Errorf("running golangci-lint: %w", err)
+		}
+		return nil
+	})
+
+	p.Go(func(ctx context.Context) error {
+		// govulncheck
+		res, err := dag.Govulncheck(
+			dagger.GovulncheckOpts{
+				Container: base,
+				Netrc:     g.Release.Netrc,
+			}).
+			ScanSource(ctx, g.Release.Source)
+		results.Add("Govulncheck", res)
+		if err != nil {
+			return fmt.Errorf("running govulncheck: %w", err)
+		}
+		return nil
+	})
+
+	p.Go(func(ctx context.Context) error {
+		// unit tests
+		res, err := g.goContainer(unitTestBase).
+			WithExec([]string{"go", "test", "./..."}).
+			Stdout(ctx)
+		results.Add("Go Unit Tests", res)
+		if err != nil {
+			return fmt.Errorf("running go unit tests: %w", err)
+		}
+		return nil
+	})
+
+	err := p.Wait()
+
+	if errStatus := g.Release.gitStatus(ctx); errStatus != nil {
+		err = errors.Join(err, fmt.Errorf("git repository is dirty after running linters and unit tests: %w", errStatus))
 	}
 
-	// lint *.go
-	res, err := dag.GolangciLint(dagger.GolangciLintOpts{Container: base}).
-		Run(g.Release.Source, dagger.GolangciLintRunOpts{Timeout: "10m"}).
-		Stdout(ctx)
-	results.Add("Golangci-lint", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running golangci-lint: %w", err))
-	}
-
-	// govulncheck
-	res, err = dag.Govulncheck(
-		dagger.GovulncheckOpts{
-			Container: base,
-			Netrc:     g.Release.Netrc,
-		}).
-		ScanSource(ctx, g.Release.Source)
-	results.Add("Govulncheck", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running govulncheck: %w", err))
-	}
-
-	// unit tests
-	res, err = g.goContainer(unitTestBase).
-		WithExec([]string{"go", "test", "./..."}).
-		Stdout(ctx)
-	results.Add("Go Unit Tests", res)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("running go unit tests: %w", err))
-	}
-
-	if err := g.Release.gitStatus(ctx); err != nil {
-		errs = append(errs, fmt.Errorf("git repository is dirty, aborting check: %w", err))
-	}
-
-	return results.String(), errors.Join(errs...)
+	return results.String(), err
 }
 
 // Verify release version adheres to gorelease standards.

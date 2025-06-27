@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync"
 
 	"golang.org/x/mod/semver"
 )
@@ -19,7 +20,7 @@ type ResultsFormatter interface {
 }
 
 // NewResultsBasicFmt initializes a ResultsFormatter with the given separator
-// used between sets of results.
+// used between sets of results. Concurrency safe.
 func NewResultsBasicFmt(sep string) ResultsFormatter {
 	return &resultsBasic{}
 }
@@ -30,13 +31,21 @@ type resultsBasic struct {
 	sep string
 	// res is the running state of results, modified by Add.
 	res strings.Builder
+	// resMux locks res
+	resMux sync.Mutex
 }
 
 func (r *resultsBasic) String() string {
+	r.resMux.Lock()
+	defer r.resMux.Unlock()
+
 	return r.res.String()
 }
 
 func (r *resultsBasic) Add(header, content string) {
+	r.resMux.Lock()
+	defer r.resMux.Unlock()
+
 	r.res.Grow((len(header) + 1 + len(content) + len(r.sep) + 1))
 
 	r.res.WriteString(header)
