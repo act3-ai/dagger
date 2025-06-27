@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.4] - 2025-06-27
+
+### 🐛 Bug Fixes
+
+- Parallelize linters in golang check and python check [1e7499d](https://github.com/act3-ai/dagger/commit/1e7499de32cf85d41cc4d0ec5e5b668d6d3915a3) by @nathan-joslin
+
+
 ## [release/v0.1.3] - 2025-06-25
 
 ### 🐛 Bug Fixes
