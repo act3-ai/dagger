@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.3] - 2025-06-30
+
+### 🐛 Bug Fixes
+
+- Default author value [5eac561](https://github.com/act3-ai/dagger/commit/5eac561575fa40238d167d606671899cb9521149) by @nathan-joslin
+
+
 ## [renovate/v0.1.2] - 2025-06-25
 
 ### 💼 Other
