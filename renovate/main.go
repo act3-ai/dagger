@@ -54,6 +54,9 @@ type Renovate struct {
 
 	// +private
 	Email string
+
+	// +private
+	EnabledManagers string
 }
 
 type Auth struct {
@@ -116,19 +119,24 @@ func New(
 	// +optional
 	// +default="bot@example.com"
 	email string,
+
+	// +optional
+	// +default=""
+	enabledManagers string,
 ) *Renovate {
 	if base == nil {
 		base = dag.Container().From("renovate/renovate:41.1.3-full")
 	}
 	return &Renovate{
-		Project:       project,
-		Base:          base,
-		Token:         token,
-		EndpointURL:   endpointURL,
-		Platform:      platform,
-		GitPrivateKey: gitPrivateKey,
-		Author:        author,
-		Email:         email,
+		Project:         project,
+		Base:            base,
+		Token:           token,
+		EndpointURL:     endpointURL,
+		Platform:        platform,
+		GitPrivateKey:   gitPrivateKey,
+		Author:          author,
+		Email:           email,
+		EnabledManagers: enabledManagers,
 	}
 }
 
@@ -246,12 +254,18 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		// WithEnvVariable("GIT_COMMITTER_NAME", author).
 		// WithEnvVariable("GIT_COMMITTER_EMAIL", email).
 		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
-		WithSecretVariable("RENOVATE_GIT_PRIVATE_KEY", m.GitPrivateKey).
+		With(func(c *dagger.Container) *dagger.Container {
+			if m.GitPrivateKey != nil {
+				return c.WithSecretVariable("RENOVATE_GIT_PRIVATE_KEY", m.GitPrivateKey)
+			}
+
+			return c
+		}).
 		WithEnvVariable("GPG_TTY", "$(tty)").
 		// WithEnvVariable("RENOVATE_GIT_IGNORED_AUTHORS", email).
 		WithEnvVariable("RENOVATE_REQUIRE_CONFIG", "optional").
 		WithEnvVariable("RENOVATE_ONBOARDING", "false").
-		// WithEnvVariable("RENOVATE_ENABLED_MANAGERS", customManagers).
+		WithEnvVariable("RENOVATE_ENABLED_MANAGERS", m.EnabledManagers).
 		WithEnvVariable("RENOVATE_CUSTOM_MANAGERS", customManagers).
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
