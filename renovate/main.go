@@ -109,7 +109,7 @@ func New(
 
 	// git author for creating branches/commits
 	// +optional
-	// +default="Renovate Bot"
+	// +default="RenovateBot"
 	author string,
 
 	// git email for creating branches/commits
