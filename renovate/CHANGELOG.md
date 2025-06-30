@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.4] - 2025-06-30
+
+### 🐛 Bug Fixes
+
+- Add option for enabled managers, fix bug with git private key [e8c5223](https://github.com/act3-ai/dagger/commit/e8c522398b770c7e29ed5627898fa0842078f76a) by **Paul Spurlock**
+
+
 ## [renovate/v0.1.3] - 2025-06-30
 
 ### 🐛 Bug Fixes
