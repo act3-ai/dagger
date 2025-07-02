@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [goreleaser/v0.1.3] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- Add support for additional .gitignore file [0e04449](https://github.com/act3-ai/dagger/commit/0e04449cfc6db6463249f0dece5cd13703da15c2) by @nathan-joslin
+
+
 ## [goreleaser/v0.1.2] - 2025-06-25
 
 ### 💼 Other
