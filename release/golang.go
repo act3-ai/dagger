@@ -115,7 +115,8 @@ func (g *Golang) Verify(ctx context.Context,
 	// +optional
 	base *dagger.Container,
 ) error {
-	const gorelease = "golang.org/x/exp/cmd/gorelease@latest"
+	// const gorelease = "golang.org/x/exp/cmd/gorelease@latest"
+	const gorelease = "github.com/nathan-joslin/exp/cmd/gorelease@d53ca235cbb4684a341c9f15f3e60fffe7c9f2c7"
 
 	var err error
 	if currentVersion == "" {
