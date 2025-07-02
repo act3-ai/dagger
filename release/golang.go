@@ -114,7 +114,7 @@ func (g *Golang) Verify(ctx context.Context,
 	// base container.
 	// +optional
 	base *dagger.Container,
-) error {
+) (string, error) {
 	// const gorelease = "golang.org/x/exp/cmd/gorelease@latest"
 	const gorelease = "github.com/nathan-joslin/exp/cmd/gorelease@d53ca235cbb4684a341c9f15f3e60fffe7c9f2c7"
 
@@ -122,7 +122,7 @@ func (g *Golang) Verify(ctx context.Context,
 	if currentVersion == "" {
 		currentVersion, err = g.Release.Source.File("VERSION").Contents(ctx)
 		if err != nil {
-			return fmt.Errorf("retreving version from VERSION file: %w", err)
+			return "", fmt.Errorf("retreving version from VERSION file: %w", err)
 		}
 	}
 
@@ -130,7 +130,7 @@ func (g *Golang) Verify(ctx context.Context,
 		currentVersion = "v" + currentVersion
 	}
 
-	_, err = g.goContainer(nil).
+	out, err := g.goContainer(nil).
 		WithExec([]string{"go", "install", gorelease}).
 		WithExec([]string{"/work/src/tool/gorelease",
 			fmt.Sprintf("-base=%s", strings.TrimSpace(currentVersion)),
@@ -142,13 +142,13 @@ func (g *Golang) Verify(ctx context.Context,
 	switch {
 	case errors.As(err, &e):
 		// exit code != 0
-		return fmt.Errorf("%s", e.Stderr)
+		return out, fmt.Errorf("%s", e.Stderr)
 	case err != nil:
 		// some other dagger error, e.g. graphql
-		return err
+		return out, err
 	default:
 		// exit code = 0
-		return nil
+		return out, nil
 	}
 }
 
