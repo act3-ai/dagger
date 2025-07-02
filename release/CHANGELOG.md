@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.5] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- Use fork of golang.org/x/exp/cmd/gorelease [8ba7fa7](https://github.com/act3-ai/dagger/commit/8ba7fa7b4ade369a9d3910efb52d31922210ab2f) by @nathan-joslin
+
+
 ## [release/v0.1.4] - 2025-06-27
 
 ### 🐛 Bug Fixes
