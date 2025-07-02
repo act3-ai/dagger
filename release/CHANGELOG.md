@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.7] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- Add support for additional .gitignore file [431a422](https://github.com/act3-ai/dagger/commit/431a422d079793b3ea7d3b28f5e939b63b16a912) by @nathan-joslin
+
+
 ## [release/v0.1.6] - 2025-07-02
 
 ### 🐛 Bug Fixes
