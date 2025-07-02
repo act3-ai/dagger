@@ -39,6 +39,10 @@ func New(ctx context.Context,
 	// Git repository source.
 	src *dagger.Directory,
 
+	// Additonal .gitignore file
+	// +optional
+	gitIgnore *dagger.File,
+
 	// Custom container to use as a base container. Must have 'goreleaser' available on PATH.
 	// +optional
 	container *dagger.Container,
@@ -89,6 +93,14 @@ func New(ctx context.Context,
 		With(func(c *dagger.Container) *dagger.Container {
 			if netrc != nil {
 				c = c.WithMountedSecret("/root/.netrc", netrc)
+			}
+			return c
+		}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if gitIgnore != nil {
+				const gitIgnorePath = "/work/.gitignore"
+				c = c.WithMountedFile(gitIgnorePath, gitIgnore).
+					WithExec([]string{"git", "config", "--global", "core.excludesfile", gitIgnorePath})
 			}
 			return c
 		}).
