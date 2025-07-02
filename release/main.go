@@ -33,6 +33,8 @@ type Release struct {
 	// +optional
 	// +private
 	Netrc *dagger.Secret
+	// +private
+	GitIgnore *dagger.File
 }
 
 func New(
@@ -41,12 +43,15 @@ func New(
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional
 	netrc *dagger.Secret,
+	// Additonal .gitignore file
+	// +optional
+	gitIgnore *dagger.File,
 ) (*Release, error) {
-
 	return &Release{
 		Source:         src,
 		RegistryConfig: dag.RegistryConfig(),
 		Netrc:          netrc,
+		GitIgnore:      gitIgnore,
 	}, nil
 }
 

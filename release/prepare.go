@@ -9,12 +9,6 @@ import (
 	"strings"
 )
 
-// TODO: consider adding the release string formmatter to release struct itself
-// TODO: helm chart version bumping, make it flexible to zero or more helm charts
-// TODO: add support for modifications to releases.md for images and helm chart table
-// TODO: unit test specific image base plumbing
-// TODO: generate image base plumbing
-
 // Generate release notes, changelog, and target release version.
 func (r *Release) Prepare(ctx context.Context,
 	// prepare for a specific version, overrides default bumping configuration, prioritized over method.
@@ -106,6 +100,14 @@ func (r *Release) gitStatus(ctx context.Context) error {
 			},
 		).
 		WithMountedDirectory("/work/src", r.Source).
+		With(func(c *dagger.Container) *dagger.Container {
+			if r.GitIgnore != nil {
+				const gitIgnorePath = "/work/.gitignore"
+				c = c.WithMountedFile(gitIgnorePath, r.GitIgnore).
+					WithExec([]string{"git", "config", "--global", "core.excludesfile", gitIgnorePath})
+			}
+			return c
+		}).
 		WithWorkdir("/work/src")
 
 	var errs []error

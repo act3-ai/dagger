@@ -165,5 +165,13 @@ func (g *Golang) goContainer(base *dagger.Container) *dagger.Container {
 			}
 			return ctr
 		}).
+		With(func(c *dagger.Container) *dagger.Container {
+			if g.Release.GitIgnore != nil {
+				const gitIgnorePath = "/work/.gitignore"
+				c = c.WithMountedFile(gitIgnorePath, g.Release.GitIgnore).
+					WithExec([]string{"git", "config", "--global", "core.excludesfile", gitIgnorePath})
+			}
+			return c
+		}).
 		WithMountedCache("/go/pkg/mod", dag.CacheVolume("go-mod"))
 }
