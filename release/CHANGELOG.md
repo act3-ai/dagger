@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.6] - 2025-07-02
+
+### 🐛 Bug Fixes
+
+- Update go verify to return an output string to propagatre warnings [6a68d9c](https://github.com/act3-ai/dagger/commit/6a68d9c31374f6baa3b3f42ff570b5c09a6054db) by @nathan-joslin
+
+
 ## [release/v0.1.5] - 2025-07-02
 
 ### 🐛 Bug Fixes
