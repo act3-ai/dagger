@@ -6,6 +6,7 @@ import (
 )
 
 // Return the result of running unit test
+// returns directory "results/" with xml, junit, and html reports
 func (python *Python) UnitTest(ctx context.Context,
 	// unit test directory
 	// +optional
