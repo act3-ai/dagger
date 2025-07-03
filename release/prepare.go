@@ -229,7 +229,7 @@ func (r *Release) notes(ctx context.Context,
 		b := &strings.Builder{}
 		b.WriteString(extraNotes)
 		b.WriteString("###")
-		notes = strings.Replace(notes, "### ", b.String(), 1)
+		notes = strings.Replace(notes, "###", b.String(), 1)
 	}
 
 	return dag.Directory().
