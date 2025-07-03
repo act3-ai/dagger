@@ -1,16 +1,5 @@
-// A generated module for Renovate functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// A Module to run renovate against a remote project to check for any dependency updates.
+// This will attempt create Pull/Merge Requests fodepending on platform provided, in ex. github.
 
 package main
 
@@ -87,7 +76,7 @@ const globalExtends = `
 var customManagers string
 
 func New(
-	// Gitlab project slug
+	// repo project slug
 	project string,
 
 	// Gitlab API token to the repo being renovated
@@ -225,7 +214,7 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 	return dag.SetSecret("renovate-secrets", string(secretsJson)), nil
 }
 
-// Run renovate to update dependencies on the remote Gitlab repository
+// Run renovate to update dependencies on the remote repository
 func (m *Renovate) Update(ctx context.Context) (string, error) {
 	// const author = "Renovate Bot"
 	// const email = "bot@example.com"
