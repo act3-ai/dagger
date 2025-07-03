@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.5] - 2025-07-03
+
+### 🐛 Bug Fixes
+
+- Edit descriptions [f999a9b](https://github.com/act3-ai/dagger/commit/f999a9bef0e0706a9fc744ed9881833633ae1e7e) by **Paul Spurlock**
+
+- Add shell example [689d63b](https://github.com/act3-ai/dagger/commit/689d63bf4d76fc838464dbdd223fcee0d6f54e7e) by **Paul Spurlock**
+
+
 ## [renovate/v0.1.4] - 2025-06-30
 
 ### 🐛 Bug Fixes
