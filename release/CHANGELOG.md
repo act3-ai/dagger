@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.8] - 2025-07-03
+
+### 🐛 Bug Fixes
+
+- Prepare extra notes whitespace [3761187](https://github.com/act3-ai/dagger/commit/376118780091241b32c65d6c46343b2be679fbab) by @nathan-joslin
+
+
 ## [release/v0.1.7] - 2025-07-02
 
 ### 🐛 Bug Fixes
