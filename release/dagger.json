@@ -37,8 +37,8 @@
     },
     {
       "name": "python",
-      "source": "github.com/act3-ai/dagger/python@python/v0.1.2",
-      "pin": "ad7e22b82d098a6199382f0dead8680b87e83cb6"
+      "source": "github.com/act3-ai/dagger/python@python/v0.1.3",
+      "pin": "1886b9cd94972fc0bebcdc72f8aad685711d747f"
     },
     {
       "name": "registry-config",
