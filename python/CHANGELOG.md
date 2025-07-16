@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [ python/v0.1.4] - 2025-07-16
+## [python/v0.1.4] - 2025-07-16
 
 ### 🐛 Bug Fixes
 
