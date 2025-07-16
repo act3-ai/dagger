@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [ python/v0.1.4] - 2025-07-16
+
+### 🐛 Bug Fixes
+
+- Add dagger tests for python [f9a32ed](https://github.com/act3-ai/dagger/commit/f9a32ed6b0d79c48ba09e3dc71023a49fb34a0e7) by **Paul Spurlock**
+
+- Upgrade dagger engine to v0.18.12 [a8363af](https://github.com/act3-ai/dagger/commit/a8363af58bd4e54a3c400a8bfc9165e2c000c60a) by **Paul Spurlock**
+
+- Add option for additional build args in publish [0177d94](https://github.com/act3-ai/dagger/commit/0177d9436b41399de2338d8a9e6781bb5c54d7f8) by **Paul Spurlock**
+
+
 ## [python/v0.1.3] - 2025-07-03
 
 ### 🐛 Bug Fixes
