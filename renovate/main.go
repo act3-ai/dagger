@@ -230,7 +230,7 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 	}
 
 	return m.Base.
-		// WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
+		WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
 		WithEnvVariable("RENOVATE_PLATFORM", m.Platform).
 		WithSecretVariable("RENOVATE_TOKEN", m.Token).
 		WithEnvVariable("RENOVATE_USERNAME", "renovate-bot").
