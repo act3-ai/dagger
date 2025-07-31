@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.7] - 2025-07-31
+
+### 🐛 Bug Fixes
+
+- Bug endpointURL [b9d53d0](https://github.com/act3-ai/dagger/commit/b9d53d056a48ebe97ae475748b6823ce90dc87cb) by **Paul Spurlock**
+
+
 ## [renovate/v0.1.6] - 2025-07-07
 
 ### 🐛 Bug Fixes
