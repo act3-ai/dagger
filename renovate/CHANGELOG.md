@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.8] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [53c46f4](https://github.com/act3-ai/dagger/commit/53c46f49c9bc5192eaa65db870d622fe15f0ef8f) by **Paul Spurlock**
+
+
 ## [renovate/v0.1.7] - 2025-07-31
 
 ### 🐛 Bug Fixes
