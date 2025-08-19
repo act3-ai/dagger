@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.10] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [7fc7c7e](https://github.com/act3-ai/dagger/commit/7fc7c7ed3d9abeb42c9f8ebfa611998ac18ef427) by **Paul Spurlock**
+
+- Update git-cliff to v0.1.3 [0db1f06](https://github.com/act3-ai/dagger/commit/0db1f065ce7543f06918830eec52e93d22d9a49a) by **Paul Spurlock**
+
+- Update govulncheck to v0.1.3 [04b97de](https://github.com/act3-ai/dagger/commit/04b97de5a5ef2aa3d88fa8cfe889e3e4f452f721) by **Paul Spurlock**
+
+- Update markdownlint to v0.1.2 [11a121d](https://github.com/act3-ai/dagger/commit/11a121d169bd02bcefe4338ca7009b6c7230e4e8) by **Paul Spurlock**
+
+- Update python to v0.1.5 [ec9e915](https://github.com/act3-ai/dagger/commit/ec9e9155962f0ce2366debce56a97f391a2afa13) by **Paul Spurlock**
+
+- Update yamllint to v0.1.3 [5685746](https://github.com/act3-ai/dagger/commit/5685746967f99737b8b89b9bb1daadf9a4cab45e) by **Paul Spurlock**
+
+
 ## [release/v0.1.9] - 2025-07-08
 
 ### 🐛 Bug Fixes
