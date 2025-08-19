@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [python/v0.1.5] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [b401190](https://github.com/act3-ai/dagger/commit/b40119027dcfe796cc40778f7a442eb7660d1656) by **Paul Spurlock**
+
+
 ## [python/v0.1.4] - 2025-07-16
 
 ### 🐛 Bug Fixes
