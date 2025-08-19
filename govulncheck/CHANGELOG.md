@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [govulncheck/v0.1.3] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [804aa81](https://github.com/act3-ai/dagger/commit/804aa81278994b40870598a9222d19b45096d256) by **Paul Spurlock**
+
+
 ## [govulncheck/v0.1.2] - 2025-06-25
 
 ### 💼 Other
