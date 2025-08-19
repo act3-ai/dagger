@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [docker/v0.1.2] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [e304e73](https://github.com/act3-ai/dagger/commit/e304e7338f900735a1b2c94689afecdd5e5af982) by **Paul Spurlock**
+
+
 ## [docker/v0.1.1] - 2025-06-25
 
 ### 💼 Other
