@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [yamllint/v0.1.3] - 2025-08-19
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.18.16 [8b63903](https://github.com/act3-ai/dagger/commit/8b63903e35f5e9ab18b10d479d993bcb1f70e074) by **Paul Spurlock**
+
+
 ## [yamllint/v0.1.2] - 2025-06-25
 
 ### 💼 Other
