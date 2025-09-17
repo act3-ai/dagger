@@ -26,7 +26,7 @@ type Markdownlint struct {
 
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
-	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
+	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json", "CHANGELOG.md"]
 	src *dagger.Directory,
 
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
