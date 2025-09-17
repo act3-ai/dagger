@@ -70,15 +70,13 @@ func (r *Release) Prepare(ctx context.Context,
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
 
-	// update changelog if it exists, else create a new one with changes if no changelogPath given
-	if changelogPath == "CHANGELOG.md" {
-		exists, err := r.Source.Exists(ctx, changelogPath)
-		if err != nil {
-			return nil, fmt.Errorf("generating changelog: %w", err)
-		}
-		if !exists {
-			r.Source = r.Source.WithNewFile("CHANGELOG.md", "")
-		}
+	// update changelog if it exists, else create new one at given changelogPath
+	exists, err := r.Source.Exists(ctx, changelogPath)
+	if err != nil {
+		return nil, fmt.Errorf("generating changelog: %w", err)
+	}
+	if !exists {
+		r.Source = r.Source.WithNewFile(changelogPath, "")
 	}
 
 	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
