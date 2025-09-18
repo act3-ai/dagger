@@ -70,7 +70,15 @@ func (r *Release) Prepare(ctx context.Context,
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
 
-	// update changelog
+	// update changelog if it exists, else create new one at given changelogPath
+	exists, err := r.Source.Exists(ctx, changelogPath)
+	if err != nil {
+		return nil, fmt.Errorf("generating changelog: %w", err)
+	}
+	if !exists {
+		r.Source = r.Source.WithNewFile(changelogPath, "")
+	}
+
 	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
 
 	// set helm chart version
