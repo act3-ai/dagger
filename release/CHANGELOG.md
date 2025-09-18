@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.11] - 2025-09-18
+
+### 🐛 Bug Fixes
+
+- create new changelog if one is not found at changelogPath [a1c8c6d](https://github.com/act3-ai/dagger/commit/0ef49970376756f9af1f0dd604d04906aa1c8c6d) by **Paul Spurlock**
+
+
 ## [release/v0.1.10] - 2025-08-19
 
 ### 🐛 Bug Fixes
