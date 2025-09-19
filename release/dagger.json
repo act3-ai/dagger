@@ -22,8 +22,8 @@
     },
     {
       "name": "golangci-lint",
-      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@golangci-lint/v0.9.0",
-      "pin": "e6c14178bcaaff9e102e2a89173ca31479b80629"
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "govulncheck",
