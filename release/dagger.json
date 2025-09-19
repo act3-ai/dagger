@@ -17,8 +17,8 @@
     },
     {
       "name": "go",
-      "source": "github.com/sagikazarmark/daggerverse/go@go/v0.9.0",
-      "pin": "d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"
+      "source": "github.com/sagikazarmark/daggerverse/go@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "golangci-lint",
