@@ -32,8 +32,8 @@
     },
     {
       "name": "markdownlint",
-      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.2",
-      "pin": "311fa7304bc65c7be73823bec4d3f88bd64732ef"
+      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.3",
+      "pin": "7767feddd969e33b63e26ffb08ef9b6cd3937dab"
     },
     {
       "name": "python",
