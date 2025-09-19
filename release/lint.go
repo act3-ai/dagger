@@ -13,10 +13,12 @@ import (
 // This file contains generic linters used in 'Check' commands for various project types. Language specific linters are used in their respective groups.
 
 // genericLint runs generic linters, e.g. markdown, yaml, etc.
-func (r *Release) genericLint(ctx context.Context,
-	results util.ResultsFormatter,
+func (r *Release) GenericLint(ctx context.Context,
+	// +optional
 	base *dagger.Container,
-) error {
+) (string, error) {
+	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
+
 	p := pool.New().
 		WithErrors().
 		WithContext(ctx)
@@ -50,7 +52,11 @@ func (r *Release) genericLint(ctx context.Context,
 		return nil
 	})
 
-	return p.Wait()
+	if err := p.Wait(); err != nil {
+		return "", err
+	}
+
+	return results.String(), nil
 }
 
 // shellcheck auto-detects and runs on all *.sh and *.bash files in the source directory.
