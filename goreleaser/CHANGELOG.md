@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [goreleaser/v0.1.4] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Upgrade goreleaser dagger engine to v0.18.19 [2898ed3](https://github.com/act3-ai/dagger/commit/2898ed3059bc68491089b33b898335430b17e062) by **Paul Spurlock**
+
+
 ## [goreleaser/v0.1.3] - 2025-07-02
 
 ### 🐛 Bug Fixes

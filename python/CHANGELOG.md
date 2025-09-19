@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [python/v0.1.6] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Upgrade python dagger engine to v0.18.19 [1bd6ef4](https://github.com/act3-ai/dagger/commit/1bd6ef462bf64bb19d996c6ea91310475279cad4) by **Paul Spurlock**
+
+
 ## [python/v0.1.5] - 2025-08-19
 
 ### 🐛 Bug Fixes
