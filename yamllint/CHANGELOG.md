@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [yamllint/v0.1.4] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Upgrade yamllint dagger engine to v0.18.19 [7778d13](https://github.com/act3-ai/dagger/commit/7778d130cee4df791a56423076c79800dd395598) by **Paul Spurlock**
+
+
 ## [yamllint/v0.1.3] - 2025-08-19
 
 ### 🐛 Bug Fixes
