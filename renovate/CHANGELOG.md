@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [renovate/v0.1.9] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Upgrade renovate dagger engine to v0.18.19 [c7b47df](https://github.com/act3-ai/dagger/commit/c7b47dfdb34dcf22092e3d0b2387d58292d0c9b4) by **Paul Spurlock**
+
+
 ## [renovate/v0.1.8] - 2025-08-19
 
 ### 🐛 Bug Fixes
