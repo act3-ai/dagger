@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [git-cliff/v0.1.4] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Upgrade git-cliff dagger engine to v.0.18.19 [9dbb228](https://github.com/act3-ai/dagger/commit/9dbb228948f68b0b20b5ec03802fb0c48cc32f9b) by **Paul Spurlock**
+
+
 ## [git-cliff/v0.1.3] - 2025-08-19
 
 ### 🐛 Bug Fixes
