@@ -7,8 +7,8 @@
   "dependencies": [
     {
       "name": "gh",
-      "source": "github.com/sagikazarmark/daggerverse/gh@gh/v0.11.0",
-      "pin": "c1be27189ce47d28f84014b715f78e47db9fbadc"
+      "source": "github.com/sagikazarmark/daggerverse/gh@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "git-cliff",
