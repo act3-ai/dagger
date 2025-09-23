@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [yamllint/v0.1.5] - 2025-09-23
+
+### 🐛 Bug Fixes
+
+- Directory filters too restrictive (#42) [8b7b938](https://github.com/act3-ai/dagger/commit/8b7b938767bde373ceca472398f6da673b329ea9) by @nathan-joslin
+
+
 ## [yamllint/v0.1.4] - 2025-09-19
 
 ### 🐛 Bug Fixes
