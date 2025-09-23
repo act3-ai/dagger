@@ -57,8 +57,8 @@
     },
     {
       "name": "yamllint",
-      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.4",
-      "pin": "05f48e2895746089ef88c54ed823cbb436618603"
+      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.5",
+      "pin": "618fc03841460ba75223864107300a7784f2fbc9"
     }
   ]
 }
