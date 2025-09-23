@@ -10,4 +10,6 @@ ignores:
   - "CHANGELOG.md"
   - "docs/cli/**"
   - "docs/apis/**"
-  - "releases/**" 
+  - "releases/**"
+
+ignore-from-file: [.gitignore, .yamlignore]

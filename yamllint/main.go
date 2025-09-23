@@ -23,7 +23,7 @@ type Yamllint struct {
 
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
-	// +ignore=["**", "!**/*.yaml", "!**/*.yml", "!**/.yamllint**", "!**/.yamlignore**", "!**/.gitignore"]
+	// +ignore=["**", "!**/*.yaml", "!**/*.yml", "!**/.yamllint*", "!**/.yamlignore*", "!**/.gitignore"]
 	src *dagger.Directory,
 
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
