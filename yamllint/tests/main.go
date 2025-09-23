@@ -12,10 +12,15 @@ import (
 
 // testdata dir entries
 const (
-	errFile        = "err.yaml"
-	validFile      = "valid.yaml"
-	configFile     = ".yamllint.yml"      // basic config, used for most tests
-	configFileWarn = ".yamllint-warn.yml" // config used for warning level tests
+	errFile               = "err.yaml"
+	validFile             = "valid.yaml"
+	configFile            = ".yamllint.yml"            // basic config, used for most tests
+	configFileWarn        = ".yamllint-warn.yml"       // config used for warning level tests
+	configFileNoExt       = ".yamllint-ignore-by-file" // no extension, a yamllint convention with custom suffix
+	gitIgnoreFile         = ".gitignore"               // common yamlignore file
+	gitIgnoreIgnoredFile  = "gitignore-ignored.yaml"
+	yamlIgnoreFile        = ".yamlignore" // common yamlignore file
+	yamlIgnoreIgnoredFile = "yamlignore-ignored.yaml"
 )
 
 type Tests struct {
@@ -33,26 +38,97 @@ func New(
 	}
 }
 
-// Run all tests
+// Run all tests.
 func (t *Tests) All(ctx context.Context) error {
 	p := pool.New().WithErrors().WithContext(ctx).WithMaxGoroutines(5)
 
 	// Options for 'New'
-	p.Go(t.Config)
-	p.Go(t.Version)
-	p.Go(t.Base)
-	// Options for 'Run'
-	p.Go(t.IgnoreErr)
-	p.Go(t.OutputFormat)
-	p.Go(t.ExtraArgs)
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "DirectoryFilter")
+		defer span.End()
+		return t.DirectoryFilter(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "Config")
+		defer span.End()
+		return t.Config(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "Version")
+		defer span.End()
+		return t.Version(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "Base")
+		defer span.End()
+		return t.Base(ctx)
+	})
 
-	p.Go(t.ListFiles)
+	// Options for 'Run'
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "IgnoreErr")
+		defer span.End()
+		return t.IgnoreErr(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "OutputFormat")
+		defer span.End()
+		return t.OutputFormat(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "ExtraArgs")
+		defer span.End()
+		return t.ExtraArgs(ctx)
+	})
+
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "ListFiles")
+		defer span.End()
+		return t.ListFiles(ctx)
+	})
 
 	// Modifiers for 'Run'
-	p.Go(t.WithStrict)
-	p.Go(t.WithNoWarnings)
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "WithStrict")
+		defer span.End()
+		return t.WithStrict(ctx)
+	})
+	p.Go(func(ctx context.Context) error {
+		ctx, span := Tracer().Start(ctx, "WithNoWarnings")
+		defer span.End()
+		return t.WithNoWarnings(ctx)
+	})
 
 	return p.Wait()
+}
+
+// DirectoryFilter ensures the pre-call filtering is properly setup.
+func (t *Tests) DirectoryFilter(ctx context.Context) error {
+	src := dag.Directory().
+		WithFiles(".",
+			[]*dagger.File{
+				t.Source.File(gitIgnoreFile),
+				t.Source.File(gitIgnoreIgnoredFile),
+				t.Source.File(yamlIgnoreFile),
+				t.Source.File(yamlIgnoreIgnoredFile),
+				t.Source.File(configFileNoExt),
+				t.Source.File(validFile),
+			})
+	expectedEntries := 1 // if the config is used, then the ignore files should also be used, leaving us only with `valid.yaml`
+
+	// also test for .yamllint* directive
+	out, err := dag.Yamllint(src).
+		Run(ctx, dagger.YamllintRunOpts{ExtraArgs: []string{"-c", configFileNoExt, "--list-files"}})
+	if err != nil {
+		return fmt.Errorf("unexpected error: %w: out %s", err, out)
+	}
+
+	gotEntries := strings.Fields(out)
+	if len(gotEntries) != expectedEntries {
+		return fmt.Errorf("unexpected number of entries, expected %d, got %d: values %v", expectedEntries, len(gotEntries), gotEntries)
+	}
+
+	return nil
 }
 
 // Config validates config mounting.
