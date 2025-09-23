@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.13] - 2025-09-23
+
+### 💼 Other
+
+- Bump yamllint to v0.1.5 [e0206c1](https://github.com/act3-ai/dagger/commit/e0206c1e4d4aada68aaaea186a42ba88e8f08a60) by **nathan-joslin**
+
+
 ## [release/v0.1.12] - 2025-09-19
 
 ### 🐛 Bug Fixes
