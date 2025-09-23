@@ -39,6 +39,9 @@ func (g *Golang) Check(ctx context.Context,
 	// base container to run unit tests in.
 	// +optional
 	unitTestBase *dagger.Container,
+	// skip any provided Generic lint tests
+	// +optional
+	skip []string,
 ) (string, error) {
 	results := util.NewResultsBasicFmt(strings.Repeat("=", 15)) // must be concurrency safe
 
@@ -48,7 +51,7 @@ func (g *Golang) Check(ctx context.Context,
 
 	p.Go(func(ctx context.Context) error {
 		// shellcheck, yamllint, markdownlint
-		_, err := g.Release.GenericLint(ctx, base)
+		_, err := g.Release.GenericLint(ctx, base, skip)
 		if err != nil {
 			return fmt.Errorf("running generic linters: %w", err)
 		}

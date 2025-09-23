@@ -46,7 +46,7 @@ func (p *Py) Check(ctx context.Context,
 
 	pl.Go(func(ctx context.Context) error {
 		// shellcheck, yamllint, markdownlint
-		_, err := p.Release.GenericLint(ctx, Base)
+		_, err := p.Release.GenericLint(ctx, Base, skip)
 		if err != nil {
 			return fmt.Errorf("running generic linters: %w", err)
 		}
