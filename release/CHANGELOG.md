@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.1.12] - 2025-09-19
+
+### 🐛 Bug Fixes
+
+- Update dagger enving to v0.18.19 [fa5e287](https://github.com/act3-ai/dagger/commit/fa5e287957879c806f5bbc03bda8a2cd29ddf8cb) by **Paul Spurlock**
+
+- Update git-cliff to v0.1.4 [4d3bb34](https://github.com/act3-ai/dagger/commit/4d3bb349ed0883ea5038321de6c8f5347f8796d2) by **Paul Spurlock**
+
+- Updae govulncheck to v0.1.4 [a701714](https://github.com/act3-ai/dagger/commit/a701714886d48e42474e075216b075625b199f38) by **Paul Spurlock**
+
+- Update markdownlint to v0.1.3 [058198e](https://github.com/act3-ai/dagger/commit/058198e576dc88c0a24e7298db3c4c329c8db0f1) by **Paul Spurlock**
+
+- Update python to v0.1.6 [5c405f8](https://github.com/act3-ai/dagger/commit/5c405f8a239c615170bb33b40a6764713045a1c7) by **Paul Spurlock**
+
+- Update yamllint to v0.1.4 [10dcae5](https://github.com/act3-ai/dagger/commit/10dcae53bc9c0e8e39ee91abe4b7855ee9f7ef0a) by **Paul Spurlock**
+
+- Update wolfi to v0.18.19 [0eab6b9](https://github.com/act3-ai/dagger/commit/0eab6b9fb9572cd1d641b80c7d53df76d32f9eac) by **Paul Spurlock**
+
+- Update shellcheck to v0.18.19 [20c792d](https://github.com/act3-ai/dagger/commit/20c792d101de7d9b2a4936c4d4b1cb33325e044a) by **Paul Spurlock**
+
+- Update golangci-lint [c6bcdd7](https://github.com/act3-ai/dagger/commit/c6bcdd72e2ea214b343bdb7eca49f2a7d60831d2) by **Paul Spurlock**
+
+- Update registry-config [6989c07](https://github.com/act3-ai/dagger/commit/6989c07070009915c48abfbe2e95a33135605341) by **Paul Spurlock**
+
+- Update go [38b1216](https://github.com/act3-ai/dagger/commit/38b12168f7fff8b3531b5f0e1946817b494aeb98) by **Paul Spurlock**
+
+- Update gh [f78bc89](https://github.com/act3-ai/dagger/commit/f78bc899df502f1b8a363b7ee73c52a9220e70fa) by **Paul Spurlock**
+
+
 ## [release/v0.1.11] - 2025-09-18
 
 ### 🐛 Bug Fixes

@@ -1,64 +1,64 @@
 {
   "name": "release",
-  "engineVersion": "v0.18.16",
+  "engineVersion": "v0.18.19",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
     {
       "name": "gh",
-      "source": "github.com/sagikazarmark/daggerverse/gh@gh/v0.11.0",
-      "pin": "c1be27189ce47d28f84014b715f78e47db9fbadc"
+      "source": "github.com/sagikazarmark/daggerverse/gh@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.1.3",
-      "pin": "ae1324039a1b85ee2c983a134104166052264a48"
+      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.1.4",
+      "pin": "148ad001be7b106a56fcae9080f8d6503a1b7662"
     },
     {
       "name": "go",
-      "source": "github.com/sagikazarmark/daggerverse/go@go/v0.9.0",
-      "pin": "d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"
+      "source": "github.com/sagikazarmark/daggerverse/go@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "golangci-lint",
-      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@golangci-lint/v0.9.0",
-      "pin": "e6c14178bcaaff9e102e2a89173ca31479b80629"
+      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "govulncheck",
-      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.3",
-      "pin": "241c111a78be0a15e85d1cc54e248fcf13aee2cf"
+      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.4",
+      "pin": "d87d3d1cfdb47b76b6e60730bd3b7be12b60395e"
     },
     {
       "name": "markdownlint",
-      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.2",
-      "pin": "311fa7304bc65c7be73823bec4d3f88bd64732ef"
+      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.3",
+      "pin": "7767feddd969e33b63e26ffb08ef9b6cd3937dab"
     },
     {
       "name": "python",
-      "source": "github.com/act3-ai/dagger/python@python/v0.1.5",
-      "pin": "d7bdc90c237f40d55a647987a881129e93c46f18"
+      "source": "github.com/act3-ai/dagger/python@python/v0.1.6",
+      "pin": "1708b212c3a2b6c7183179b326526f687f96c1d0"
     },
     {
       "name": "registry-config",
-      "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
-      "pin": "126b5fbbdad70dbf2a8689600baec2eb78c05ef4"
+      "source": "github.com/sagikazarmark/daggerverse/registry-config@main",
+      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
     },
     {
       "name": "shellcheck",
-      "source": "github.com/dagger/dagger/modules/shellcheck@v0.18.11",
-      "pin": "cd07403da9ae9ca9239750753e1f331013a23124"
+      "source": "github.com/dagger/dagger/modules/shellcheck@v0.18.19",
+      "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
     },
     {
       "name": "wolfi",
-      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.11",
-      "pin": "cd07403da9ae9ca9239750753e1f331013a23124"
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.19",
+      "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
     },
     {
       "name": "yamllint",
-      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.3",
-      "pin": "c4a91440bf30f26f7f30e084af482ba9eb8e44a3"
+      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.4",
+      "pin": "05f48e2895746089ef88c54ed823cbb436618603"
     }
   ]
 }
