@@ -12,10 +12,11 @@ import (
 
 // testdata dir entries
 const (
-	errFile        = "err.yaml"
-	validFile      = "valid.yaml"
-	configFile     = ".yamllint.yml"      // basic config, used for most tests
-	configFileWarn = ".yamllint-warn.yml" // config used for warning level tests
+	errFile         = "err.yaml"
+	validFile       = "valid.yaml"
+	configFile      = ".yamllint.yml"      // basic config, used for most tests
+	configFileWarn  = ".yamllint-warn.yml" // config used for warning level tests
+	configFileNoExt = ".yamllint"          // no extension, a yamllint convention
 )
 
 type Tests struct {
@@ -33,11 +34,12 @@ func New(
 	}
 }
 
-// Run all tests
+// Run all tests.
 func (t *Tests) All(ctx context.Context) error {
 	p := pool.New().WithErrors().WithContext(ctx).WithMaxGoroutines(5)
 
 	// Options for 'New'
+	p.Go(t.DirectoryFilter)
 	p.Go(t.Config)
 	p.Go(t.Version)
 	p.Go(t.Base)
@@ -53,6 +55,35 @@ func (t *Tests) All(ctx context.Context) error {
 	p.Go(t.WithNoWarnings)
 
 	return p.Wait()
+}
+
+// DirectoryFilter ensures the pre-call filtering is properly setup.
+func (t *Tests) DirectoryFilter(ctx context.Context) error {
+	testDir := dag.Directory().
+		WithFile(configFile, t.Source.File(configFile)).          // .yml
+		WithFile(validFile, t.Source.File(validFile)).            // .yaml
+		WithFile(configFileNoExt, t.Source.File(configFileNoExt)) // .yamllint
+
+	entries, err := testDir.Entries(ctx)
+	if err != nil {
+		return fmt.Errorf("getting number of expected entries: %w", err)
+	}
+	expectedEntries := len(entries)
+
+	// can't access container directly, so try to use the config file AFTER filter.
+	// specifying the config via constructor options would invalidate this test.
+	out, err := dag.Yamllint(testDir).
+		Run(ctx, dagger.YamllintRunOpts{ExtraArgs: []string{"-c", ".yamllint", "--list-files"}})
+	if err != nil {
+		return fmt.Errorf("unexpected error: %w", err)
+	}
+
+	gotEntries := strings.Fields(out)
+	if len(gotEntries) != expectedEntries {
+		return fmt.Errorf("unexpected number of entries, expected %d, got %d: values %v", expectedEntries, len(gotEntries), gotEntries)
+	}
+
+	return nil
 }
 
 // Config validates config mounting.
