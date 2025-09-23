@@ -16,7 +16,9 @@ const (
 	validFile       = "valid.yaml"
 	configFile      = ".yamllint.yml"      // basic config, used for most tests
 	configFileWarn  = ".yamllint-warn.yml" // config used for warning level tests
-	configFileNoExt = ".yamllint"          // no extension, a yamllint convention
+	configFileNoExt = ".yamllint-foo"      // no extension, a yamllint convention with custom suffix
+	gitIgnore       = ".gitignore"         // common yamlignore file
+	yamlIgnore      = ".yamlignore"        // common yamlignore file
 )
 
 type Tests struct {
@@ -101,9 +103,11 @@ func (t *Tests) All(ctx context.Context) error {
 // DirectoryFilter ensures the pre-call filtering is properly setup.
 func (t *Tests) DirectoryFilter(ctx context.Context) error {
 	testDir := dag.Directory().
-		WithFile(configFile, t.Source.File(configFile)).          // .yml
-		WithFile(validFile, t.Source.File(validFile)).            // .yaml
-		WithFile(configFileNoExt, t.Source.File(configFileNoExt)) // .yamllint
+		WithFile(configFile, t.Source.File(configFile)).           // .yml
+		WithFile(validFile, t.Source.File(validFile)).             // .yaml
+		WithFile(configFileNoExt, t.Source.File(configFileNoExt)). // .yamllint
+		WithFile(gitIgnore, t.Source.File(gitIgnore)).             // .gitignore
+		WithFile(yamlIgnore, t.Source.File(yamlIgnore))            // .yamlignore
 
 	entries, err := testDir.Entries(ctx)
 	if err != nil {
@@ -114,7 +118,7 @@ func (t *Tests) DirectoryFilter(ctx context.Context) error {
 	// can't access container directly, so try to use the config file AFTER filter.
 	// specifying the config via constructor options would invalidate this test.
 	out, err := dag.Yamllint(testDir).
-		Run(ctx, dagger.YamllintRunOpts{ExtraArgs: []string{"-c", ".yamllint", "--list-files"}})
+		Run(ctx, dagger.YamllintRunOpts{ExtraArgs: []string{"-c", configFileNoExt, "--list-files"}})
 	if err != nil {
 		return fmt.Errorf("unexpected error: %w", err)
 	}
