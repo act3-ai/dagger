@@ -5,6 +5,7 @@ import (
 	"dagger/release/internal/dagger"
 	"dagger/release/util"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/sourcegraph/conc/pool"
@@ -12,45 +13,60 @@ import (
 
 // This file contains generic linters used in 'Check' commands for various project types. Language specific linters are used in their respective groups.
 
-// genericLint runs generic linters, e.g. markdown, yaml, etc.
-func (r *Release) genericLint(ctx context.Context,
-	results util.ResultsFormatter,
+// GenericLint runs shellcheck, yamllint, and markdownlint
+func (r *Release) GenericLint(ctx context.Context,
+	// +optional
 	base *dagger.Container,
-) error {
+	// skip any provided lint tests
+	// +optional
+	skip []string,
+) (string, error) {
+	results := util.NewResultsBasicFmt(strings.Repeat("=", 15))
+
 	p := pool.New().
 		WithErrors().
 		WithContext(ctx)
 
-	p.Go(func(ctx context.Context) error {
-		res, err := r.shellcheck(ctx, 4) // TODO: plumb concurrency?
-		results.Add("Shellcheck", res)
-		if err != nil {
-			return fmt.Errorf("running shellcheck: %w", err)
-		}
-		return nil
-	})
+	if !slices.Contains(skip, "shellcheck") {
+		p.Go(func(ctx context.Context) error {
+			res, err := r.shellcheck(ctx, 4) // TODO: plumb concurrency?
+			results.Add("Shellcheck", res)
+			if err != nil {
+				return fmt.Errorf("running shellcheck: %w", err)
+			}
+			return nil
+		})
+	}
 
-	p.Go(func(ctx context.Context) error {
-		res, err := dag.Yamllint(r.Source, dagger.YamllintOpts{Base: base}).
-			Run(ctx)
-		results.Add("Yamllint", res)
-		if err != nil {
-			return fmt.Errorf("running yamllint: %w", err)
-		}
-		return nil
-	})
+	if !slices.Contains(skip, "yamllint") {
+		p.Go(func(ctx context.Context) error {
+			res, err := dag.Yamllint(r.Source, dagger.YamllintOpts{Base: base}).
+				Run(ctx)
+			results.Add("Yamllint", res)
+			if err != nil {
+				return fmt.Errorf("running yamllint: %w", err)
+			}
+			return nil
+		})
+	}
 
-	p.Go(func(ctx context.Context) error {
-		res, err := dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Base: base}).
-			Run(ctx)
-		results.Add("Markdownlint", res)
-		if err != nil {
-			return fmt.Errorf("running markdownlint: %w", err)
-		}
-		return nil
-	})
+	if !slices.Contains(skip, "markdownlint") {
+		p.Go(func(ctx context.Context) error {
+			res, err := dag.Markdownlint(r.Source, dagger.MarkdownlintOpts{Base: base}).
+				Run(ctx)
+			results.Add("Markdownlint", res)
+			if err != nil {
+				return fmt.Errorf("running markdownlint: %w", err)
+			}
+			return nil
+		})
+	}
 
-	return p.Wait()
+	if err := p.Wait(); err != nil {
+		return "", err
+	}
+
+	return results.String(), nil
 }
 
 // shellcheck auto-detects and runs on all *.sh and *.bash files in the source directory.
