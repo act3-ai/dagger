@@ -1,0 +1,149 @@
+Docker Build
+
+act3-pipeline
+-- Lint(run multiple tests with 1 command)
+-- Release
+    generate (changelog, version, release notes)
+    Create (creates gitlab/github release)
+-- Scan
+    vulnerability
+    sbom
+
+
+Docker publish
+Python Publish
+
+
+package pipeline
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"dagger.io/dagger"
+	"github.com/sourcegraph/conc/pool"
+)
+
+// Helper: parse skips into a map for quick lookup
+func newSkipSet(skips []string) map[string]bool {
+	set := make(map[string]bool)
+	for _, s := range skips {
+		set[strings.ToLower(strings.TrimSpace(s))] = true
+	}
+	return set
+}
+
+// Helper: check if files matching glob exist
+func hasGlob(ctx context.Context, dir *dagger.Directory, pattern string) bool {
+	files, err := dir.Glob(ctx, pattern)
+	return err == nil && len(files) > 0
+}
+
+// Helper: check if file exists
+func hasFile(ctx context.Context, dir *dagger.Directory, path string) bool {
+	exists, _ := dir.File(path).Exists(ctx)
+	return exists
+}
+
+// Detect features based on file presence
+func DetectFeatures(ctx context.Context, dir *dagger.Directory) (map[string]bool, error) {
+	m := map[string]bool{}
+
+	m["markdownlint"] = hasGlob(ctx, dir, "**/*.md")
+	m["yamllint"] = hasGlob(ctx, dir, "**/*.y*ml")
+	m["golangci-lint"] = hasFile(ctx, dir, "go.mod")
+
+	return m, nil
+}
+
+// Each linter config
+type Linter struct {
+	Name    string
+	Feature string
+	Run     func(ctx context.Context) error
+}
+
+// Example linter functions (replace with real ones)
+func RunMarkdownLint(ctx context.Context, dir *dagger.Directory) error {
+	// Dummy logic — replace with actual linter call
+	fmt.Println("Running markdownlint")
+	return nil
+}
+
+func RunYamllint(ctx context.Context, dir *dagger.Directory) error {
+	fmt.Println("Running yamllint")
+	return nil
+}
+
+func RunGolangciLint(ctx context.Context, dir *dagger.Directory) error {
+	fmt.Println("Running golangci-lint")
+	return nil
+}
+
+// LintAll runs all applicable linters
+func (a *Act3Pipeline) LintAll(ctx context.Context,
+	Source *dagger.Directory,
+	skip []string,
+) (string, error) {
+	results := &strings.Builder{}
+	skips := newSkipSet(skip)
+
+	features, err := DetectFeatures(ctx, Source)
+	if err != nil {
+		return "", fmt.Errorf("failed to detect features: %w", err)
+	}
+
+	linters := []Linter{
+		{
+			Name:    "markdownlint",
+			Feature: "markdownlint",
+			Run: func(ctx context.Context) error {
+				return RunMarkdownLint(ctx, Source)
+			},
+		},
+		{
+			Name:    "yamllint",
+			Feature: "yamllint",
+			Run: func(ctx context.Context) error {
+				return RunYamllint(ctx, Source)
+			},
+		},
+		{
+			Name:    "golangci-lint",
+			Feature: "golangci-lint",
+			Run: func(ctx context.Context) error {
+				return RunGolangciLint(ctx, Source)
+			},
+		},
+	}
+
+	pl := pool.New().WithContext(ctx).WithErrors()
+
+	for _, l := range linters {
+		l := l // capture range variable
+
+		if skips[l.Name] {
+			results.WriteString(fmt.Sprintf("✖ %s — Skipped (user request)\n", l.Name))
+			continue
+		}
+
+		if !features[l.Feature] {
+			results.WriteString(fmt.Sprintf("✖ %s — Skipped (no matching files)\n", l.Name))
+			continue
+		}
+
+		pl.Go(func(ctx context.Context) error {
+			err := l.Run(ctx)
+			if err != nil {
+				results.WriteString(fmt.Sprintf("✖ %s — Failed: %v\n", l.Name, err))
+			} else {
+				results.WriteString(fmt.Sprintf("✔ %s — Success\n", l.Name))
+			}
+			return err
+		})
+	}
+
+	err = pl.Wait()
+	return results.String(), err
+}
