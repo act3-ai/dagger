@@ -44,7 +44,6 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.Directory, error) {
-	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 
 	if !ignoreError {
 		if err := r.gitStatus(ctx); err != nil {
@@ -73,6 +72,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// update changelog if it exists, else create new one at given changelogPath
+	d := r.gitRefAsDir()
 	exists, err := d.Exists(ctx, changelogPath)
 	if err != nil {
 		return nil, fmt.Errorf("generating changelog: %w", err)
@@ -81,7 +81,7 @@ func (r *Release) Prepare(ctx context.Context,
 		d = d.WithNewFile(changelogPath, "")
 	}
 
-	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
+	changelogFile := r.changelog(d, version, changelogPath, base, args)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -103,7 +103,6 @@ func (r *Release) Prepare(ctx context.Context,
 
 // gitStatus returns an error if a git repository contains uncommitted changes.
 func (r *Release) gitStatus(ctx context.Context) error {
-	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 
 	ctr := dag.Wolfi().
 		Container(
@@ -111,7 +110,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 				Packages: []string{"git"},
 			},
 		).
-		WithMountedDirectory("/work/src", d).
+		WithMountedDirectory("/work/src", r.gitRefAsDir()).
 		With(func(c *dagger.Container) *dagger.Container {
 			if r.GitIgnore != nil {
 				const gitIgnorePath = "/work/.gitignore"
@@ -168,9 +167,8 @@ func (r *Release) version(ctx context.Context,
 	// +optional
 	args []string,
 ) (string, error) {
-	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 
-	version, err := dag.GitCliff(d, dagger.GitCliffOpts{Container: base}).
+	version, err := dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
 			// method="" throws an error
 			if method != "" {
@@ -186,7 +184,10 @@ func (r *Release) version(ctx context.Context,
 // Generate the change log from conventional commit messages.
 //
 // changelog is a default changelog generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom changelogs.
-func (r *Release) changelog(ctx context.Context,
+func (r *Release) changelog(
+	//source directory for changelog
+	source *dagger.Directory,
+	//version to generate changelog for
 	version string,
 	// Changelog file path, relative to source directory
 	// +optional
@@ -199,9 +200,8 @@ func (r *Release) changelog(ctx context.Context,
 	// +optional
 	args []string,
 ) *dagger.File {
-	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	// generate and prepend to changelog
-	return dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
+	return dag.GitCliff(source, dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithStrip("footer").
 		WithUnreleased().
@@ -228,7 +228,6 @@ func (r *Release) notes(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.File, error) {
-	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	// generate and export release notes
 	notes, err := dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
@@ -260,7 +259,6 @@ func (r *Release) setHelmChartVersion(
 	// Chart.yaml path
 	chartPath string,
 ) *dagger.File {
-	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 
 	version = strings.TrimPrefix(version, "v")
 	updatedChart := dag.Wolfi().
