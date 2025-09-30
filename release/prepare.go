@@ -44,6 +44,8 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.Directory, error) {
+	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+
 	if !ignoreError {
 		if err := r.gitStatus(ctx); err != nil {
 			return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
@@ -71,12 +73,12 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// update changelog if it exists, else create new one at given changelogPath
-	exists, err := r.Source.Exists(ctx, changelogPath)
+	exists, err := d.Exists(ctx, changelogPath)
 	if err != nil {
 		return nil, fmt.Errorf("generating changelog: %w", err)
 	}
 	if !exists {
-		r.Source = r.Source.WithNewFile(changelogPath, "")
+		d = d.WithNewFile(changelogPath, "")
 	}
 
 	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
@@ -101,13 +103,15 @@ func (r *Release) Prepare(ctx context.Context,
 
 // gitStatus returns an error if a git repository contains uncommitted changes.
 func (r *Release) gitStatus(ctx context.Context) error {
+	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+
 	ctr := dag.Wolfi().
 		Container(
 			dagger.WolfiContainerOpts{
 				Packages: []string{"git"},
 			},
 		).
-		WithMountedDirectory("/work/src", r.Source).
+		WithMountedDirectory("/work/src", d).
 		With(func(c *dagger.Container) *dagger.Container {
 			if r.GitIgnore != nil {
 				const gitIgnorePath = "/work/.gitignore"
@@ -164,7 +168,9 @@ func (r *Release) version(ctx context.Context,
 	// +optional
 	args []string,
 ) (string, error) {
-	version, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
+	d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+
+	version, err := dag.GitCliff(d, dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
 			// method="" throws an error
 			if method != "" {
@@ -193,8 +199,9 @@ func (r *Release) changelog(ctx context.Context,
 	// +optional
 	args []string,
 ) *dagger.File {
+	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	// generate and prepend to changelog
-	return dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
+	return dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithStrip("footer").
 		WithUnreleased().
@@ -221,8 +228,9 @@ func (r *Release) notes(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.File, error) {
+	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	// generate and export release notes
-	notes, err := dag.GitCliff(r.Source, dagger.GitCliffOpts{Container: base}).
+	notes, err := dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithUnreleased().
 		WithStrip("all").
@@ -252,12 +260,14 @@ func (r *Release) setHelmChartVersion(
 	// Chart.yaml path
 	chartPath string,
 ) *dagger.File {
+	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+
 	version = strings.TrimPrefix(version, "v")
 	updatedChart := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
-		WithMountedDirectory("/src", r.Source).
+		WithMountedDirectory("/src", r.gitRefAsDir()).
 		WithWorkdir("/src").
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",
