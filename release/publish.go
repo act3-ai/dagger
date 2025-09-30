@@ -83,6 +83,9 @@ func (r *Release) CreateGithub(ctx context.Context,
 	// +optional
 	assets []*dagger.File,
 ) (string, error) {
+
+	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+
 	if title == "" {
 		title = version
 	}
@@ -91,7 +94,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 		dagger.GhOpts{
 			Token:  token,
 			Repo:   repo,
-			Source: r.Source,
+			Source: r.gitRefAsDir(),
 		}).
 		Release().
 		Create(ctx, version, title,

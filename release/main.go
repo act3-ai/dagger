@@ -24,9 +24,9 @@ import (
 )
 
 type Release struct {
-	// Source git repository
+	// Git Ref Source, ex: https://gitlab.com/my/app.git
 	// +private
-	Source *dagger.Directory
+	GitRef *dagger.GitRef
 	// +private
 	RegistryConfig *dagger.RegistryConfig
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
@@ -38,8 +38,8 @@ type Release struct {
 }
 
 func New(
-	// top level source code directory
-	src *dagger.Directory,
+	// Git Ref Source, ex: https://gitlab.com/my/app.git
+	gitref *dagger.GitRef,
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional
 	netrc *dagger.Secret,
@@ -48,7 +48,7 @@ func New(
 	gitIgnore *dagger.File,
 ) (*Release, error) {
 	return &Release{
-		Source:         src,
+		GitRef:         gitref,
 		RegistryConfig: dag.RegistryConfig(),
 		Netrc:          netrc,
 		GitIgnore:      gitIgnore,
@@ -66,6 +66,7 @@ func (r *Release) WithRegistryAuth(
 ) *Release {
 	r.RegistryConfig = r.RegistryConfig.WithRegistryAuth(address, username, secret)
 	return r
+
 }
 
 // Removes credentials for a private registry.
@@ -75,4 +76,9 @@ func (r *Release) WithoutRegistryAuth(
 ) *Release {
 	r.RegistryConfig = r.RegistryConfig.WithoutRegistryAuth(address)
 	return r
+}
+
+// convert GitRef to a Directory
+func (r *Release) gitRefAsDir() *dagger.Directory {
+	return r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 }
