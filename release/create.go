@@ -84,8 +84,6 @@ func (r *Release) CreateGithub(ctx context.Context,
 	assets []*dagger.File,
 ) (string, error) {
 
-	// d := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
-
 	if title == "" {
 		title = version
 	}
