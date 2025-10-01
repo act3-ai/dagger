@@ -66,7 +66,7 @@ func (r *Release) orasCtr() *dagger.Container {
 		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret())
 }
 
-// CreateGithub creates a release in GitHub.
+// Create a release in GitHub.
 func (r *Release) CreateGithub(ctx context.Context,
 	// GitHub repository, without "github.com"
 	repo string,
@@ -106,7 +106,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 	return fmt.Sprintf("Successfully published release to 'github.com/%s'", repo), nil
 }
 
-// CreateGitlab creates a release in a public or private GitLab instance.
+// Create a release in a public or private GitLab instance.
 func (r *Release) CreateGitlab(ctx context.Context,
 	// GitLab host
 	// +optional
@@ -144,8 +144,8 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		WithEnvVariable("GITLAB_HOST", host).
 		WithExec([]string{"glab", "release", "create",
 			"-R", project, // repository
-			version,                         // tag
-			"--name=" + version,             // title
+			version, // tag
+			"--name=" + title,
 			"--notes-file=" + notesFileName, // description
 		}).
 		Stdout(ctx)
