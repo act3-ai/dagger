@@ -52,7 +52,7 @@ func (t *Tests) WithLabels(ctx context.Context,
 	const expectedName = `test.io`
 	const expectedValue = `label1`
 
-	ctr := dag.Docker(dagger.DockerOpts{Src: src}).WithLabel("test.io", "label1").
+	ctr := dag.Docker(src).WithLabel("test.io", "label1").
 		Build(dagger.DockerBuildOpts{Target: "with-label"})
 
 	labelList, err := ctr.Labels(ctx)
@@ -87,7 +87,7 @@ func (t *Tests) WithBuildArg(ctx context.Context,
 
 	// dagger has no list build arg function, so build arg is being set to file in Dockerfile
 	// .Stdout() requires a WithExec, even if one is in Dockerfile
-	actual, err := dag.Docker(dagger.DockerOpts{Src: src}).WithBuildArg("TEST_ARG1", "testvalue1").
+	actual, err := dag.Docker(src).WithBuildArg("TEST_ARG1", "testvalue1").
 		Build(dagger.DockerBuildOpts{Target: "with-build-arg"}).WithExec([]string{"cat", "testarg.txt"}).Stdout(ctx)
 
 	const expected = "testvalue1"
@@ -105,7 +105,7 @@ func (t *Tests) WithSecret(ctx context.Context,
 	// +defaultPath="."
 	src *dagger.Directory) error {
 
-	_, err := dag.Docker(dagger.DockerOpts{Src: src}).
+	_, err := dag.Docker(src).
 		WithSecret("TEST_SECRET1", dag.SetSecret("DUMMY_SECRET1", "password1")).
 		Build(dagger.DockerBuildOpts{Target: "with-secret"}).
 		Sync(ctx)
