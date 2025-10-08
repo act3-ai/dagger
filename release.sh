@@ -45,13 +45,14 @@ prepare)
     dagger -m "$module"/tests call all
 
     version=$(dagger -m git-cliff call --src="." \
+    with-unreleased \
     with-include-path --pattern "$module/**" \
-    bumped-version)
+    bumped-version --args="--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$")
     #needed because version tag is format of module/v1.0.0
     stripped_version="${version#*/}"
     
     #generate and export new version/release notes
-    dagger -m release call --src="." prepare \
+    dagger -m release call --gitref="https://github.com/act3-ai/dagger" prepare \
     --changelog-path "$module/CHANGELOG.md" \
     --notes-path "$module/releases/$stripped_version.md" \
     --version "$version" \
@@ -88,7 +89,7 @@ publish)
     notesPath="$module/releases/$stripped_version.md"
     
     # create release, upload artifacts
-    dagger -m release --src=. call \
+    dagger -m release --gitref="https://github.com/act3-ai/dagger" call \
         create-github \
         --token=env://GITHUB_TOKEN \
         --repo="act3-ai/dagger" \
