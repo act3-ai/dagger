@@ -4,7 +4,7 @@
 
 dagger -m github.com/act3-ai/dagger/renovate call \
 --platform=github \
---endpoint-url=http://github.com \
+--endpoint-url=https://github.com \
 --project=act3-ai/dagger \
 --token=env:GITHUB_TOKEN \
   update
@@ -13,7 +13,7 @@ dagger -m github.com/act3-ai/dagger/renovate call \
 # Also creates PRs using signed commits from author provided.
 dagger -m github.com/act3-ai/dagger/renovate call \
 --platform=github \
---endpoint-url=http://github.com \
+--endpoint-url=https://github.com \
 --project=act3-ai/dagger \
 --author="$GITHUB_USER" \
 --email="$GITHUB_EMAIL" \

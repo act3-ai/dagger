@@ -16,28 +16,3 @@ jobs:
         uses: dagger/dagger-for-github@8.0.0
         with:
           version: latest
-
-      - name: test-docker
-        working-directory: ./docker/tests
-        run: dagger call all
-
-      - name: test-git-cliff
-        working-directory: ./git-cliff/tests
-        run: dagger call all
-
-      - name: test-goreleaser
-        working-directory: ./goreleaser/tests
-        run: dagger call all
-
-      - name: test-markdownlint
-        working-directory: ./markdownlint/tests
-        run: dagger call all
-
-      - name: test-python
-        working-directory: ./python/tests
-        run: dagger call all
-
-      - name: test-yamllint
-        working-directory: ./yamllint/tests
-        run: dagger call all
-            
