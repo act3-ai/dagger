@@ -105,4 +105,14 @@ upgrade_act3_module_deps() {
 
 }
 
-upgrade_dagger_engine_all
+#call function
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+  if declare -f "$1" > /dev/null; then
+    "$@"
+  else
+    echo "Error: '$1' is not a valid function."
+    echo "Available functions:"
+    declare -F | awk '{print $3}'
+    exit 1
+  fi
+fi
