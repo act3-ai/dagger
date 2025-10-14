@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 list_modules() {
-find . -maxdepth 2 -mindepth 2 -type f -name dagger.json -exec dirname {} \; | sed 's|^\./||'
+  find . -maxdepth 2 -mindepth 2 -type f -name dagger.json -exec dirname {} \; | sed 's|^\./||'
 }
 
 list_modules_with_tests() {
-find . -maxdepth 3 -type f -path './*/tests/dagger.json' -exec dirname {} \; | sed 's|^\./||'
+  find . -maxdepth 3 -type f -path './*/tests/dagger.json' -exec dirname {} \; | sed 's|^\./||'
 }
 
 detect_latest_dagger_version() {
@@ -15,15 +15,15 @@ detect_latest_dagger_version() {
 
 
 check_git_status() {
-local path="${1:-}"
+  local path="${1:-}"
 
-if [[ -z "$path" ]]; then
-  # No argument provided: check entire repo
-  git status --porcelain
-else
-  # Argument provided: check only the given path
-  git status --porcelain "$path"
-fi
+  if [[ -z "$path" ]]; then
+    # No argument provided: check entire repo
+    git status --porcelain
+  else
+    # Argument provided: check only the given path
+    git status --porcelain "$path"
+  fi
 }
 
 upgrade_dagger_engine() {
@@ -33,9 +33,9 @@ upgrade_dagger_engine() {
     exit 1
   fi
 
-module="$1"
-LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
-CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
+  module="$1"
+  LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
+  CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
 
   if [[ "$CURRENT_DAGGER_VERSION" != "$LATEST_DAGGER_VERSION" ]]; then
     echo "Upgrading Dagger Engine in $module from $CURRENT_DAGGER_VERSION to $LATEST_DAGGER_VERSION"
@@ -49,12 +49,12 @@ CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
 #update dagger engine to latest version in all modules
 upgrade_dagger_engine_all() {
 
-#upgrade dagger engine locally first
-brew upgrade dagger
+  #upgrade dagger engine locally first
+  brew upgrade dagger
 
-#create branch for updates
-LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
-git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
+  #create branch for updates
+  LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
+  git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 
   #upgrade dagger engine in modules
   for module in $(list_modules); do
@@ -92,16 +92,16 @@ git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 #find any act3 module updates and update release module with latest
 upgrade_act3_module_deps() {
 
-dagger -m github.com/act3-ai/dagger/renovate call \
---platform=github \
---endpoint-url=https://api.github.com/ \
---project=act3-ai/dagger \
---author="$GITHUB_USER" \
---email="$GITHUB_EMAIL" \
---token=env:GITHUB_TOKEN \
---git-private-key=env:GITHUB_PRIVATE_KEY \
---enabled-managers="custom.regex" \
-  update
+  dagger -m github.com/act3-ai/dagger/renovate call \
+    --platform=github \
+    --endpoint-url=https://api.github.com \
+    --project=act3-ai/dagger \
+    --author="$GITHUB_USER" \
+    --email="$GITHUB_EMAIL" \
+    --token=env:GITHUB_TOKEN \
+    --git-private-key=env:GITHUB_PRIVATE_KEY \
+    --enabled-managers="custom.regex" \
+      update
 
 }
 
