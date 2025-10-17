@@ -20,7 +20,7 @@ type GitCliff struct {
 
 func New(ctx context.Context,
 	// Git repository source.
-	src *dagger.Directory,
+	gitref *dagger.GitRef,
 
 	// Custom container to use as a base container. Must have 'git-cliff' available on PATH.
 	// +optional
@@ -64,7 +64,7 @@ func New(ctx context.Context,
 			return c
 		}).
 		WithWorkdir(srcDir).
-		WithMountedDirectory(srcDir, src)
+		WithMountedDirectory(srcDir, gitref.Tree(dagger.GitRefTreeOpts{Depth: -1}))
 
 	return &GitCliff{
 		Container: container,

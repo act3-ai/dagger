@@ -76,12 +76,12 @@ func (t *Tests) All(ctx context.Context) error {
 func (t *Tests) BumpedVersion(ctx context.Context) error {
 
 	//version should be bumped with a fix: commit
-	gitDir := t.gitRepo().
+	gitRef := t.gitRepo().
 		WithNewFile("test.md", "test").
 		WithExec([]string{"git", "add", "test.md"}).
-		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo")
+		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	actual, err := dag.GitCliff(gitDir).BumpedVersion(ctx)
+	actual, err := dag.GitCliff(gitRef).BumpedVersion(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -99,12 +99,12 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 func (t *Tests) BumpedVersionIncludePath(ctx context.Context) error {
 
 	//version should be bumped with a fix: commit.
-	gitDir := t.gitRepo().
+	gitRef := t.gitRepo().
 		WithNewFile("test/test.md", "test").
 		WithExec([]string{"git", "add", "test/test.md"}).
-		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo")
+		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	actual, err := dag.GitCliff(gitDir).WithIncludePath([]string{"test/**"}).BumpedVersion(ctx)
+	actual, err := dag.GitCliff(gitRef).WithIncludePath([]string{"test/**"}).BumpedVersion(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -123,12 +123,12 @@ func (t *Tests) BumpedVersionIncludePath(ctx context.Context) error {
 func (t *Tests) BumpedVersionExcludePath(ctx context.Context) error {
 
 	//fix: commit is excluded so version should NOT be bumped.
-	gitDir := t.gitRepo().
+	gitRef := t.gitRepo().
 		WithNewFile("test/test.md", "test").
 		WithExec([]string{"git", "add", "test/test.md"}).
-		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo")
+		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	actual, err := dag.GitCliff(gitDir).WithExcludePath([]string{"test/**"}).BumpedVersion(ctx)
+	actual, err := dag.GitCliff(gitRef).WithExcludePath([]string{"test/**"}).BumpedVersion(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -146,9 +146,9 @@ func (t *Tests) BumpedVersionExcludePath(ctx context.Context) error {
 // test WithLatest
 func (t *Tests) WithLatest(ctx context.Context) error {
 
-	gitDir := t.gitRepo().Directory("/repo")
+	gitRef := t.gitRepo().Directory("/repo").AsGit().Head()
 
-	output, err := dag.GitCliff(gitDir).WithLatest().Run().Stdout(ctx)
+	output, err := dag.GitCliff(gitRef).WithLatest().Run().Stdout(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -164,9 +164,9 @@ func (t *Tests) WithLatest(ctx context.Context) error {
 // test WithCurrent
 func (t *Tests) WithCurrent(ctx context.Context) error {
 
-	gitDir := t.gitRepo().Directory("/repo")
+	gitRef := t.gitRepo().Directory("/repo").AsGit().Head()
 
-	output, err := dag.GitCliff(gitDir).WithCurrent().Run().Stdout(ctx)
+	output, err := dag.GitCliff(gitRef).WithCurrent().Run().Stdout(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -182,9 +182,9 @@ func (t *Tests) WithCurrent(ctx context.Context) error {
 // test WithUnreleased
 func (t *Tests) WithUnreleased(ctx context.Context) error {
 
-	gitDir := t.gitRepo().Directory("/repo")
+	gitRef := t.gitRepo().Directory("/repo").AsGit().Head()
 
-	output, err := dag.GitCliff(gitDir).WithUnreleased().Run().Stdout(ctx)
+	output, err := dag.GitCliff(gitRef).WithUnreleased().Run().Stdout(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -200,9 +200,9 @@ func (t *Tests) WithUnreleased(ctx context.Context) error {
 // test WithOutput
 func (t *Tests) WithOutput(ctx context.Context) error {
 
-	gitDir := t.gitRepo().Directory("/repo")
+	gitRef := t.gitRepo().Directory("/repo").AsGit().Head()
 
-	file := dag.GitCliff(gitDir).WithOutput("CHANGELOG.md").Run().File("CHANGELOG.md")
+	file := dag.GitCliff(gitRef).WithOutput("CHANGELOG.md").Run().File("CHANGELOG.md")
 
 	contents, err := file.Contents(ctx)
 
