@@ -44,7 +44,7 @@ prepare)
     #run module tests
     dagger -m "$module"/tests call all
 
-    version=$(dagger -m git-cliff call --src="." \
+    version=$(dagger -m git-cliff call --gitref="." \
     with-unreleased \
     with-include-path --pattern "$module/**" \
     bumped-version --args="--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$")
@@ -52,7 +52,7 @@ prepare)
     stripped_version="${version#*/}"
     
     #generate and export new version/release notes
-    dagger -m release call --gitref="https://github.com/act3-ai/dagger" prepare \
+    dagger -m release call --gitref="." prepare \
     --changelog-path "$module/CHANGELOG.md" \
     --notes-path "$module/releases/$stripped_version.md" \
     --version "$version" \
