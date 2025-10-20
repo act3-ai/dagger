@@ -118,14 +118,6 @@ func (r *Release) gitStatus(ctx context.Context) error {
 			},
 		).
 		WithMountedDirectory("/work/src", r.gitRefAsDir()).
-		With(func(c *dagger.Container) *dagger.Container {
-			if r.GitIgnore != nil {
-				const gitIgnorePath = "/work/.gitignore"
-				c = c.WithMountedFile(gitIgnorePath, r.GitIgnore).
-					WithExec([]string{"git", "config", "--global", "core.excludesfile", gitIgnorePath})
-			}
-			return c
-		}).
 		WithWorkdir("/work/src")
 
 	var errs []error
