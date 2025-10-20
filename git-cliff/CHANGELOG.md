@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [git-cliff/v0.2.0] - 2025-10-17
+
+### 🚀 Features
+
+- Change --src to --gitref and only accept a dagger.GitRef instead of a directory [848fd67](https://github.com/act3-ai/dagger/commit/848fd674342b1a77296a23d6907857b4fc11dec1) by **Paul Spurlock**
+
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger engine to v0.19.2 [71853cb](https://github.com/act3-ai/dagger/commit/71853cbbccbb65652efddff50a972241b943542a) by **Paul Spurlock**
+
+
 ## [git-cliff/v0.1.4] - 2025-09-19
 
 ### 🐛 Bug Fixes
