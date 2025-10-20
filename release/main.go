@@ -73,6 +73,6 @@ func (r *Release) WithoutRegistryAuth(
 }
 
 // convert GitRef to a Directory
-func (r *Release) gitRefAsDir() *dagger.Directory {
-	return r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+func (r *Release) gitRefAsDir(gitref *dagger.GitRef) *dagger.Directory {
+	return gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
 }
