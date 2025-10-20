@@ -12,7 +12,7 @@
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.1.4",
+      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.0",
       "pin": "148ad001be7b106a56fcae9080f8d6503a1b7662"
     },
     {
