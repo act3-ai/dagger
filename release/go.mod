@@ -3,7 +3,7 @@ module dagger/release
 go 1.24.0
 
 require (
-	github.com/99designs/gqlgen v0.17.79
+	github.com/99designs/gqlgen v0.17.80
 	github.com/Khan/genqlient v0.8.1
 	github.com/sourcegraph/conc v0.3.0
 	github.com/stretchr/testify v1.11.1
