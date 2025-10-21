@@ -1,5 +1,6 @@
-// Yamllint provides utility to lint YAML files without needing to download locally with pip or homebrew.
-// It provides nearly all functionality given by yamllint, only exluding stdin uses.
+// Yamllint is a utility that lints YAML files without needing to download locally with pip or homebrew.
+
+// It provides nearly all functionality given by yamllint by accepting a source directory or file.
 //  See https://github.com/adrienverge/yamllint for more information.
 
 package main
@@ -76,9 +77,9 @@ func New(ctx context.Context,
 	}
 }
 
-// Run 'yamllint' with all previously provided options.
+// Runs 'yamllint' with all previously provided 'with' options.
 //
-// May be used as a "catch-all" in case functions are not implemented.
+// May be used as a "catch-all" in case functions are not implemented via extraArgs.
 func (y *Yamllint) Run(ctx context.Context,
 	// Output results, without an error.
 	// +optional
