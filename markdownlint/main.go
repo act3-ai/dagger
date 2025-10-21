@@ -44,7 +44,8 @@ func New(ctx context.Context,
 ) *Markdownlint {
 	if base == nil {
 		base = dag.Container().
-			From(fmt.Sprintf("%s:%s", defaultImageRepository, version))
+			From(fmt.Sprintf("%s:%s", defaultImageRepository, version)).
+			WithUser("root")
 	}
 
 	var disableDefaultGlobs bool
