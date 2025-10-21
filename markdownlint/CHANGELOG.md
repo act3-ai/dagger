@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [markdownlint/v0.1.5] - 2025-10-21
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger engine to v0.19.2 [9b99fcf](https://github.com/act3-ai/dagger/commit/9b99fcf07da8e4fd83cb452c3eb5d52eaf3d7573) by **Paul Spurlock**
+
+
 ## [markdownlint/v0.1.4] - 2025-10-21
 
 ### 🐛 Bug Fixes
