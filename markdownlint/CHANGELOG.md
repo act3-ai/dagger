@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [markdownlint/v0.1.4] - 2025-10-21
+
+### 🐛 Bug Fixes
+
+- Use user 'root' to avoid permissions errors with scanning [bec6a10](https://github.com/act3-ai/dagger/commit/bec6a10ab35d4ee8ab6c1b87a75c17061d7cb295) by **Paul Spurlock**
+
+
 ## [markdownlint/v0.1.3] - 2025-09-19
 
 ### 🐛 Bug Fixes
