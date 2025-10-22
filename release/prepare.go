@@ -28,7 +28,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	// +default="CHANGELOG.md"
 	changelogPath string,
-	// Release notes file path, relative to source directory. Default: releases/v<version>.md.
+	// Release notes file path, relative to source directory. Default: releases/<version>.md.
 	// +optional
 	notesPath string,
 	// Additional information to include in release notes. Injected after header and before commit
@@ -40,7 +40,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// ignore git status errors
 	// +optional
 	ignoreError bool,
-	// additional arguments to git-cliff --bumped version
+	// additional arguments to git-cliff --bumped-version
 	// +optional
 	args []string,
 ) (*dagger.Directory, error) {
@@ -61,7 +61,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// check if version already exists in repo
-	versionCheck, err := r.gitRefAsDir().AsGit().Tag(version).Ref(ctx)
+	versionCheck, err := r.gitRefAsDir(r.GitRef).AsGit().Tag(version).Ref(ctx)
 
 	if err == nil {
 		return nil, fmt.Errorf("tag %q already exists: %s", strings.TrimSpace(version), versionCheck)
@@ -78,17 +78,8 @@ func (r *Release) Prepare(ctx context.Context,
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
 
-	// update changelog if it exists, else create new one at given changelogPath
-	d := r.gitRefAsDir()
-	exists, err := d.Exists(ctx, changelogPath)
-	if err != nil {
-		return nil, fmt.Errorf("generating changelog: %w", err)
-	}
-	if !exists {
-		d = d.WithNewFile(changelogPath, "")
-	}
-
-	changelogFile := r.changelog(d, version, changelogPath, base, args)
+	//Create changelog if it doesn't exist, otherwise prepend to existing changelogPath
+	changelogFile := r.changelog(ctx, r.GitRef, version, changelogPath, base, args)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -117,7 +108,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 				Packages: []string{"git"},
 			},
 		).
-		WithMountedDirectory("/work/src", r.gitRefAsDir()).
+		WithMountedDirectory("/work/src", r.gitRefAsDir(r.GitRef)).
 		WithWorkdir("/work/src")
 
 	var errs []error
@@ -153,8 +144,6 @@ func (r *Release) gitStatus(ctx context.Context) error {
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
-//
-// Includes 'v' prefix.
 func (r *Release) version(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
@@ -167,7 +156,7 @@ func (r *Release) version(ctx context.Context,
 	args []string,
 ) (string, error) {
 
-	version, err := dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
+	version, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
 			// method="" throws an error
 			if method != "" {
@@ -188,8 +177,9 @@ func (r *Release) version(ctx context.Context,
 //
 // changelog is a default changelog generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom changelogs.
 func (r *Release) changelog(
-	//source directory for changelog
-	source *dagger.Directory,
+	ctx context.Context,
+	//gitref source for changelog
+	gitref *dagger.GitRef,
 	//version to generate changelog for
 	version string,
 	// Changelog file path, relative to source directory
@@ -203,12 +193,26 @@ func (r *Release) changelog(
 	// +optional
 	args []string,
 ) *dagger.File {
+
 	// generate and prepend to changelog
-	return dag.GitCliff(source, dagger.GitCliffOpts{Container: base}).
+	return dag.GitCliff(gitref, dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithStrip("footer").
 		WithUnreleased().
-		WithPrepend(changelog).
+		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
+			// check if changelog file exists, if not create it
+			exists, err := r.gitRefAsDir(gitref).Exists(ctx, changelog)
+			if err != nil {
+				panic(fmt.Errorf("failed to check if %s exists: %w", changelog, err))
+			}
+
+			if !exists {
+				return gc.WithOutput(changelog)
+			}
+
+			// if file exists, prepend instead
+			return gc.WithPrepend(changelog)
+		}).
 		Run(dagger.GitCliffRunOpts{Args: args}).
 		File(changelog)
 }
@@ -232,7 +236,7 @@ func (r *Release) notes(ctx context.Context,
 	args []string,
 ) (*dagger.File, error) {
 	// generate and export release notes
-	notes, err := dag.GitCliff(r.gitRefAsDir(), dagger.GitCliffOpts{Container: base}).
+	notes, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithUnreleased().
 		WithStrip("all").
@@ -268,7 +272,7 @@ func (r *Release) setHelmChartVersion(
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
-		WithMountedDirectory("/src", r.gitRefAsDir()).
+		WithMountedDirectory("/src", r.gitRefAsDir(r.GitRef)).
 		WithWorkdir("/src").
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",

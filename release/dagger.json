@@ -8,22 +8,22 @@
     {
       "name": "gh",
       "source": "github.com/sagikazarmark/daggerverse/gh@main",
-      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.1.4",
-      "pin": "148ad001be7b106a56fcae9080f8d6503a1b7662"
+      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.0",
+      "pin": "74fc73ef2d2ada1b7ae9d0bb24bba7ead4c8b2da"
     },
     {
       "name": "go",
       "source": "github.com/sagikazarmark/daggerverse/go@main",
-      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
     },
     {
       "name": "golangci-lint",
       "source": "github.com/sagikazarmark/daggerverse/golangci-lint@main",
-      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
     },
     {
       "name": "govulncheck",
@@ -43,7 +43,7 @@
     {
       "name": "registry-config",
       "source": "github.com/sagikazarmark/daggerverse/registry-config@main",
-      "pin": "88056b48085a170fbf7638e106efbecd26c6573d"
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
     },
     {
       "name": "shellcheck",
