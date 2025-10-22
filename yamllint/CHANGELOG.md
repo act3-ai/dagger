@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [yamllint/v0.1.7] - 2025-10-21
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger engine to v0.19.2 [aee0947](https://github.com/act3-ai/dagger/commit/aee09479207ceb84fff790bd8e18c84115fd7982) by **Paul Spurlock**
+
+
+## [yamllint/v0.1.6] - 2025-10-21
+
+### 🐛 Bug Fixes
+
+- Directory filters too restrictive (#42) [abc9bc9](https://github.com/act3-ai/dagger/commit/abc9bc9161677156f30819d7aa7abed0a6f16a65) by **Nathan Joslin**
+
+- Description [0e1de86](https://github.com/act3-ai/dagger/commit/0e1de8687300a501f88a8d154866f2dad37672c6) by **Paul Spurlock**
+
+
 ## [yamllint/v0.1.5] - 2025-09-23
 
 ### 🐛 Bug Fixes
