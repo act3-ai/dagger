@@ -5,6 +5,7 @@ import (
 	"context"
 	"dagger/git-cliff/internal/dagger"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -190,7 +191,16 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	cmd = append(cmd, "--bumped-version")
 	cmd = append(cmd, args...)
 
-	return gc.Container.WithExec(cmd).
+	ctr := gc.Container.WithExec(cmd)
+
+	stderr, _ := ctr.Stderr(ctx)
+
+	if strings.Contains(stderr, "There is nothing to bump") {
+		combined, _ := ctr.CombinedOutput(ctx)
+		return "", fmt.Errorf("failed to bump version:\n%s", combined)
+	}
+
+	return ctr.
 		Stdout(ctx)
 }
 
