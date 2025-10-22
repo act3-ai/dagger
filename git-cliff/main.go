@@ -213,6 +213,14 @@ func (gc *GitCliff) WithGiteaToken(
 	return gc.WithSecretVariable("GITEA_TOKEN", token)
 }
 
+// Prints bumped version for unreleased changes.
+//
+// e.g. `git-cliff --bumped-version`.
+func (gc *GitCliff) WithBumpedVersion() *GitCliff {
+	gc.Command = append(gc.Command, "--bumped-version")
+	return gc
+}
+
 // Bump the version for unreleased changes. Optionally with specified bump method/type.
 //
 // e.g. `git-cliff --bump`.
@@ -224,6 +232,19 @@ func (gc *GitCliff) WithBump(
 	gc.Command = append(gc.Command, "--bump")
 	if method != "" {
 		gc.Command = append(gc.Command, method)
+	}
+	return gc
+}
+
+// Sets the regex for matching git tags.
+//
+// e.g. `git-cliff --tag-pattern`.
+func (gc *GitCliff) WithTagPattern(
+	// glob pattern
+	pattern []string,
+) *GitCliff {
+	for _, p := range pattern {
+		gc.Command = append(gc.Command, "--include-path", p)
 	}
 	return gc
 }
