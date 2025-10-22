@@ -159,6 +159,28 @@ func (gc *GitCliff) Run(
 }
 
 // Prints bumped version for unreleased changes.
+//
+// e.g. `git-cliff --bumped-version`.
+func (gc *GitCliff) WithBumpedVersion(ctx context.Context,
+) *GitCliff {
+	gc.Command = append(gc.Command, "--bumped-version")
+	return gc
+}
+
+// Sets the regex for matching git tags.
+//
+// e.g. `git-cliff --tag-pattern`.
+func (gc *GitCliff) WithTagPattern(ctx context.Context,
+	// glob pattern
+	pattern []string,
+) *GitCliff {
+	for _, p := range pattern {
+		gc.Command = append(gc.Command, "--tag-pattern", p)
+	}
+	return gc
+}
+
+// Prints bumped version for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	// additional arguments and flags for git-cliff
 	// +optional
