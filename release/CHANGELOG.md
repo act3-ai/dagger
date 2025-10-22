@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.2.2] - 2025-10-22
+
+### 🐛 Bug Fixes
+
+- Update dependency act3-ai/dagger to git-cliff/v0.2.0 [6248f0f](https://github.com/act3-ai/dagger/commit/6248f0f4caff0ff5103b946e3c29b2a1df321a85) by **Paul Spurlock**
+
+- Update git-cliff functions to use gitRef instead of src [7ad89bf](https://github.com/act3-ai/dagger/commit/7ad89bf2aec8a8f73002bff76c7989e47082c09d) by **Paul Spurlock**
+
+
 ## [release/v0.2.1] - 2025-10-20
 
 ### 🐛 Bug Fixes
