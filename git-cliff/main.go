@@ -244,7 +244,7 @@ func (gc *GitCliff) WithTagPattern(
 	pattern []string,
 ) *GitCliff {
 	for _, p := range pattern {
-		gc.Command = append(gc.Command, "--include-path", p)
+		gc.Command = append(gc.Command, "--tag-pattern", p)
 	}
 	return gc
 }
