@@ -65,6 +65,8 @@ func (t *Tests) All(ctx context.Context) error {
 	p.Go(t.BumpedVersion)
 	p.Go(t.BumpedVersionIncludePath)
 	p.Go(t.BumpedVersionExcludePath)
+	p.Go(t.WithBumpedVersion)
+	p.Go(t.WithTagPattern)
 	p.Go(t.WithLatest)
 	p.Go(t.WithCurrent)
 	p.Go(t.WithOutput)
@@ -72,7 +74,7 @@ func (t *Tests) All(ctx context.Context) error {
 	return p.Wait()
 }
 
-// test bumped version
+// test BumpedVersion
 func (t *Tests) BumpedVersion(ctx context.Context) error {
 
 	//version should be bumped with a fix: commit
@@ -82,6 +84,30 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
 	actual, err := dag.GitCliff(gitRef).BumpedVersion(ctx)
+
+	if err != nil {
+		return parseErr(err)
+	}
+
+	const expected = `v1.0.1`
+
+	if strings.TrimSpace(actual) != expected {
+		return fmt.Errorf("tag does not match the expected value\nactual:   %s\nexpected: %s", actual, expected)
+	}
+
+	return err
+}
+
+// test WithBumpedVersion
+func (t *Tests) WithBumpedVersion(ctx context.Context) error {
+
+	//version should be bumped with a fix: commit
+	gitRef := t.gitRepo().
+		WithNewFile("test.md", "test").
+		WithExec([]string{"git", "add", "test.md"}).
+		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
+
+	actual, err := dag.GitCliff(gitRef).WithBumpedVersion().Run().Stdout(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -135,6 +161,32 @@ func (t *Tests) BumpedVersionExcludePath(ctx context.Context) error {
 	}
 
 	const expected = `v1.0.0`
+
+	if strings.TrimSpace(actual) != expected {
+		return fmt.Errorf("tag does not match the expected value\nactual:   %s\nexpected: %s", actual, expected)
+	}
+
+	return err
+}
+
+// test withTagPattern
+func (t *Tests) WithTagPattern(ctx context.Context) error {
+
+	//version should be bumped with a fix: commit
+	gitRef := t.gitRepo().
+		WithNewFile("test.md", "test").
+		WithExec([]string{"git", "add", "test.md"}).
+		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
+
+	var tagPattern = []string{"v[0-9]+.[0-9]+.[0-9]+$"}
+
+	actual, err := dag.GitCliff(gitRef).WithTagPattern(tagPattern).BumpedVersion(ctx)
+
+	if err != nil {
+		return parseErr(err)
+	}
+
+	const expected = `v1.0.1`
 
 	if strings.TrimSpace(actual) != expected {
 		return fmt.Errorf("tag does not match the expected value\nactual:   %s\nexpected: %s", actual, expected)
