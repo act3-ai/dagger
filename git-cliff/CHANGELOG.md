@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [git-cliff/v0.2.1] - 2025-10-23
+
+### 🐛 Bug Fixes
+
+- Add WithTagPattern and WithBumpedVersion functions [e48fa16](https://github.com/act3-ai/dagger/commit/e48fa162cb0c65f2e5763dd0a2fc00c823694e33) by **Paul Spurlock**
+
+
 ## [git-cliff/v0.2.0] - 2025-10-17
 
 ### 🚀 Features
