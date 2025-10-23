@@ -74,7 +74,7 @@ func (t *Tests) All(ctx context.Context) error {
 	return p.Wait()
 }
 
-// test withBumpedVersion
+// test BumpedVersion
 func (t *Tests) BumpedVersion(ctx context.Context) error {
 
 	//version should be bumped with a fix: commit
@@ -98,7 +98,7 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 	return err
 }
 
-// test bumped version
+// test WithBumpedVersion
 func (t *Tests) WithBumpedVersion(ctx context.Context) error {
 
 	//version should be bumped with a fix: commit
