@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [release/v0.2.3] - 2025-10-24
+
+### 🐛 Bug Fixes
+
+- Update git-cliff to v0.2.1 [3994eec](https://github.com/act3-ai/dagger/commit/3994eeca1df882ca96bf5d7345baa92c4edfd9b7) by **Paul Spurlock**
+
+- Improve error handling when git-cliff bump fails to bump version [b12ed52](https://github.com/act3-ai/dagger/commit/b12ed52d00a84ac0b053bc92ac573d65b1f840c0) by **Paul Spurlock**
+
+- Add test for prepare [5f8231a](https://github.com/act3-ai/dagger/commit/5f8231a286aa4b5256f081047b625966e099a19f) by **Paul Spurlock**
+
+- Remove gitStatus check, no longer needed since gitref is the only accepted source [c19e219](https://github.com/act3-ai/dagger/commit/c19e2194b1c6be02daf219b257960c06a8b26021) by **Paul Spurlock**
+
+
 ## [release/v0.2.2] - 2025-10-22
 
 ### 🐛 Bug Fixes
