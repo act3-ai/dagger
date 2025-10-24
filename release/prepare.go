@@ -54,16 +54,19 @@ func (r *Release) Prepare(ctx context.Context,
 	// bump version if not specified
 	var err error
 	if version == "" {
-		version, err = r.version(ctx, method, base, args)
+		version, err = r.Version(ctx, method, base, args)
 		if err != nil {
 			return nil, fmt.Errorf("resolving next release version: %w", err)
 		}
 	}
 
 	// check if version already exists in repo
-	versionCheck, err := r.gitRefAsDir(r.GitRef).AsGit().Tag(version).Ref(ctx)
+	versionCheck, _ := r.gitRefAsDir(r.GitRef).
+		AsGit().
+		Tag(version).
+		Ref(ctx)
 
-	if err == nil {
+	if versionCheck != "" {
 		return nil, fmt.Errorf("tag %q already exists: %s", strings.TrimSpace(version), versionCheck)
 	}
 
@@ -144,7 +147,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
-func (r *Release) version(ctx context.Context,
+func (r *Release) Version(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
 	method string,
@@ -156,7 +159,7 @@ func (r *Release) version(ctx context.Context,
 	args []string,
 ) (string, error) {
 
-	version, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
+	ctr := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
 			// method="" throws an error
 			if method != "" {
@@ -164,13 +167,19 @@ func (r *Release) version(ctx context.Context,
 			}
 			return r
 		}).
-		BumpedVersion(ctx, dagger.GitCliffBumpedVersionOpts{Args: args})
+		WithBumpedVersion().
+		Run(dagger.GitCliffRunOpts{Args: args})
 
-	if err != nil {
-		return "", fmt.Errorf("error bumping version: %s", err)
+	stderr, _ := ctr.Stderr(ctx)
+
+	if strings.Contains(stderr, "There is nothing to bump") {
+		combined, _ := ctr.CombinedOutput(ctx)
+		return "", fmt.Errorf("failed to bump version:\n%s", combined)
 	}
 
-	return strings.TrimSpace(version), err
+	stdout, err := ctr.Stdout(ctx)
+
+	return strings.TrimSpace(stdout), err
 }
 
 // Generate the change log from conventional commit messages.
