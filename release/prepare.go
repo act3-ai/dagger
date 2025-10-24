@@ -54,7 +54,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// bump version if not specified
 	var err error
 	if version == "" {
-		version, err = r.Version(ctx, method, base, args)
+		version, err = r.version(ctx, method, base, args)
 		if err != nil {
 			return nil, fmt.Errorf("resolving next release version: %w", err)
 		}
@@ -147,7 +147,7 @@ func (r *Release) gitStatus(ctx context.Context) error {
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
-func (r *Release) Version(ctx context.Context,
+func (r *Release) version(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
 	method string,
