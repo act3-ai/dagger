@@ -4,6 +4,7 @@ import (
 	"context"
 	"dagger/release/internal/dagger"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 )
@@ -51,12 +52,14 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// check if version already exists in repo
-	versionCheck, _ := r.gitRefAsDir(r.GitRef).
+	versionCheck, err := r.gitRefAsDir(r.GitRef).
 		AsGit().
 		Tag(version).
 		Ref(ctx)
 
-	if versionCheck != "" {
+	if err != nil {
+		log.Println("No previous tag found...continuing with tag bump")
+	} else {
 		return nil, fmt.Errorf("tag %q already exists: %s", strings.TrimSpace(version), versionCheck)
 	}
 
@@ -116,10 +119,16 @@ func (r *Release) version(ctx context.Context,
 		WithBumpedVersion().
 		Run(dagger.GitCliffRunOpts{Args: args})
 
-	stderr, _ := ctr.Stderr(ctx)
+	stderr, err := ctr.Stderr(ctx)
+	if err != nil {
+		return "", fmt.Errorf("err checking version: %w", err)
+	}
 
 	if strings.Contains(stderr, "There is nothing to bump") {
-		combined, _ := ctr.CombinedOutput(ctx)
+		combined, err := ctr.CombinedOutput(ctx)
+		if err != nil {
+			return "", fmt.Errorf("err checking version: %w", err)
+		}
 		return "", fmt.Errorf("failed to bump version:\n%s", combined)
 	}
 
