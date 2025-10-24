@@ -57,7 +57,6 @@ prepare)
     --notes-path "$module/releases/$stripped_version.md" \
     --version "$version" \
     --version-path "$module/VERSION" \
-    --ignore-error=$force \
     --args="--include-path=$module/**,--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$" \
     export --path="."
 

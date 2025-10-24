@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"dagger/release/internal/dagger"
-	"errors"
 	"fmt"
+	"log"
 	"path/filepath"
 	"strings"
 )
@@ -37,19 +37,10 @@ func (r *Release) Prepare(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
-	// ignore git status errors
-	// +optional
-	ignoreError bool,
 	// additional arguments to git-cliff --bumped-version
 	// +optional
 	args []string,
 ) (*dagger.Directory, error) {
-
-	if !ignoreError {
-		if err := r.gitStatus(ctx); err != nil {
-			return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
-		}
-	}
 
 	// bump version if not specified
 	var err error
@@ -61,9 +52,14 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// check if version already exists in repo
-	versionCheck, err := r.gitRefAsDir(r.GitRef).AsGit().Tag(version).Ref(ctx)
+	versionCheck, err := r.gitRefAsDir(r.GitRef).
+		AsGit().
+		Tag(version).
+		Ref(ctx)
 
-	if err == nil {
+	if err != nil {
+		log.Println("No previous tag found...continuing with tag bump")
+	} else {
 		return nil, fmt.Errorf("tag %q already exists: %s", strings.TrimSpace(version), versionCheck)
 	}
 
@@ -99,50 +95,6 @@ func (r *Release) Prepare(ctx context.Context,
 		}), nil
 }
 
-// gitStatus returns an error if a git repository contains uncommitted changes.
-func (r *Release) gitStatus(ctx context.Context) error {
-
-	ctr := dag.Wolfi().
-		Container(
-			dagger.WolfiContainerOpts{
-				Packages: []string{"git"},
-			},
-		).
-		WithMountedDirectory("/work/src", r.gitRefAsDir(r.GitRef)).
-		WithWorkdir("/work/src")
-
-	var errs []error
-	// check for unstaged changes
-	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
-		Stdout(ctx)
-
-	var e *dagger.ExecError
-	switch {
-	case errors.As(err, &e):
-		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-		// exit code != 0
-		errs = append(errs, fmt.Errorf("checking for unstaged git changes: %s", result))
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return err
-	}
-
-	// check for staged, but not committed changes
-	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
-		Stdout(ctx)
-	switch {
-	case errors.As(err, &e):
-		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-		// exit code != 0
-		errs = append(errs, fmt.Errorf("checking for staged git changes: %s", result))
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return err
-	}
-
-	return errors.Join(errs...)
-}
-
 // Generate the next version from conventional commit messages (see cliff.toml).
 func (r *Release) version(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
@@ -156,7 +108,7 @@ func (r *Release) version(ctx context.Context,
 	args []string,
 ) (string, error) {
 
-	version, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
+	ctr := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
 		With(func(r *dagger.GitCliff) *dagger.GitCliff {
 			// method="" throws an error
 			if method != "" {
@@ -164,13 +116,25 @@ func (r *Release) version(ctx context.Context,
 			}
 			return r
 		}).
-		BumpedVersion(ctx, dagger.GitCliffBumpedVersionOpts{Args: args})
+		WithBumpedVersion().
+		Run(dagger.GitCliffRunOpts{Args: args})
 
+	stderr, err := ctr.Stderr(ctx)
 	if err != nil {
-		return "", fmt.Errorf("error bumping version: %s", err)
+		return "", fmt.Errorf("err checking version: %w", err)
 	}
 
-	return strings.TrimSpace(version), err
+	if strings.Contains(stderr, "There is nothing to bump") {
+		combined, err := ctr.CombinedOutput(ctx)
+		if err != nil {
+			return "", fmt.Errorf("err checking version: %w", err)
+		}
+		return "", fmt.Errorf("failed to bump version:\n%s", combined)
+	}
+
+	stdout, err := ctr.Stdout(ctx)
+
+	return strings.TrimSpace(stdout), err
 }
 
 // Generate the change log from conventional commit messages.
