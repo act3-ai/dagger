@@ -40,3 +40,7 @@ jobs:
       - name: test-yamllint
         working-directory: ./yamllint/tests
         run: dagger call all
+
+      - name: test-release
+        working-directory: ./release/tests
+        run: dagger call all
