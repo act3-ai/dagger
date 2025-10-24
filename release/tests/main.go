@@ -50,14 +50,7 @@ func (t *Tests) gitRepo() *dagger.Container {
 
 }
 
-// Run all tests
-// func (t *Tests) All(ctx context.Context) error {
-// 	p := pool.New().WithErrors().WithContext(ctx)
-
-// 	return p.Wait()
-// }
-
-// test prepare
+// ensure prepare generates a CHANGELOG.md, VERSION, and releases/v1.0.1.md file after a bump
 func (t *Tests) Prepare(ctx context.Context) error {
 
 	gitref := t.gitRepo().
