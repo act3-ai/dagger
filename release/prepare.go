@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"dagger/release/internal/dagger"
-	"errors"
 	"fmt"
 	"path/filepath"
 	"strings"
@@ -37,19 +36,10 @@ func (r *Release) Prepare(ctx context.Context,
 	// base image for git-cliff
 	// +optional
 	base *dagger.Container,
-	// ignore git status errors
-	// +optional
-	ignoreError bool,
 	// additional arguments to git-cliff --bumped-version
 	// +optional
 	args []string,
 ) (*dagger.Directory, error) {
-
-	if !ignoreError {
-		if err := r.gitStatus(ctx); err != nil {
-			return nil, fmt.Errorf("git repository is dirty, aborting prepare: %w", err)
-		}
-	}
 
 	// bump version if not specified
 	var err error
@@ -100,50 +90,6 @@ func (r *Release) Prepare(ctx context.Context,
 			}
 			return d
 		}), nil
-}
-
-// gitStatus returns an error if a git repository contains uncommitted changes.
-func (r *Release) gitStatus(ctx context.Context) error {
-
-	ctr := dag.Wolfi().
-		Container(
-			dagger.WolfiContainerOpts{
-				Packages: []string{"git"},
-			},
-		).
-		WithMountedDirectory("/work/src", r.gitRefAsDir(r.GitRef)).
-		WithWorkdir("/work/src")
-
-	var errs []error
-	// check for unstaged changes
-	_, err := ctr.WithExec([]string{"git", "diff", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
-		Stdout(ctx)
-
-	var e *dagger.ExecError
-	switch {
-	case errors.As(err, &e):
-		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-		// exit code != 0
-		errs = append(errs, fmt.Errorf("checking for unstaged git changes: %s", result))
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return err
-	}
-
-	// check for staged, but not committed changes
-	_, err = ctr.WithExec([]string{"git", "diff", "--cached", "--stat", "--exit-code"}, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeSuccess}).
-		Stdout(ctx)
-	switch {
-	case errors.As(err, &e):
-		result := fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-		// exit code != 0
-		errs = append(errs, fmt.Errorf("checking for staged git changes: %s", result))
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return err
-	}
-
-	return errors.Join(errs...)
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
