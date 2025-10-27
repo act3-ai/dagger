@@ -37,9 +37,6 @@ func New(
 	// base development container
 	// +optional
 	base *dagger.Container,
-	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
-	// +optional
-	netrc *dagger.Secret,
 	// extra arguments for uv sync command
 	// +optional
 	syncArgs []string,
@@ -58,7 +55,6 @@ func New(
 	return &Python{
 		Base:     base,
 		Source:   src,
-		Netrc:    netrc,
 		SyncArgs: syncArgs,
 	}
 }
@@ -70,13 +66,8 @@ func (python *Python) UV() *dagger.Container {
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
 		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-		With(func(c *dagger.Container) *dagger.Container {
-			if python.Netrc != nil {
-				return c.WithMountedSecret("/root/.netrc", python.Netrc)
-			}
-			return c
-		})
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
+
 }
 
 // build dev dependencies first before running test
@@ -88,6 +79,22 @@ func (python *Python) Container() *dagger.Container {
 				python.SyncArgs...,
 			),
 		)
+}
+
+// Add creds for private UV packages. Currently uses `uv auth login to handle credentials`
+func (python *Python) WithRegistryCreds(
+	// name of the registry
+	registry string,
+	// username for registry
+	username string,
+	// password for registry
+	password *dagger.Secret,
+) *Python {
+	python.Base = python.Base.WithSecretVariable("UV_REGISTRY_PASSWORD", password).
+		WithExec([]string{"sh", "-c",
+			fmt.Sprintf("uv auth login -u %s --password $UV_REGISTRY_PASSWORD %s",
+				username, registry)})
+	return python
 }
 
 // add an environment variable to the base container
