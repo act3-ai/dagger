@@ -83,7 +83,7 @@ func (python *Python) Container() *dagger.Container {
 
 // Add creds for private UV packages. Currently uses `uv auth login to handle credentials`
 func (python *Python) WithRegistryCreds(
-	// name of the registry
+	// url of the registry
 	registry string,
 	// username for registry
 	username string,
@@ -100,6 +100,14 @@ func (python *Python) WithRegistryCreds(
 // add an environment variable to the base container
 func (python *Python) WithEnvVariable(name, value string) *Python {
 	python.Base = python.Base.WithEnvVariable(name, value)
+	return python
+}
+
+// adds a netrc file as a secret to the base container
+func (python *Python) WithNetrc(
+	//netrc file to add, in format of dagger.secret (--netrc file://mynetrc)
+	netrc *dagger.Secret) *Python {
+	python.Base = python.Base.WithMountedSecret("/root/.netrc", netrc)
 	return python
 }
 
