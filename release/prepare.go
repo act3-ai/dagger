@@ -5,6 +5,7 @@ import (
 	"dagger/release/internal/dagger"
 	"fmt"
 	"log"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -41,6 +42,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.Changeset, error) {
+	src := r.gitRefAsDir()
 
 	// bump version if not specified
 	var err error
@@ -52,7 +54,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// check if version already exists in repo
-	versionCheck, err := r.gitRefAsDir().
+	versionCheck, err := src.
 		AsGit().
 		Tag(version).
 		Ref(ctx)
@@ -85,17 +87,17 @@ func (r *Release) Prepare(ctx context.Context,
 
 	// consider changing the construction of this diff
 	// instead just modify the source directory directly and then compute the changes
-	after := r.gitRefAsDir().
+	after := src.
 		WithFile(changelogPath, changelogFile).
 		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
 		WithNewFile(versionPath, strings.TrimPrefix(version+"\n", "v")).
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
-				d = d.WithFile(chartPath, chartFile)
+				d = d.WithFile(path.Join(chartPath, "Chart.yaml"), chartFile)
 			}
 			return d
 		})
-	return r.gitRefAsDir().Changes(after), nil
+	return after.Changes(src), nil
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
@@ -228,12 +230,12 @@ func (r *Release) notes(ctx context.Context,
 func (r *Release) setHelmChartVersion(
 	// release version
 	version string,
-	// Chart.yaml path
+	// path to the chart
 	chartPath string,
 ) *dagger.File {
-
 	version = strings.TrimPrefix(version, "v")
-	updatedChart := dag.Wolfi().
+	file := path.Join(chartPath, "Chart.yaml")
+	return dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
@@ -242,8 +244,6 @@ func (r *Release) setHelmChartVersion(
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",
 			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
-			"-i", chartPath}).
-		File(chartPath)
-
-	return updatedChart
+			"-i", file}).
+		File(file)
 }
