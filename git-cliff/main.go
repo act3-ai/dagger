@@ -5,6 +5,7 @@ import (
 	"context"
 	"dagger/git-cliff/internal/dagger"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -159,6 +160,28 @@ func (gc *GitCliff) Run(
 }
 
 // Prints bumped version for unreleased changes.
+//
+// e.g. `git-cliff --bumped-version`.
+func (gc *GitCliff) WithBumpedVersion(ctx context.Context,
+) *GitCliff {
+	gc.Command = append(gc.Command, "--bumped-version")
+	return gc
+}
+
+// Sets the regex for matching git tags.
+//
+// e.g. `git-cliff --tag-pattern`.
+func (gc *GitCliff) WithTagPattern(ctx context.Context,
+	// glob pattern
+	pattern []string,
+) *GitCliff {
+	for _, p := range pattern {
+		gc.Command = append(gc.Command, "--tag-pattern", p)
+	}
+	return gc
+}
+
+// Prints bumped version for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	// additional arguments and flags for git-cliff
 	// +optional
@@ -168,7 +191,16 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	cmd = append(cmd, "--bumped-version")
 	cmd = append(cmd, args...)
 
-	return gc.Container.WithExec(cmd).
+	ctr := gc.Container.WithExec(cmd)
+
+	stderr, _ := ctr.Stderr(ctx)
+
+	if strings.Contains(stderr, "There is nothing to bump") {
+		combined, _ := ctr.CombinedOutput(ctx)
+		return "", fmt.Errorf("failed to bump version:\n%s", combined)
+	}
+
+	return ctr.
 		Stdout(ctx)
 }
 
