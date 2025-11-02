@@ -92,7 +92,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 		dagger.GhOpts{
 			Token:  token,
 			Repo:   repo,
-			Source: r.gitRefAsDir(),
+			Source: r.GitRef.Tree(),
 		}).
 		Release().
 		Create(ctx, version, title,

@@ -42,7 +42,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.Changeset, error) {
-	src := r.gitRefAsDir()
+	src := r.GitRef.Tree()
 
 	// bump version if not specified
 	var err error
@@ -168,7 +168,7 @@ func (r *Release) changelog(
 		WithUnreleased().
 		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
 			// check if changelog file exists, if not create it
-			exists, err := r.gitRefAsDir().Exists(ctx, changelog)
+			exists, err := r.GitRef.Tree().Exists(ctx, changelog)
 			if err != nil {
 				panic(fmt.Errorf("failed to check if %s exists: %w", changelog, err))
 			}
@@ -239,7 +239,7 @@ func (r *Release) setHelmChartVersion(
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
-		WithMountedDirectory("/src", r.gitRefAsDir()).
+		WithMountedDirectory("/src", r.GitRef.Tree()).
 		WithWorkdir("/src").
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",
