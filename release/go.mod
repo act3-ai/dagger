@@ -3,7 +3,7 @@ module dagger/release
 go 1.24.0
 
 require (
-	github.com/99designs/gqlgen v0.17.80
+	github.com/99designs/gqlgen v0.17.81
 	github.com/Khan/genqlient v0.8.1
 	github.com/sourcegraph/conc v0.3.0
 	github.com/stretchr/testify v1.11.1
@@ -24,7 +24,7 @@ require (
 	go.opentelemetry.io/proto/otlp v1.8.0
 	golang.org/x/mod v0.28.0
 	golang.org/x/sync v0.17.0
-	google.golang.org/grpc v1.75.1
+	google.golang.org/grpc v1.76.0
 )
 
 require (

@@ -40,7 +40,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// additional arguments to git-cliff --bumped-version
 	// +optional
 	args []string,
-) (*dagger.Directory, error) {
+) (*dagger.Changeset, error) {
 
 	// bump version if not specified
 	var err error
@@ -52,7 +52,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// check if version already exists in repo
-	versionCheck, err := r.gitRefAsDir(r.GitRef).
+	versionCheck, err := r.gitRefAsDir().
 		AsGit().
 		Tag(version).
 		Ref(ctx)
@@ -75,7 +75,7 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	//Create changelog if it doesn't exist, otherwise prepend to existing changelogPath
-	changelogFile := r.changelog(ctx, r.GitRef, version, changelogPath, base, args)
+	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -83,7 +83,9 @@ func (r *Release) Prepare(ctx context.Context,
 		chartFile = r.setHelmChartVersion(version, chartPath)
 	}
 
-	return dag.Directory().
+	// consider changing the construction of this diff
+	// instead just modify the source directory directly and then compute the changes
+	after := r.gitRefAsDir().
 		WithFile(changelogPath, changelogFile).
 		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
 		WithNewFile(versionPath, strings.TrimPrefix(version+"\n", "v")).
@@ -92,7 +94,8 @@ func (r *Release) Prepare(ctx context.Context,
 				d = d.WithFile(chartPath, chartFile)
 			}
 			return d
-		}), nil
+		})
+	return r.gitRefAsDir().Changes(after), nil
 }
 
 // Generate the next version from conventional commit messages (see cliff.toml).
@@ -142,8 +145,6 @@ func (r *Release) version(ctx context.Context,
 // changelog is a default changelog generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom changelogs.
 func (r *Release) changelog(
 	ctx context.Context,
-	//gitref source for changelog
-	gitref *dagger.GitRef,
 	//version to generate changelog for
 	version string,
 	// Changelog file path, relative to source directory
@@ -159,13 +160,13 @@ func (r *Release) changelog(
 ) *dagger.File {
 
 	// generate and prepend to changelog
-	return dag.GitCliff(gitref, dagger.GitCliffOpts{Container: base}).
+	return dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
 		WithTag(version).
 		WithStrip("footer").
 		WithUnreleased().
 		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
 			// check if changelog file exists, if not create it
-			exists, err := r.gitRefAsDir(gitref).Exists(ctx, changelog)
+			exists, err := r.gitRefAsDir().Exists(ctx, changelog)
 			if err != nil {
 				panic(fmt.Errorf("failed to check if %s exists: %w", changelog, err))
 			}
@@ -236,7 +237,7 @@ func (r *Release) setHelmChartVersion(
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
-		WithMountedDirectory("/src", r.gitRefAsDir(r.GitRef)).
+		WithMountedDirectory("/src", r.gitRefAsDir()).
 		WithWorkdir("/src").
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",

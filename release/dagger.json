@@ -1,6 +1,6 @@
 {
   "name": "release",
-  "engineVersion": "v0.19.2",
+  "engineVersion": "v0.19.4",
   "sdk": {
     "source": "go"
   },
@@ -60,5 +60,6 @@
       "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.5",
       "pin": "618fc03841460ba75223864107300a7784f2fbc9"
     }
-  ]
+  ],
+  "disableDefaultFunctionCaching": true
 }
