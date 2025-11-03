@@ -43,7 +43,8 @@ func (t *Tests) gitRepo() *dagger.Container {
 		WithExec([]string{"git", "init"}).
 		WithExec([]string{"git", "config", "user.name", "test"}).
 		WithExec([]string{"git", "config", "user.email", "test@dagger.io"}).
-		WithExec([]string{"git", "add", "README.md"}).
+		WithFile("cliff.toml", dag.CurrentModule().Source().File("test.cliff.toml")).
+		WithExec([]string{"git", "add", "README.md", "cliff.toml"}).
 		WithExec([]string{"git", "commit", "-m", "fix: Initial commit"}).
 		WithExec([]string{"git", "tag", "-a", "-m", "Initial commit", "v1.0.0"})
 
@@ -59,11 +60,11 @@ func (t *Tests) Prepare(ctx context.Context) error {
 
 	const expectedPatch = `diff --git b/CHANGELOG.md b/CHANGELOG.md
 new file mode 100644
-index 0000000..b57dd50
+index 0000000..9427169
 --- /dev/null
 +++ b/CHANGELOG.md
 @@ -0,0 +1,5 @@
-+## [1.0.1] - 2025-11-02
++## [1.0.1]
 +
 +### 🐛 Bug Fixes
 +
@@ -77,11 +78,11 @@ index 0000000..7dea76e
 +1.0.1
 diff --git b/releases/v1.0.1.md b/releases/v1.0.1.md
 new file mode 100644
-index 0000000..b57dd50
+index 0000000..9427169
 --- /dev/null
 +++ b/releases/v1.0.1.md
 @@ -0,0 +1,5 @@
-+## [1.0.1] - 2025-11-02
++## [1.0.1]
 +
 +### 🐛 Bug Fixes
 +
