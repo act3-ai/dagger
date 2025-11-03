@@ -52,26 +52,25 @@ func (r *Release) Prepare(ctx context.Context,
 			return nil, fmt.Errorf("resolving next release version: %w", err)
 		}
 	}
+	version = strings.TrimPrefix(version, "v")
 
 	// check if version already exists in repo
 	versionCheck, err := src.
 		AsGit().
-		Tag(version).
+		Tag("v" + version).
 		Ref(ctx)
 
 	if err != nil {
 		log.Println("No previous tag found...continuing with tag bump")
 	} else {
-		return nil, fmt.Errorf("tag %q already exists: %s", strings.TrimSpace(version), versionCheck)
+		return nil, fmt.Errorf("git tag %s already exists so we cannot create v%s", versionCheck, version)
 	}
 
 	if notesPath == "" {
-		notesPath = filepath.Join("releases", fmt.Sprintf("%s.md", version))
+		notesPath = filepath.Join("releases", fmt.Sprintf("v%s.md", version))
 	}
-	notesDir := filepath.Dir(notesPath)
-	notesName := filepath.Base(notesPath)
 
-	releaseNotesFile, err := r.notes(ctx, version, notesName, extraNotes, base, args)
+	releaseNotesFile, err := r.notes(ctx, version, filepath.Base(notesPath), extraNotes, base, args)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
@@ -89,7 +88,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// instead just modify the source directory directly and then compute the changes
 	after := src.
 		WithFile(changelogPath, changelogFile).
-		WithFile(filepath.Join(notesDir, notesName), releaseNotesFile).
+		WithFile(notesPath, releaseNotesFile).
 		WithNewFile(versionPath, strings.TrimPrefix(version+"\n", "v")).
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
@@ -100,7 +99,8 @@ func (r *Release) Prepare(ctx context.Context,
 	return after.Changes(src), nil
 }
 
-// Generate the next version from conventional commit messages (see cliff.toml).
+// Generate the next semantic version from conventional commit messages (see cliff.toml).
+// The returned version is of the form MAJOR.MINOR.PATH (without the preceding "v").
 func (r *Release) version(ctx context.Context,
 	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
 	// +optional
@@ -129,6 +129,7 @@ func (r *Release) version(ctx context.Context,
 		return "", fmt.Errorf("err checking version: %w", err)
 	}
 
+	// TODO this should be encapsulated by the GitCliff module
 	if strings.Contains(stderr, "There is nothing to bump") {
 		combined, err := ctr.CombinedOutput(ctx)
 		if err != nil {
@@ -139,7 +140,10 @@ func (r *Release) version(ctx context.Context,
 
 	stdout, err := ctr.Stdout(ctx)
 
-	return strings.TrimSpace(stdout), err
+	version := strings.TrimSpace(stdout)
+	version = strings.TrimPrefix(version, "v")
+
+	return version, nil
 }
 
 // Generate the change log from conventional commit messages.
@@ -160,10 +164,11 @@ func (r *Release) changelog(
 	// +optional
 	args []string,
 ) *dagger.File {
+	version = strings.TrimPrefix(version, "v")
 
 	// generate and prepend to changelog
 	return dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
-		WithTag(version).
+		WithTag("v" + version).
 		WithStrip("footer").
 		WithUnreleased().
 		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
@@ -202,9 +207,11 @@ func (r *Release) notes(ctx context.Context,
 	// +optional
 	args []string,
 ) (*dagger.File, error) {
+	version = strings.TrimPrefix(version, "v")
+
 	// generate and export release notes
 	notes, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
-		WithTag(version).
+		WithTag("v" + version).
 		WithUnreleased().
 		WithStrip("all").
 		Run(dagger.GitCliffRunOpts{Args: args}).

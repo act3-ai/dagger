@@ -19,6 +19,18 @@ const (
 	imageGlabCLI = "registry.gitlab.com/gitlab-org/cli:latest"
 )
 
+// orasCtr returns a container with an oras executable, with mounted registry credentials.
+func (r *Release) orasCtr() *dagger.Container {
+	oras := dag.Container().
+		From(imageOras).
+		File("/bin/oras")
+
+	return dag.Wolfi().
+		Container().
+		WithMountedFile("/bin/oras", oras).
+		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret())
+}
+
 // Publish additional tags to a remote OCI artifact.
 func (r *Release) AddTags(ctx context.Context,
 	// Existing OCI reference
@@ -43,27 +55,43 @@ func (r *Release) ExtraTags(ctx context.Context,
 	// target version
 	version string,
 ) ([]string, error) {
+	version = strings.TrimPrefix(version, "v")
+
 	out, err := r.orasCtr().
-		WithExec([]string{"oras", "repo", "tags", ref}).
+		WithExec([]string{"oras", "repo", "tags", "--exclude-digest-tags", ref}).
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("retrieving existing repository tags: %w", err)
 	}
 	existing := strings.Fields(out)
 
-	return util.ExtraTags(version, existing)
+	return util.ExtraTags("v"+version, existing)
 }
 
-// orasCtr returns a container with an oras executable, with mounted registry credentials.
-func (r *Release) orasCtr() *dagger.Container {
-	oras := dag.Container().
-		From(imageOras).
-		File("/bin/oras")
+// Create extra tags based on the provided target tag.
+// Combines ExtraTags() and AddTags().
+func (r *Release) CreateExtraTags(ctx context.Context,
+	// OCI repository, e.g. localhost:5000/helloworld
+	ref string,
+	// target version
+	version string,
+) ([]string, error) {
+	tags, err := r.ExtraTags(ctx, ref, version)
+	if err != nil {
+		return nil, err
+	}
 
-	return dag.Wolfi().
-		Container().
-		WithMountedFile("/bin/oras", oras).
-		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret())
+	_, err = r.AddTags(ctx, ref, tags)
+	if err != nil {
+		return nil, err
+	}
+
+	fullRefs := make([]string, len(tags))
+	for i, tag := range tags {
+		// TODO make this work even if ref has a digest
+		fullRefs[i] = fmt.Sprintf("%s:%s", ref, tag)
+	}
+	return fullRefs, nil
 }
 
 // Create a release in GitHub.
@@ -83,9 +111,10 @@ func (r *Release) CreateGithub(ctx context.Context,
 	// +optional
 	assets []*dagger.File,
 ) (string, error) {
+	version = strings.TrimPrefix(version, "v")
 
 	if title == "" {
-		title = version
+		title = "v" + version
 	}
 
 	err := dag.Gh(
@@ -95,7 +124,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 			Source: r.GitRef.Tree(),
 		}).
 		Release().
-		Create(ctx, version, title,
+		Create(ctx, "v"+version, title,
 			dagger.GhReleaseCreateOpts{
 				NotesFile: notes,
 				Files:     assets,
@@ -127,6 +156,8 @@ func (r *Release) CreateGitlab(ctx context.Context,
 	// +optional
 	assets []*dagger.File,
 ) (string, error) {
+	version = strings.TrimPrefix(version, "v")
+
 	notesFileName, err := notes.Name(ctx)
 	if err != nil {
 		return "", err
@@ -134,7 +165,7 @@ func (r *Release) CreateGitlab(ctx context.Context,
 
 	hostRepo := fmt.Sprintf("%s/%s", host, project)
 	if title == "" {
-		title = version
+		title = "v" + version
 	}
 
 	_, err = dag.Container().
@@ -144,7 +175,7 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		WithEnvVariable("GITLAB_HOST", host).
 		WithExec([]string{"glab", "release", "create",
 			"-R", project, // repository
-			version, // tag
+			"v" + version, // tag
 			"--name=" + title,
 			"--notes-file=" + notesFileName, // description
 		}).
@@ -178,6 +209,8 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 ) (string, error) {
 	ctx, span := Tracer().Start(ctx, "Upload Assets")
 	defer span.End()
+
+	version = strings.TrimPrefix(version, "v")
 
 	p := pool.NewWithResults[string]().WithContext(ctx)
 	for _, asset := range assets {
