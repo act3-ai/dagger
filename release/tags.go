@@ -6,6 +6,8 @@ import (
 	"dagger/release/util"
 	"fmt"
 	"strings"
+
+	"github.com/distribution/reference"
 )
 
 const imageOras = "ghcr.io/oras-project/oras:v1.3.0"
@@ -62,12 +64,17 @@ func (r *Release) ExtraTags(ctx context.Context,
 // Create extra tags based on the provided target tag.
 // Combines ExtraTags() and AddTags().
 func (r *Release) CreateExtraTags(ctx context.Context,
-	// OCI repository, e.g. localhost:5000/helloworld
+	// OCI image reference, e.g. localhost:5000/helloworld, localhost:5000/helloworld:v1.2.3
 	ref string,
 	// target version
 	version string,
 ) ([]string, error) {
-	tags, err := r.ExtraTags(ctx, ref, version)
+	named, err := reference.ParseNamed(ref)
+	if err != nil {
+		return nil, err
+	}
+
+	tags, err := r.ExtraTags(ctx, named.Name(), version)
 	if err != nil {
 		return nil, err
 	}
@@ -79,8 +86,11 @@ func (r *Release) CreateExtraTags(ctx context.Context,
 
 	fullRefs := make([]string, len(tags))
 	for i, tag := range tags {
-		// TODO make this work even if ref has a digest
-		fullRefs[i] = fmt.Sprintf("%s:%s", ref, tag)
+		tagged, err := reference.WithTag(named, tag)
+		if err != nil {
+			return nil, fmt.Errorf("failed to add tag %s to %s: %w", tag, ref, err)
+		}
+		fullRefs[i] = tagged.String()
 	}
 	return fullRefs, nil
 }
