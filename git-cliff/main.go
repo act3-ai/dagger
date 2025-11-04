@@ -188,7 +188,7 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 		}
 
 		if strings.Contains(stderr, "ERROR") {
-			return "", fmt.Errorf("error getting version: %w", err)
+			return "", fmt.Errorf("error getting version: %s", stderr)
 		}
 
 	}
