@@ -173,22 +173,32 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	cmd = append(cmd, args...)
 
 	ctr := gc.Container.WithExec(cmd)
+	// The check below is needed due to how git-cliff returns its warning/error logs.
+	//  Warnings are returned as errors and not stdout
 	stderr, err := ctr.Stderr(ctx)
 	if err != nil {
-		return "", fmt.Errorf("err checking version: %w", err)
+		return "", fmt.Errorf("error getting version: %w", err)
 	}
 
-	if strings.Contains(stderr, "There is nothing to bump") {
-		combined, err := ctr.CombinedOutput(ctx)
-		if err != nil {
-			return "", fmt.Errorf("err checking version: %w", err)
+	if stderr != "" {
+		// git-cliff returns the latest tag it found when there is nothing to bump
+		// This will return an empty string instead in that case
+		if strings.Contains(stderr, "There is nothing to bump") {
+			return "", nil
 		}
-		return "", fmt.Errorf("failed to bump version:\n%s", combined)
+
+		if strings.Contains(stderr, "ERROR") {
+			return "", fmt.Errorf("error getting version: %w", err)
+		}
+
 	}
 
 	stdout, err := ctr.Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting version: %w", err)
+	}
 
-	return stdout, err
+	return stdout, nil
 }
 
 // Generate a changelog for a specific version, ignoring configured method of version bumping.
