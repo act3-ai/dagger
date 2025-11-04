@@ -5,6 +5,7 @@ import (
 	"context"
 	"dagger/git-cliff/internal/dagger"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -31,9 +32,9 @@ func New(ctx context.Context,
 	// +default="latest"
 	version string,
 
-	// Configuration file.
+	// Configuration file path in provided git repository/ref.
 	// +optional
-	config *dagger.File,
+	config string,
 
 	// Mount netrc credentials for a private git repository.
 	// +optional
@@ -47,13 +48,16 @@ func New(ctx context.Context,
 	srcDir := "/work/src"
 	container = container.With(
 		func(c *dagger.Container) *dagger.Container {
-			if config != nil {
-				cfgPath, err := config.Name(ctx)
+			if config != "" {
+				exists, err := gitref.Tree(dagger.GitRefTreeOpts{Depth: -1}).Exists(ctx, config)
+
 				if err != nil {
 					panic(fmt.Errorf("resolving configuration file name: %w", err))
+				} else if !exists {
+					panic(fmt.Errorf("configuration file not found: %w", err))
+				} else {
+					cmd = append(cmd, "--config", config)
 				}
-				c = c.WithMountedFile(cfgPath, config)
-				cmd = append(cmd, "--config", cfgPath)
 			}
 			return c
 		}).With(
@@ -168,8 +172,23 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	cmd = append(cmd, "--bumped-version")
 	cmd = append(cmd, args...)
 
-	return gc.Container.WithExec(cmd).
-		Stdout(ctx)
+	ctr := gc.Container.WithExec(cmd)
+	stderr, err := ctr.Stderr(ctx)
+	if err != nil {
+		return "", fmt.Errorf("err checking version: %w", err)
+	}
+
+	if strings.Contains(stderr, "There is nothing to bump") {
+		combined, err := ctr.CombinedOutput(ctx)
+		if err != nil {
+			return "", fmt.Errorf("err checking version: %w", err)
+		}
+		return "", fmt.Errorf("failed to bump version:\n%s", combined)
+	}
+
+	stdout, err := ctr.Stdout(ctx)
+
+	return stdout, err
 }
 
 // Generate a changelog for a specific version, ignoring configured method of version bumping.
