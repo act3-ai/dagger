@@ -5,6 +5,7 @@ import (
 	"context"
 	"dagger/git-cliff/internal/dagger"
 	"fmt"
+	"strings"
 )
 
 const (
@@ -31,10 +32,6 @@ func New(ctx context.Context,
 	// +default="latest"
 	version string,
 
-	// Configuration file.
-	// +optional
-	config *dagger.File,
-
 	// Mount netrc credentials for a private git repository.
 	// +optional
 	netrc *dagger.Secret,
@@ -42,29 +39,18 @@ func New(ctx context.Context,
 	if container == nil {
 		container = defaultContainer(version)
 	}
-
+	gitRefDir := gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	cmd := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
 	container = container.With(
-		func(c *dagger.Container) *dagger.Container {
-			if config != nil {
-				cfgPath, err := config.Name(ctx)
-				if err != nil {
-					panic(fmt.Errorf("resolving configuration file name: %w", err))
-				}
-				c = c.WithMountedFile(cfgPath, config)
-				cmd = append(cmd, "--config", cfgPath)
-			}
-			return c
-		}).With(
 		func(c *dagger.Container) *dagger.Container {
 			if netrc != nil {
 				c = c.WithMountedSecret("/root/.netrc", netrc)
 			}
 			return c
 		}).
-		WithWorkdir(srcDir).
-		WithMountedDirectory(srcDir, gitref.Tree(dagger.GitRefTreeOpts{Depth: -1}))
+		WithMountedDirectory(srcDir, gitRefDir).
+		WithWorkdir(srcDir)
 
 	return &GitCliff{
 		Container: container,
@@ -145,6 +131,15 @@ func (gc *GitCliff) WithSecretVariable(
 	return gc
 }
 
+func (gc *GitCliff) WithConfig(
+	// Configuration file path in provided git repository/ref.
+	// +optional
+	config string,
+) *GitCliff {
+	gc.Command = append(gc.Command, "--config", config)
+	return gc
+}
+
 // Run git-cliff with all options previously provided.
 //
 // Run MAY be used as a "catch-all" in case functions are not implemented.
@@ -160,6 +155,9 @@ func (gc *GitCliff) Run(
 
 // Prints bumped version for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
+	// Configuration file path in provided git repository/ref.
+	// +optional
+	config string,
 	// additional arguments and flags for git-cliff
 	// +optional
 	args []string,
@@ -168,8 +166,37 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	cmd = append(cmd, "--bumped-version")
 	cmd = append(cmd, args...)
 
-	return gc.Container.WithExec(cmd).
-		Stdout(ctx)
+	if config != "" {
+		cmd = append(cmd, "--config", config)
+	}
+
+	ctr := gc.Container.WithExec(cmd)
+	// The check below is needed due to how git-cliff returns its warning/error logs.
+	//  Warnings are returned as errors and not stdout
+	stderr, err := ctr.Stderr(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting version: %w", err)
+	}
+
+	if stderr != "" {
+		// git-cliff returns the latest tag it found when there is nothing to bump
+		// This will return an empty string instead in that case
+		if strings.Contains(stderr, "There is nothing to bump") {
+			return "", nil
+		}
+
+		if strings.Contains(stderr, "ERROR") {
+			return "", fmt.Errorf("error getting version: %s", stderr)
+		}
+
+	}
+
+	stdout, err := ctr.Stdout(ctx)
+	if err != nil {
+		return "", fmt.Errorf("error getting version: %w", err)
+	}
+
+	return stdout, nil
 }
 
 // Generate a changelog for a specific version, ignoring configured method of version bumping.

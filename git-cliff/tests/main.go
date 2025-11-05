@@ -160,7 +160,7 @@ func (t *Tests) BumpedVersionExcludePath(ctx context.Context) error {
 		return parseErr(err)
 	}
 
-	const expected = `v1.0.0`
+	const expected = ``
 
 	if strings.TrimSpace(actual) != expected {
 		return fmt.Errorf("tag does not match the expected value\nactual:   %s\nexpected: %s", actual, expected)
