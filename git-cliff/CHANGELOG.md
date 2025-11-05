@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [git-cliff/v0.2.2] - 2025-11-05
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger to v0.19.4 [56794ad](https://github.com/act3-ai/dagger/commit/56794ad9a351d580bd35e2e30a1196c3e10616c4) by @pspurlock
+
+- Bug with optional config path, add version checking to BumpedVersion [1eff2a6](https://github.com/act3-ai/dagger/commit/1eff2a69c85934080337171bc01adc71a7adeaea) by @pspurlock
+
+- Add cliff.toml for git-cliff [0a868fb](https://github.com/act3-ai/dagger/commit/0a868fb2dfff1eb4e2bb8ef303afe2b7c203ca57) by @pspurlock
+
+- More error log handling changes in bumped-version [a3388c4](https://github.com/act3-ai/dagger/commit/a3388c4210379f29d85f8c79b798a737295c8700) by @pspurlock
+
+- Tests [6b5cbd2](https://github.com/act3-ai/dagger/commit/6b5cbd2faf75b349d72c17ea17c1a11f3cd4b410) by @pspurlock
+
+- Move config out of New and into functions instead [730de2d](https://github.com/act3-ai/dagger/commit/730de2ded4773b679f4d205bd8cbe38bc57d1932) by @pspurlock
+
+
 ## [git-cliff/v0.2.1] - 2025-10-23
 
 ### 🐛 Bug Fixes
