@@ -4,79 +4,54 @@ import (
 	"context"
 	"dagger/release/internal/dagger"
 	"fmt"
-	"log"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
-// Generate release notes, changelog, and target release version.
+// Generate release notes, changelog, and VERSION file with target release version.
+// Will also optionally bump a version in provided helm chart path.
 func (r *Release) Prepare(ctx context.Context,
-	// prepare for a specific version, overrides default bumping configuration, prioritized over method.
-	// +optional
+	// prepare for a specific version
 	version string,
-	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
+	// prefix to path for changelog, version, and release notes
 	// +optional
-	method string,
-	// path to version file
-	// +optional
-	// +default="VERSION"
-	versionPath string,
+	pathPrefix string,
 	// path to helm chart in source directory to bump chart version to release version.
 	// +optional
 	chartPath string,
-	// Changelog file path, relative to source directory
-	// +optional
-	// +default="CHANGELOG.md"
-	changelogPath string,
-	// Release notes file path, relative to source directory. Default: releases/<version>.md.
-	// +optional
-	notesPath string,
 	// Additional information to include in release notes. Injected after header and before commit
 	// +optional
 	extraNotes string,
-	// base image for git-cliff
+	//git-cliff cliff.toml path to use. Defaults to root of gitref "."
 	// +optional
-	base *dagger.Container,
-	// additional arguments to git-cliff --bumped-version
+	config string,
+	//provide a github token to git-cliff.
+	//This is needed to avoid github api rate limit
 	// +optional
-	args []string,
+	token *dagger.Secret,
 ) (*dagger.Changeset, error) {
 	src := r.GitRef.Tree()
 
-	// bump version if not specified
-	var err error
-	if version == "" {
-		version, err = r.version(ctx, method, base, args)
-		if err != nil {
-			return nil, fmt.Errorf("resolving next release version: %w", err)
-		}
+	// Base paths
+	changelogPath := "CHANGELOG.md"
+	notesPath := filepath.Join("releases", fmt.Sprintf("%s.md", version))
+	versionPath := "VERSION"
+
+	// Prepend path prefix if given
+	if pathPrefix != "" {
+		changelogPath = filepath.Join(pathPrefix, changelogPath)
+		notesPath = filepath.Join(pathPrefix, notesPath)
+		versionPath = filepath.Join(pathPrefix, versionPath)
 	}
-	version = strings.TrimPrefix(version, "v")
-
-	// check if version already exists in repo
-	versionCheck, err := src.
-		AsGit().
-		Tag("v" + version).
-		Ref(ctx)
-
-	if err != nil {
-		log.Println("No previous tag found...continuing with tag bump")
-	} else {
-		return nil, fmt.Errorf("git tag %s already exists so we cannot create v%s", versionCheck, version)
-	}
-
-	if notesPath == "" {
-		notesPath = filepath.Join("releases", fmt.Sprintf("v%s.md", version))
-	}
-
-	releaseNotesFile, err := r.notes(ctx, version, filepath.Base(notesPath), extraNotes, base, args)
+	// generate changelog
+	changelogFile := r.changelog(ctx, version, changelogPath, config, token)
+	// generate release notes
+	releaseNotesFile, err := r.notes(ctx, version, filepath.Base(notesPath), extraNotes, config, token)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
 	}
-
-	//Create changelog if it doesn't exist, otherwise prepend to existing changelogPath
-	changelogFile := r.changelog(ctx, version, changelogPath, base, args)
 
 	// set helm chart version
 	var chartFile *dagger.File
@@ -89,7 +64,7 @@ func (r *Release) Prepare(ctx context.Context,
 	after := src.
 		WithFile(changelogPath, changelogFile).
 		WithFile(notesPath, releaseNotesFile).
-		WithNewFile(versionPath, strings.TrimPrefix(version+"\n", "v")).
+		WithNewFile(versionPath, version).
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
 				d = d.WithFile(path.Join(chartPath, "Chart.yaml"), chartFile)
@@ -99,51 +74,26 @@ func (r *Release) Prepare(ctx context.Context,
 	return after.Changes(src), nil
 }
 
+// regex to confirm valid semver
+var semverRegex = regexp.MustCompile(`(\d+\.\d+\.\d+(?:-[0-9A-Za-z-.]+)?)`)
+
 // Generate the next semantic version from conventional commit messages (see cliff.toml).
-// The returned version is of the form MAJOR.MINOR.PATH (without the preceding "v").
-func (r *Release) version(ctx context.Context,
-	// prepare for a specific method/type of release, overrides bumping configuration, ignored if version is specified. Supported values: 'major', 'minor', and 'patch'.
+// The returned version is of the form MAJOR.MINOR.PATCH.
+func (r *Release) Version(ctx context.Context,
+	//git-cliff cliff.toml path to use. Defaults to root of gitref "./"
 	// +optional
-	method string,
-	// base image for git-cliff
-	// +optional
-	base *dagger.Container,
-	// additional arguments and flags for git-cliff --bumped-version
-	// +optional
-	args []string,
+	config string,
 ) (string, error) {
 
-	ctr := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
-		With(func(r *dagger.GitCliff) *dagger.GitCliff {
-			// method="" throws an error
-			if method != "" {
-				r = r.WithBump(dagger.GitCliffWithBumpOpts{Method: method})
-			}
-			return r
-		}).
-		WithBumpedVersion().
-		Run(dagger.GitCliffRunOpts{Args: args})
+	bumpedTag, err := dag.GitCliff(r.GitRef).
+		BumpedVersion(ctx, dagger.GitCliffBumpedVersionOpts{Config: config})
 
-	stderr, err := ctr.Stderr(ctx)
-	if err != nil {
-		return "", fmt.Errorf("err checking version: %w", err)
+	semver := semverRegex.FindStringSubmatch(bumpedTag)
+
+	if len(semver) < 2 {
+		return "", fmt.Errorf("valid semver not found in: %s", bumpedTag)
 	}
-
-	// TODO this should be encapsulated by the GitCliff module
-	if strings.Contains(stderr, "There is nothing to bump") {
-		combined, err := ctr.CombinedOutput(ctx)
-		if err != nil {
-			return "", fmt.Errorf("err checking version: %w", err)
-		}
-		return "", fmt.Errorf("failed to bump version:\n%s", combined)
-	}
-
-	stdout, err := ctr.Stdout(ctx)
-
-	version := strings.TrimSpace(stdout)
-	version = strings.TrimPrefix(version, "v")
-
-	return version, nil
+	return semver[1], err
 }
 
 // Generate the change log from conventional commit messages.
@@ -154,24 +104,31 @@ func (r *Release) changelog(
 	//version to generate changelog for
 	version string,
 	// Changelog file path, relative to source directory
-	// +optional
 	// +default="CHANGELOG.md"
 	changelog string,
-	// base image for git-cliff
-	// +optional
-	base *dagger.Container,
-	// additional arguments and flags for git-cliff
-	// +optional
-	args []string,
+	//git-cliff cliff.toml path to use. Defaults to root of gitref "./"
+	config string,
+	//provide a github token to git-cliff.
+	//This is needed due to github api rate limit
+	token *dagger.Secret,
 ) *dagger.File {
 	version = strings.TrimPrefix(version, "v")
 
 	// generate and prepend to changelog
-	return dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
-		WithTag("v" + version).
+	return dag.GitCliff(r.GitRef).
+		WithTag(version).
 		WithStrip("footer").
 		WithUnreleased().
 		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
+			//use alternate git-cliff config if provided
+			if config != "" {
+				gc = gc.WithConfig(dagger.GitCliffWithConfigOpts{Config: config})
+			}
+			// use token if provided
+			if token != nil {
+				gc = gc.WithSecretVariable("GITHUB_TOKEN", token)
+			}
+
 			// check if changelog file exists, if not create it
 			exists, err := r.GitRef.Tree().Exists(ctx, changelog)
 			if err != nil {
@@ -185,7 +142,7 @@ func (r *Release) changelog(
 			// if file exists, prepend instead
 			return gc.WithPrepend(changelog)
 		}).
-		Run(dagger.GitCliffRunOpts{Args: args}).
+		Run().
 		File(changelog)
 }
 
@@ -195,26 +152,34 @@ func (r *Release) changelog(
 func (r *Release) notes(ctx context.Context,
 	version string,
 	// Custom release notes file name. Default: v<version>.md
-	// +optional
 	name string,
 	// Additional information to include in release notes. Injected after header and before commit
-	// +optional
 	extraNotes string,
-	// base image for git-cliff
-	// +optional
-	base *dagger.Container,
-	// additional arguments and flags for git-cliff
-	// +optional
-	args []string,
+	//git-cliff cliff.toml path to use. Defaults to root of gitref "./"
+	config string,
+	//provide a github token to git-cliff.
+	//This is needed due to github api rate limit
+	token *dagger.Secret,
 ) (*dagger.File, error) {
 	version = strings.TrimPrefix(version, "v")
 
 	// generate and export release notes
-	notes, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{Container: base}).
-		WithTag("v" + version).
+	notes, err := dag.GitCliff(r.GitRef).
+		WithTag(version).
 		WithUnreleased().
 		WithStrip("all").
-		Run(dagger.GitCliffRunOpts{Args: args}).
+		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
+			// use alternate git-cliff config if provided
+			if config != "" {
+				gc = gc.WithConfig(dagger.GitCliffWithConfigOpts{Config: config})
+			}
+			// use token if provided
+			if token != nil {
+				gc = gc.WithSecretVariable("GITHUB_TOKEN", token)
+			}
+			return gc
+		}).
+		Run().
 		Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
