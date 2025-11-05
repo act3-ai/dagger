@@ -68,19 +68,12 @@ func ExtraTags(target string, existing []string) ([]string, error) {
 		return nil, fmt.Errorf("new version %q is not valid semver", target)
 	}
 
-	// filter out non-semver tags and sort
+	// filter out non-semver tags, target, and sort
 	semverTags := slices.DeleteFunc(existing, func(tag string) bool {
-		return !semver.IsValid(tag)
+		return !semver.IsValid(tag) || tag == target
 	})
 	semver.Sort(semverTags)
 	slices.Reverse(semverTags)
-
-	// check if new tag doesn't already exist
-	for _, tag := range semverTags {
-		if tag == target {
-			return nil, fmt.Errorf("version %s already exists", target)
-		}
-	}
 
 	newMajor := semver.Major(target)
 	newMajorMinor := semver.MajorMinor(target)

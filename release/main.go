@@ -37,13 +37,13 @@ type Release struct {
 
 func New(
 	// Git Ref Source, ex: https://gitlab.com/my/app.git
-	gitref *dagger.GitRef,
+	gitRef *dagger.GitRef,
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional
 	netrc *dagger.Secret,
 ) (*Release, error) {
 	return &Release{
-		GitRef:         gitref,
+		GitRef:         gitRef,
 		RegistryConfig: dag.RegistryConfig(),
 		Netrc:          netrc,
 	}, nil
@@ -70,9 +70,4 @@ func (r *Release) WithoutRegistryAuth(
 ) *Release {
 	r.RegistryConfig = r.RegistryConfig.WithoutRegistryAuth(address)
 	return r
-}
-
-// convert GitRef to a Directory
-func (r *Release) gitRefAsDir(gitref *dagger.GitRef) *dagger.Directory {
-	return gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
 }
