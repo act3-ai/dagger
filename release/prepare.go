@@ -32,11 +32,12 @@ func (r *Release) Prepare(ctx context.Context,
 	// +optional
 	token *dagger.Secret,
 ) (*dagger.Changeset, error) {
+	version = strings.TrimPrefix(version, "v")
 	src := r.GitRef.Tree()
 
 	// Base paths
 	changelogPath := "CHANGELOG.md"
-	notesPath := filepath.Join("releases", fmt.Sprintf("%s.md", version))
+	notesPath := filepath.Join("releases", fmt.Sprintf("v%s.md", version))
 	versionPath := "VERSION"
 
 	// Prepend path prefix if given
