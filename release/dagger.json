@@ -12,8 +12,8 @@
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.1",
-      "pin": "324669f01272fc59c6cf74f1e2b68898bb5b220d"
+      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.2",
+      "pin": "c2915e4ed29dfeceb2336ea61223d84288c0cceb"
     },
     {
       "name": "go",
