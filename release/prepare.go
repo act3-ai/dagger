@@ -64,7 +64,7 @@ func (r *Release) Prepare(ctx context.Context,
 	after := src.
 		WithFile(changelogPath, changelogFile).
 		WithFile(notesPath, releaseNotesFile).
-		WithNewFile(versionPath, version).
+		WithNewFile(versionPath, version+"\n").
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
 				d = d.WithFile(path.Join(chartPath, "Chart.yaml"), chartFile)

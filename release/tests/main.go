@@ -76,11 +76,11 @@ index 0000000..7dea76e
 +++ b/VERSION
 @@ -0,0 +1 @@
 +1.0.1
-diff --git b/releases/v1.0.1.md b/releases/v1.0.1.md
+diff --git b/releases/1.0.1.md b/releases/1.0.1.md
 new file mode 100644
 index 0000000..9427169
 --- /dev/null
-+++ b/releases/v1.0.1.md
++++ b/releases/1.0.1.md
 @@ -0,0 +1,5 @@
 +## [1.0.1]
 +
@@ -88,7 +88,8 @@ index 0000000..9427169
 +
 +- Test tag
 `
-	changes := dag.Release(gitref).Prepare()
+	version, err := dag.Release(gitref).Version(ctx)
+	changes := dag.Release(gitref).Prepare(version)
 
 	patch, err := changes.AsPatch().Contents(ctx)
 
