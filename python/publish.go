@@ -10,8 +10,11 @@ func (python *Python) Publish(ctx context.Context,
 	// extra args to pass into uv build
 	// +optional
 	buildArgs []string,
+	// url to publish python package/wheel to
 	publishUrl string,
+	// username for private publish url
 	username string,
+	// password for private publish url, must be given in dagger.Secret format, in ex. env://MY_TOKEN
 	password *dagger.Secret,
 ) (*dagger.Container, error) {
 
