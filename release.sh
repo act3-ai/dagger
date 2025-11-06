@@ -42,22 +42,19 @@ case "$cmd" in
 prepare)
     git fetch --tags
     #run module tests
-    dagger -m "$module"/tests call all
+    #dagger -m "$module"/tests call all
 
-    version=$(dagger -m git-cliff call --gitref="." \
-    with-unreleased \
-    with-include-path --pattern "$module/**" \
-    bumped-version --args="--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$")
-    #needed because version tag is format of module/v1.0.0
-    stripped_version="${version#*/}"
+    version=$(
+      dagger -m release call --git-ref="." \
+      version \
+      --config="$module/cliff.toml"
+    )
     
     #generate and export new version/release notes
-    dagger -m release call --gitref="." prepare \
-    --changelog-path "$module/CHANGELOG.md" \
-    --notes-path "$module/releases/$stripped_version.md" \
-    --version "$version" \
-    --version-path "$module/VERSION" \
-    --args="--include-path=$module/**,--tag-pattern=$module/v[0-9]+\\.[0-9]+\\.[0-9]+$" \
+    dagger -m release call --git-ref="." -v prepare \
+    --path-prefix="$module" \
+    --version="$version" \
+    --token=env://GITHUB_TOKEN \
     export --path="."
 
     echo "Please review the local changes, especially $module/releases/$version.md"
@@ -65,34 +62,31 @@ prepare)
 
 approve)
     version=$(cat "$module/VERSION")
-    #needed because version tag is format of module/v1.0.0
-    stripped_version="${version#*/}"
 
-    notesPath="$module/releases/$stripped_version.md"
+    notesPath="$module/releases/v$version.md"
     # release material
     git add "$module/VERSION" "$module/CHANGELOG.md" "$notesPath"
     # documentation changes (from make gendoc, apidoc, swagger)
     # git add \*.md # updated
     # signed commit
-    git commit -S -m "chore(release): prepare for $version"
+    git commit -S -m "chore(release): prepare for $module/v$version"
     # annotated and signed tag
-    git tag -s -a -m "Official release $version" "$version"
+    git tag -s -a -m "Official release $module/v$version" "$module/v$version"
     ;;
 publish)
     # push this branch and the associated tags
     git push --follow-tags
 
     version=$(cat "$module/VERSION")
-    #needed because version tag is format of module/v1.0.0
-    stripped_version="${version#*/}"
-    notesPath="$module/releases/$stripped_version.md"
+    notesPath="$module/releases/v$version.md"
     
     # create release, upload artifacts
-    dagger -m release --gitref="https://github.com/act3-ai/dagger" call \
+    dagger -m release --git-ref="." call \
         create-github \
         --token=env://GITHUB_TOKEN \
         --repo="act3-ai/dagger" \
-        --version="$version" \
+        --title="$module/v$version" \
+        --version="$module/v$version" \
         --notes="$notesPath"
 
     ;;
