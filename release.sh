@@ -42,7 +42,7 @@ case "$cmd" in
 prepare)
     git fetch --tags
     #run module tests
-    #dagger -m "$module"/tests call all
+    dagger -m "$module"/tests call all
 
     version=$(
       dagger -m release call --git-ref="." \
@@ -55,6 +55,7 @@ prepare)
     --path-prefix="$module" \
     --version="$version" \
     --token=env://GITHUB_TOKEN \
+    --config="$module/cliff.toml" \
     export --path="."
 
     echo "Please review the local changes, especially $module/releases/$version.md"
