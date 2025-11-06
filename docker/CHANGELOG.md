@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- Add cliff.toml [521456d](https://github.com/act3-ai/dagger/commit/521456d6d2765b41e8a8667d22a2304f13c0c6c8) by @pspurlock
+
+
 ## [docker/v0.1.4] - 2025-10-02
 
 ### 🐛 Bug Fixes
