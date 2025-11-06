@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.7] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- Test commit [11b383f](https://github.com/act3-ai/dagger/commit/11b383f84ef3cbbc59df1949a4acb532f8a6e505) by @pspurlock
+
+
 ## [python/v0.1.6] - 2025-09-19
 
 ### 🐛 Bug Fixes
