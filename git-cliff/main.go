@@ -13,144 +13,226 @@ const (
 )
 
 type GitCliff struct {
-	Container *dagger.Container
-
 	// +private
-	Command []string
+	Gitref *dagger.GitRef
+	// +private
+	Options *Options
+}
+
+// Options represents all configurable options for running git-cliff
+type Options struct {
+	GitCliffVersion string
+	Netrc           *dagger.Secret
+	Tag             string
+	TagPattern      []string
+	Bump            bool
+	BumpedVersion   bool
+	Unreleased      bool
+	Strip           string
+	OutputFile      string
+	Prepend         string
+	GithubToken     *dagger.Secret
+	GitlabToken     *dagger.Secret
+	GiteaToken      *dagger.Secret
+	Config          string
+	IncludePath     []string
+	ExcludePath     []string
+	SkipCommits     []string
+	Latest          bool
+	Current         bool
+	TopoOrder       bool
 }
 
 func New(ctx context.Context,
 	// Git repository source.
 	gitref *dagger.GitRef,
-
-	// Custom container to use as a base container. Must have 'git-cliff' available on PATH.
+	// Version of git-cliff image.
 	// +optional
-	container *dagger.Container,
-
-	// Version (image tag) to use as a git-cliff binary source.
-	// +optional
-	// +default="latest"
-	version string,
-
-	// Mount netrc credentials for a private git repository.
+	// +default=latest
+	gitCliffVersion string,
+	// Mount netrc credentials.
 	// +optional
 	netrc *dagger.Secret,
+	// Sets the tag for the latest version
+	// +optional
+	tag string,
+	// Sets the regex for matching git tags
+	// +optional
+	tagPattern []string,
+	// Bumps the version for unreleased changes. Optionally with specified version
+	// +optional
+	bump bool,
+	// Prints bumped version for unreleased changes
+	// +optional
+	bumpedVersion bool,
+	//processes the commits that do not belong to a tag
+	// +optional
+	// +default=true
+	unreleased bool,
+	// Strips the given parts from the changelog [possible values: header, footer, all]
+	// +optional
+	strip string,
+	//writes output to the given file
+	// +optional
+	outputFile string,
+	//Prepends entries to the given changelog file
+	// +optional
+	prepend string,
+	// private token to use when authenticating with a private github instance set in cliff.toml
+	// See: https://git-cliff.org/docs/integration/github
+	// +optional
+	githubToken *dagger.Secret,
+	// private token to use when authenticating with a private gitlab instance set in cliff.toml
+	// See: https://git-cliff.org/docs/integration/gitlab
+	// +optional
+	gitlabToken *dagger.Secret,
+	// private token to use when authenticating with a private gitea instance set in cliff.toml
+	// See: https://git-cliff.org/docs/integration/gitea
+	// +optional
+	giteaToken *dagger.Secret,
+	// path to a git-cliff config. Defaults to root directory of given git-ref source
+	// +optional
+	config string,
+	// Sets the path to include related commits
+	// +optional
+	includePath []string,
+	// Sets the path to exnclude related commits
+	// +optional
+	excludePath []string,
+	// Sets commits that will be skipped in the changelog
+	// +optional
+	skipCommits []string,
+	// Processes the commits starting from the latest tag
+	// +optional
+	latest bool,
+	// Processes the commits that belong to the current tag
+	// +optional
+	current bool,
+	// Sorts the tags topologically
+	// +optional
+	topoOrder bool,
 ) *GitCliff {
-	if container == nil {
-		container = defaultContainer(version)
+	return &GitCliff{
+		Gitref: gitref,
+		Options: &Options{
+			GitCliffVersion: gitCliffVersion,
+			Netrc:           netrc,
+			Tag:             tag,
+			TagPattern:      tagPattern,
+			Bump:            bump,
+			BumpedVersion:   bumpedVersion,
+			Unreleased:      unreleased,
+			Strip:           strip,
+			OutputFile:      outputFile,
+			Prepend:         prepend,
+			GithubToken:     githubToken,
+			GitlabToken:     gitlabToken,
+			GiteaToken:      giteaToken,
+			Config:          config,
+			IncludePath:     includePath,
+			ExcludePath:     excludePath,
+			SkipCommits:     skipCommits,
+			Latest:          latest,
+			Current:         current,
+			TopoOrder:       topoOrder,
+		},
 	}
-	gitRefDir := gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
+}
+
+// Run git-cliff with all options provided.
+//
+// Run MAY be used as a "catch-all" in case functions are not implemented.
+func (gc *GitCliff) Run() *dagger.Container {
+	//convert git-ref to a *dagger.Directory
+	gitRefDir := gc.Gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
+	//default git-cliff cmd
 	cmd := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
-	container = container.With(
-		func(c *dagger.Container) *dagger.Container {
-			if netrc != nil {
-				c = c.WithMountedSecret("/root/.netrc", netrc)
-			}
-			return c
-		}).
+	//base git-cliff container
+	ctr := dag.Container().
+		From(fmt.Sprintf("%s:%s", imageGitCliff, gc.Options.GitCliffVersion)).
 		WithMountedDirectory(srcDir, gitRefDir).
 		WithWorkdir(srcDir)
 
-	return &GitCliff{
-		Container: container,
-		Command:   cmd,
+	// parse given options set
+	if gc.Options.Netrc != nil {
+		ctr = ctr.WithMountedSecret("/root/.netrc", gc.Options.Netrc)
 	}
-}
 
-// WithPrivateGitlabHost provides conveneince for using git-cliff with a private GitLab host. Altenatively, use WithEnvVariable and WithSecretVariable as needed.
-//
-// Sets GITLAB_API_URL, GITLAB_REPO, and GITLAB_TOKEN.
-func (gc *GitCliff) WithPrivateGitlabHost(
-	// API URL, typically https://<host>/api/v4
-	apiURL string,
-	// Repository
-	repo string,
-	// Access token
-	token *dagger.Secret,
-) *GitCliff {
-	gc.Container = gc.Container.WithEnvVariable("GITLAB_API_URL", apiURL).
-		WithEnvVariable("GITLAB_REPO", repo).
-		WithSecretVariable("GITLAB_TOKEN", token)
+	if gc.Options.Tag != "" {
+		cmd = append(cmd, "--tag", gc.Options.Tag)
+	}
 
-	return gc
-}
+	if len(gc.Options.TagPattern) > 0 {
+		cmd = append(cmd, "--tag-pattern", strings.Join(gc.Options.TagPattern, ","))
+	}
 
-// WithPrivateGiteaHost provides conveneince for using git-cliff with a private Gitea host.Altenatively, use WithEnvVariable and WithSecretVariable as needed.
-//
-// Sets GITEA_API_URL, GITEA_REPO, and GITEA_TOKEN.
-func (gc *GitCliff) WithPrivateGiteaHost(
-	// API URL, typically https://<host>/api/v4
-	apiURL string,
-	// Repository
-	repo string,
-	// Access token
-	token *dagger.Secret,
-) *GitCliff {
-	gc.Container = gc.Container.WithEnvVariable("GITEA_API_URL", apiURL).
-		WithEnvVariable("GITEA_REPO", repo).
-		WithSecretVariable("GITEA_TOKEN", token)
+	if gc.Options.Bump {
+		cmd = append(cmd, "--bump")
+	}
 
-	return gc
-}
+	if gc.Options.BumpedVersion {
+		cmd = append(cmd, "--bumped-version")
+	}
 
-// WithEnvVariable adds an environment variable to the git-cliff container.
-//
-// This is useful for reusability and readability by not breaking the calling chain.
-func (gc *GitCliff) WithEnvVariable(
-	// The name of the environment variable (e.g., "HOST").
-	name string,
-	// The value of the environment variable (e.g., "localhost").
-	value string,
-	// Replace `${VAR}` or $VAR in the value according to the current environment
-	// variables defined in the container (e.g., "/opt/bin:$PATH").
-	//
-	// +optional
-	expand bool,
-) *GitCliff {
-	gc.Container = gc.Container.WithEnvVariable(
-		name,
-		value,
-		dagger.ContainerWithEnvVariableOpts{
-			Expand: expand,
-		},
-	)
-	return gc
-}
+	if gc.Options.Unreleased {
+		cmd = append(cmd, "--unreleased")
+	}
 
-// WithSecretVariable adds an env variable containing a secret to the git-cliff container.
-//
-// This is useful for reusability and readability by not breaking the calling chain.
-func (gc *GitCliff) WithSecretVariable(
-	// The name of the environment variable containing a secret (e.g., "PASSWORD").
-	name string,
-	// The value of the environment variable containing a secret.
-	secret *dagger.Secret,
-) *GitCliff {
-	gc.Container = gc.Container.WithSecretVariable(name, secret)
-	return gc
-}
+	if gc.Options.Strip != "" {
+		cmd = append(cmd, "--strip", gc.Options.Strip)
+	}
 
-func (gc *GitCliff) WithConfig(
-	// Configuration file path in provided git repository/ref.
-	// +optional
-	config string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--config", config)
-	return gc
-}
+	if gc.Options.OutputFile != "" {
+		cmd = append(cmd, "--output", gc.Options.OutputFile)
+	}
 
-// Run git-cliff with all options previously provided.
-//
-// Run MAY be used as a "catch-all" in case functions are not implemented.
-func (gc *GitCliff) Run(
-	// arguments and flags, without `git-cliff`
-	// +optional
-	args []string,
-) *dagger.Container {
-	cmd := gc.Command
-	cmd = append(cmd, args...)
-	return gc.Container.WithExec(cmd)
+	if gc.Options.Prepend != "" {
+		cmd = append(cmd, "--prepend", gc.Options.Prepend)
+	}
+
+	if gc.Options.GithubToken != nil {
+		ctr = ctr.
+			WithSecretVariable("GITHUB_TOKEN", gc.Options.GithubToken)
+	}
+	if gc.Options.GitlabToken != nil {
+		ctr = ctr.
+			WithSecretVariable("GITLAB_TOKEN", gc.Options.GitlabToken)
+	}
+	if gc.Options.GiteaToken != nil {
+		ctr = ctr.
+			WithSecretVariable("GITEA_TOKEN", gc.Options.GiteaToken)
+	}
+
+	if gc.Options.Config != "" {
+		cmd = append(cmd, "--config", gc.Options.Config)
+	}
+
+	if len(gc.Options.IncludePath) > 0 {
+		cmd = append(cmd, "--include-path", strings.Join(gc.Options.IncludePath, ","))
+	}
+
+	if len(gc.Options.ExcludePath) > 0 {
+		cmd = append(cmd, "--exclude-path", strings.Join(gc.Options.ExcludePath, ","))
+	}
+
+	if gc.Options.Latest {
+		cmd = append(cmd, "--latest")
+	}
+
+	if gc.Options.Current {
+		cmd = append(cmd, "--current")
+	}
+
+	if gc.Options.TopoOrder {
+		cmd = append(cmd, "--topo-order")
+	}
+
+	// cmd := gc.Command
+	// cmd = append(cmd, args...)
+	// return gc.Container.WithExec(cmd)
+
+	return ctr.WithExec(cmd)
 }
 
 // Prints bumped version for unreleased changes.
@@ -197,204 +279,4 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	}
 
 	return stdout, nil
-}
-
-// Generate a changelog for a specific version, ignoring configured method of version bumping.
-//
-// e.g. `git-cliff --tag <version>`.
-func (gc *GitCliff) WithTag(ctx context.Context,
-	// Specific tag
-	version string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--tag", version)
-	return gc
-}
-
-// Sets the GitHub API token.
-//
-// e.g. `GITHUB_TOKEN=<token> git-cliff`.
-func (gc *GitCliff) WithGithubToken(
-	// GitHub API token.
-	token *dagger.Secret,
-) *GitCliff {
-	return gc.WithSecretVariable("GITHUB_TOKEN", token)
-}
-
-// Sets the GitLab API token.
-//
-// e.g. `GITLAB_TOKEN=<token> git-cliff`.
-func (gc *GitCliff) WithGitlabToken(
-	// GitLab API token.
-	token *dagger.Secret,
-) *GitCliff {
-	return gc.WithSecretVariable("GITLAB_TOKEN", token)
-}
-
-// Sets the Gitea API token.
-//
-// e.g. `GITEA_TOKEN=<token> git-cliff`.
-func (gc *GitCliff) WithGiteaToken(
-	// Gitea API token.
-	token *dagger.Secret,
-) *GitCliff {
-	return gc.WithSecretVariable("GITEA_TOKEN", token)
-}
-
-// Prints bumped version for unreleased changes.
-//
-// e.g. `git-cliff --bumped-version`.
-func (gc *GitCliff) WithBumpedVersion() *GitCliff {
-	gc.Command = append(gc.Command, "--bumped-version")
-	return gc
-}
-
-// Bump the version for unreleased changes. Optionally with specified bump method/type.
-//
-// e.g. `git-cliff --bump`.
-func (gc *GitCliff) WithBump(
-	// bump method/type. Supported values: 'major', 'minor', and 'patch'.
-	// +optional
-	method string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--bump")
-	if method != "" {
-		gc.Command = append(gc.Command, method)
-	}
-	return gc
-}
-
-// Sets the regex for matching git tags.
-//
-// e.g. `git-cliff --tag-pattern`.
-func (gc *GitCliff) WithTagPattern(
-	// glob pattern
-	pattern []string,
-) *GitCliff {
-	for _, p := range pattern {
-		gc.Command = append(gc.Command, "--tag-pattern", p)
-	}
-	return gc
-}
-
-// Processes the commits starting from the latest tag.
-//
-// e.g. `git-cliff --latest`.
-func (gc *GitCliff) WithLatest() *GitCliff {
-	gc.Command = append(gc.Command, "--latest")
-	return gc
-}
-
-// Processes the commits that belog to the current tag.
-//
-// e.g. `git-cliff --current`
-func (gc *GitCliff) WithCurrent() *GitCliff {
-	gc.Command = append(gc.Command, "--current")
-	return gc
-}
-
-// Processes the commits that do not belog to a tag.
-//
-// e.g. `git-cliff --unreleased`.
-func (gc *GitCliff) WithUnreleased() *GitCliff {
-	gc.Command = append(gc.Command, "--unreleased")
-	return gc
-}
-
-// Sorts the tags topologically.
-//
-// e.g. `git-cliff --topo-order`.
-func (gc *GitCliff) WithTopoOrder() *GitCliff {
-	gc.Command = append(gc.Command, "--topo-order")
-	return gc
-}
-
-// Sets the git repository.
-//
-// e.g. `git-cliff --repository <repo>...`.
-func (gc *GitCliff) WithRepository(
-	// git repository (one or more)
-	repo []string,
-) *GitCliff {
-	for _, r := range repo {
-		gc.Command = append(gc.Command, "--repository", r)
-	}
-	return gc
-}
-
-// Sets the path to include related commits.
-//
-// e.g. `git-cliff --include-pattern <pattern>...`.
-func (gc *GitCliff) WithIncludePath(
-	// glob pattern or direct path (one or more)
-	pattern []string,
-) *GitCliff {
-	for _, p := range pattern {
-		gc.Command = append(gc.Command, "--include-path", p)
-	}
-	return gc
-}
-
-// Sets the path to exclude related commits.
-//
-// e.g. `git-cliff --include-pattern <pattern>...`.
-func (gc *GitCliff) WithExcludePath(
-	// glob pattern or direct path (one or more)
-	pattern []string,
-) *GitCliff {
-	for _, p := range pattern {
-		gc.Command = append(gc.Command, "--exclude-path", p)
-	}
-	return gc
-}
-
-// Sets comits that will be skipped in the changelog.
-//
-// e.g. `git-cliff --skip-commit <sha1>...`.
-func (gc *GitCliff) WithSkipCommit(
-	// Commits (one or more)
-	sha1 []string,
-) *GitCliff {
-	for _, commit := range sha1 {
-		gc.Command = append(gc.Command, "--skip-commit", commit)
-	}
-	return gc
-}
-
-// Prepends entries to the given changelog file.
-//
-// e.g. `git-cliff --prepend <changelog>`.
-func (gc *GitCliff) WithPrepend(
-	// Path to changelog, relative to source git directory
-	changelog string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--prepend", changelog)
-	return gc
-}
-
-// Writes output to the fiven file.
-//
-// e.g. `git-cliff --output <path>`.
-func (gc *GitCliff) WithOutput(
-	// Write output to file, relative to source git directory.
-	path string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--output", path)
-	return gc
-}
-
-// Strips the given parts from the changelog.
-//
-// e.g. `git-cliff --strip <part>`.
-func (gc *GitCliff) WithStrip(
-	// Part of changelog to strip. Supported values: header, footer, all.
-	part string,
-) *GitCliff {
-	gc.Command = append(gc.Command, "--strip", part)
-	return gc
-}
-
-// defaultContainer constructs a minimal container containing a source git repository.
-func defaultContainer(version string) *dagger.Container {
-	return dag.Container().
-		From(fmt.Sprintf("%s:%s", imageGitCliff, version))
 }
