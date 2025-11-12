@@ -35,23 +35,40 @@ func (r *Release) Prepare(ctx context.Context,
 	version = strings.TrimPrefix(version, "v")
 	src := r.GitRef.Tree()
 
-	// Base paths
-	changelogPath := "CHANGELOG.md"
-	notesPath := filepath.Join("releases", fmt.Sprintf("v%s.md", version))
-	versionPath := "VERSION"
-
 	// Prepend path prefix if given
-	if pathPrefix != "" {
-		changelogPath = filepath.Join(pathPrefix, changelogPath)
-		notesPath = filepath.Join(pathPrefix, notesPath)
-		versionPath = filepath.Join(pathPrefix, versionPath)
+	changelogPath := filepath.Join(pathPrefix, "CHANGELOG.md")
+	versionPath := filepath.Join(pathPrefix, "VERSION")
+	notesPath := filepath.Join(pathPrefix, "releases", fmt.Sprintf("v%s.md", version))
+
+	// generate changelog if one is not found, else prepend to an existing one
+	chlogOpts := dagger.GitCliffDevOpts{
+		Tag:    version,
+		Config: config,
+		Strip:  "footer",
 	}
-	// generate changelog
-	changelogFile := r.changelog(ctx, version, changelogPath, config, token)
-	// generate release notes
-	releaseNotesFile, err := r.notes(ctx, version, filepath.Base(notesPath), extraNotes, config, token)
+
+	if r.changelogCheck(ctx, changelogPath) {
+		chlogOpts.Prepend = changelogPath
+	} else {
+		chlogOpts.OutputFile = changelogPath
+	}
+
+	changelogFile := dag.GitCliffDev(r.GitRef, chlogOpts).Run().File(changelogPath)
+
+	// generate release notes with optional extraNotes if provided
+	releaseNotesOpts := dagger.GitCliffDevOpts{
+		Tag:    version,
+		Config: config,
+		Strip:  "all",
+	}
+
+	releaseNotes, err := dag.GitCliffDev(r.GitRef, releaseNotesOpts).Run().Stdout(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("generating release notes: %w", err)
+	}
+
+	if extraNotes != "" {
+		releaseNotes = strings.Replace(releaseNotes, "###", extraNotes+"###", 1)
 	}
 
 	// set helm chart version
@@ -64,7 +81,7 @@ func (r *Release) Prepare(ctx context.Context,
 	// instead just modify the source directory directly and then compute the changes
 	after := src.
 		WithFile(changelogPath, changelogFile).
-		WithFile(notesPath, releaseNotesFile).
+		WithNewFile(notesPath, releaseNotes).
 		WithNewFile(versionPath, version+"\n").
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
@@ -97,108 +114,6 @@ func (r *Release) Version(ctx context.Context,
 	return semver[1], err
 }
 
-// Generate the change log from conventional commit messages.
-//
-// changelog is a default changelog generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom changelogs.
-func (r *Release) changelog(
-	ctx context.Context,
-	//version to generate changelog for
-	version string,
-	// Changelog file path, relative to source directory
-	// +default="CHANGELOG.md"
-	changelog string,
-	//git-cliff cliff.toml path to use. Defaults to root of gitref "./"
-	config string,
-	//provide a github token to git-cliff.
-	//This is needed due to github api rate limit
-	token *dagger.Secret,
-) *dagger.File {
-	version = strings.TrimPrefix(version, "v")
-
-	// generate and prepend to changelog
-	return dag.GitCliff(r.GitRef).
-		WithTag(version).
-		WithStrip("footer").
-		WithUnreleased().
-		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
-			//use alternate git-cliff config if provided
-			if config != "" {
-				gc = gc.WithConfig(dagger.GitCliffWithConfigOpts{Config: config})
-			}
-			// use token if provided
-			if token != nil {
-				gc = gc.WithSecretVariable("GITHUB_TOKEN", token)
-			}
-
-			// check if changelog file exists, if not create it
-			exists, err := r.GitRef.Tree().Exists(ctx, changelog)
-			if err != nil {
-				panic(fmt.Errorf("failed to check if %s exists: %w", changelog, err))
-			}
-
-			if !exists {
-				return gc.WithOutput(changelog)
-			}
-
-			// if file exists, prepend instead
-			return gc.WithPrepend(changelog)
-		}).
-		Run().
-		File(changelog)
-}
-
-// Generate release notes.
-//
-// notes are default release notes generated using the git-cliff module. Please use the act3-ai/dagger/git-cliff module directly for custom release notes.
-func (r *Release) notes(ctx context.Context,
-	version string,
-	// Custom release notes file name. Default: v<version>.md
-	name string,
-	// Additional information to include in release notes. Injected after header and before commit
-	extraNotes string,
-	//git-cliff cliff.toml path to use. Defaults to root of gitref "./"
-	config string,
-	//provide a github token to git-cliff.
-	//This is needed due to github api rate limit
-	token *dagger.Secret,
-) (*dagger.File, error) {
-	version = strings.TrimPrefix(version, "v")
-
-	// generate and export release notes
-	notes, err := dag.GitCliff(r.GitRef).
-		WithTag(version).
-		WithUnreleased().
-		WithStrip("all").
-		With(func(gc *dagger.GitCliff) *dagger.GitCliff {
-			// use alternate git-cliff config if provided
-			if config != "" {
-				gc = gc.WithConfig(dagger.GitCliffWithConfigOpts{Config: config})
-			}
-			// use token if provided
-			if token != nil {
-				gc = gc.WithSecretVariable("GITHUB_TOKEN", token)
-			}
-			return gc
-		}).
-		Run().
-		Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("generating release notes: %w", err)
-	}
-
-	// add extra notes section
-	if extraNotes != "" {
-		b := &strings.Builder{}
-		b.WriteString(extraNotes)
-		b.WriteString("###")
-		notes = strings.Replace(notes, "###", b.String(), 1)
-	}
-
-	return dag.Directory().
-		WithNewFile(name, notes).
-		File(name), nil
-}
-
 // Set the version and appVersion of a helm chart.
 func (r *Release) setHelmChartVersion(
 	// release version
@@ -219,4 +134,18 @@ func (r *Release) setHelmChartVersion(
 			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
 			"-i", file}).
 		File(file)
+}
+
+// check if changelog exists
+func (r *Release) changelogCheck(
+	ctx context.Context,
+	// path to the changelog
+	changelogPath string,
+) bool {
+
+	exists, err := r.GitRef.Tree().Exists(ctx, changelogPath)
+	if err != nil {
+		panic(fmt.Errorf("failed to check if %s exists: %w", changelogPath, err))
+	}
+	return exists
 }
