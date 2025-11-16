@@ -160,7 +160,7 @@ func (gc *GitCliff) ReleaseNotes(
 	}
 
 	if extraNotes != "" {
-		releaseNotes = strings.Replace(releaseNotes, "###", extraNotes+"###", 1)
+		releaseNotes = strings.Replace(releaseNotes, "###", extraNotes+"\n###", 1)
 	}
 
 	return gc.Container.WithExec(cmd).WithNewFile(notes, releaseNotes).File(notes)
