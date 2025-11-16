@@ -13,6 +13,8 @@ const (
 )
 
 type GitCliff struct {
+	//Returns a git-cliff container with optionally mounted secret variables
+	//for private gitlab, github, or gitea tokens
 	Container *dagger.Container
 	// +private
 	Gitref *dagger.GitRef
@@ -22,7 +24,7 @@ type GitCliff struct {
 
 func New(ctx context.Context,
 	// Git repository source.
-	gitref *dagger.GitRef,
+	gitRef *dagger.GitRef,
 	// Version of git-cliff image.
 	// +optional
 	// +default=latest
@@ -42,7 +44,7 @@ func New(ctx context.Context,
 ) *GitCliff {
 
 	//convert git-ref to a *dagger.Directory
-	gitRefDir := gitref.Tree(dagger.GitRefTreeOpts{Depth: -1})
+	gitRefDir := gitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
 	//default git-cliff cmd
 	cmd := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
@@ -54,7 +56,7 @@ func New(ctx context.Context,
 
 	if githubToken != nil {
 		ctr = ctr.
-			WithSecretVariable("GITLAB_TOKEN", githubToken)
+			WithSecretVariable("GITHUB_TOKEN", githubToken)
 	}
 
 	if gitlabToken != nil {
@@ -69,13 +71,13 @@ func New(ctx context.Context,
 	return &GitCliff{
 		Container: ctr,
 		Command:   cmd,
-		Gitref:    gitref,
+		Gitref:    gitRef,
 	}
 }
 
-// generate a changelog file with unreleased changes and bumps the tag
+// generate a changelog file with unreleased changes and bumps the tag if tag is not provided
 // If file already exists, it will prepend to the existing changelog instead of creating a new one.
-func (gc *GitCliff) GenerateChangelog(
+func (gc *GitCliff) Changelog(
 	ctx context.Context,
 	//file path to output or prepend generated changelog.
 	// +optional
@@ -118,8 +120,8 @@ func (gc *GitCliff) GenerateChangelog(
 	return gc.Container.WithExec(cmd).File(changelog)
 }
 
-// generate release notes with unreleased changes and bumps the tag if tag is not provided
-func (gc *GitCliff) GenerateReleaseNotes(
+// generate release notes file with unreleased changes and bumps the tag if tag is not provided
+func (gc *GitCliff) ReleaseNotes(
 	ctx context.Context,
 	//file path to output release notes.
 	// +optional
@@ -132,6 +134,9 @@ func (gc *GitCliff) GenerateReleaseNotes(
 	// +optional
 	// +default="cliff.toml"
 	config string,
+	// append additional provided release notes
+	// +optional
+	extraNotes string,
 ) *dagger.File {
 	cmd := gc.Command
 	cmd = append(cmd,
@@ -139,7 +144,6 @@ func (gc *GitCliff) GenerateReleaseNotes(
 		"--unreleased",
 		"--strip",
 		"all",
-		"--output", notes,
 	)
 
 	//use provided tag, otherwise bump automatically
@@ -149,10 +153,20 @@ func (gc *GitCliff) GenerateReleaseNotes(
 		cmd = append(cmd, "--bump")
 	}
 
-	return gc.Container.WithExec(cmd).File(notes)
+	//generate release notes and append any extraNotes provided
+	releaseNotes, err := gc.Container.WithExec(cmd).Stdout(ctx)
+	if err != nil {
+		panic(fmt.Errorf("failed to generate release notes: %w", err))
+	}
+
+	if extraNotes != "" {
+		releaseNotes = strings.Replace(releaseNotes, "###", extraNotes+"###", 1)
+	}
+
+	return gc.Container.WithExec(cmd).WithNewFile(notes, releaseNotes).File(notes)
 }
 
-// Prints bumped version for unreleased changes.
+// Prints a bumped tag for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
 	//path to git-cliff config to use for generating changelog in provided git-ref source.
 	// +optional
