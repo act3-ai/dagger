@@ -206,5 +206,5 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 		return "", fmt.Errorf("error getting version: %w", err)
 	}
 
-	return stdout, nil
+	return strings.TrimSpace(stdout), nil
 }
