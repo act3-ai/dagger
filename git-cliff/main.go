@@ -1,4 +1,7 @@
 // GitCliff is a highly customizable changelog generator.
+// This module uses a git reference as a source directory to scan for changes
+// and create a changelog or bump a version. A cliff.toml can be used for additional
+// customization if found in the working directory where GitCliff is being ran.
 package main
 
 import (
