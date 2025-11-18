@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6] - 2025-11-18
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger engine to v0.19.5 [50890a8](https://github.com/act3-ai/dagger/commit/50890a89d660ee551deefed7b79e84d32106bfa3) by @pspurlock
+
+- Add option for alternate dockerfile location and set target default to none [a062625](https://github.com/act3-ai/dagger/commit/a062625b6fda691c5b2064773f42eac083cf4c3a) by @pspurlock
+
+
 ## [0.1.5] - 2025-11-06
 
 ### 🐛 Bug Fixes
