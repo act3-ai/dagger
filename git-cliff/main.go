@@ -5,6 +5,7 @@ import (
 	"context"
 	"dagger/git-cliff/internal/dagger"
 	"fmt"
+	"path/filepath"
 	"strings"
 )
 
@@ -29,6 +30,8 @@ func New(ctx context.Context,
 	// +optional
 	// +default=latest
 	gitCliffVersion string,
+	// +optional
+	workingDir string,
 	// private token to use when authenticating with a private github instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/github
 	// +optional
@@ -52,7 +55,14 @@ func New(ctx context.Context,
 	ctr := dag.Container().
 		From(fmt.Sprintf("%s:%s", imageGitCliff, gitCliffVersion)).
 		WithMountedDirectory(srcDir, gitRefDir).
-		WithWorkdir(srcDir)
+		With(func(c *dagger.Container) *dagger.Container {
+			if workingDir != "" {
+				c = c.WithWorkdir(filepath.Join(srcDir, workingDir))
+			} else {
+				c = c.WithWorkdir(srcDir)
+			}
+			return c
+		})
 
 	if githubToken != nil {
 		ctr = ctr.
@@ -86,14 +96,9 @@ func (gc *GitCliff) Changelog(
 	//tag to generate changelog for
 	// +optional
 	tag string,
-	//path to git-cliff config to use for generating changelog in provided git-ref source.
-	// +optional
-	// +default="cliff.toml"
-	config string,
 ) *dagger.File {
 	cmd := gc.Command
 	cmd = append(cmd,
-		"--config", config,
 		"--unreleased",
 		"--strip",
 		"footer",
@@ -106,7 +111,7 @@ func (gc *GitCliff) Changelog(
 		cmd = append(cmd, "--bump")
 	}
 	//check if changelog exists and either prepend or generate new changelog file
-	exists, err := gc.Gitref.Tree().Exists(ctx, changelog)
+	exists, err := gc.Container.Exists(ctx, changelog)
 	if err != nil {
 		panic(fmt.Errorf("failed to check if %s exists: %w", changelog, err))
 	}
@@ -130,17 +135,12 @@ func (gc *GitCliff) ReleaseNotes(
 	//tag to generate changelog for
 	// +optional
 	tag string,
-	//path to git-cliff config to use for generating changelog in provided git-ref source.
-	// +optional
-	// +default="cliff.toml"
-	config string,
 	// append additional provided release notes
 	// +optional
 	extraNotes string,
 ) *dagger.File {
 	cmd := gc.Command
 	cmd = append(cmd,
-		"--config", config,
 		"--unreleased",
 		"--strip",
 		"all",
@@ -168,14 +168,9 @@ func (gc *GitCliff) ReleaseNotes(
 
 // Prints a bumped tag for unreleased changes.
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
-	//path to git-cliff config to use for generating changelog in provided git-ref source.
-	// +optional
-	// +default="cliff.toml"
-	config string,
 ) (string, error) {
 	cmd := gc.Command
 	cmd = append(cmd,
-		"--config", config,
 		"--unreleased",
 		"--bumped-version",
 	)
