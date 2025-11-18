@@ -172,9 +172,12 @@ func (d *Docker) getSecrets(ctx context.Context) ([]*dagger.Secret, error) {
 // Build image from Dockerfile
 func (d *Docker) Build(
 	ctx context.Context,
+	// +optional
+	// +default="Dockerfile"
+	dockerfile string,
 	// target stage of image build
 	// +optional
-	// +default="ci"
+	// +default=""
 	target string,
 	// platform to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// +default="linux/amd64"
@@ -188,10 +191,11 @@ func (d *Docker) Build(
 	}
 
 	ctr := d.Source.DockerBuild(dagger.DirectoryDockerBuildOpts{
-		Target:    target,
-		Secrets:   secrets,
-		BuildArgs: d.BuildArg,
-		Platform:  platform,
+		Dockerfile: dockerfile,
+		Target:     target,
+		Secrets:    secrets,
+		BuildArgs:  d.BuildArg,
+		Platform:   platform,
 	})
 
 	//Apply labels to container
@@ -210,13 +214,16 @@ func (d *Docker) Build(
 
 // Build a multi-arch image index from Dockerfile and Publish to an OCI registry, returning a slice of image digest references.
 func (d *Docker) Publish(ctx context.Context,
+	// +optional
+	// +default="Dockerfile"
+	dockerfile string,
 	// registry address to publish to, without tag
 	address string,
 	// comma separated list of tags to publish
 	tags []string,
 	// target stage of image build
 	// +optional
-	// +default="ci"
+	// +default=""
 	target string,
 	// platforms to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// +default=["linux/amd64"]
@@ -229,7 +236,7 @@ func (d *Docker) Publish(ctx context.Context,
 	//check for platforms and build each one
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
 	for _, platform := range platforms {
-		ctr, err := d.Build(ctx, target, platform)
+		ctr, err := d.Build(ctx, target, dockerfile, platform)
 		if err != nil {
 			return nil, fmt.Errorf("building platform %s: %w", platform, err)
 		}
