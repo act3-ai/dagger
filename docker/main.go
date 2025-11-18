@@ -172,6 +172,7 @@ func (d *Docker) getSecrets(ctx context.Context) ([]*dagger.Secret, error) {
 // Build image from Dockerfile
 func (d *Docker) Build(
 	ctx context.Context,
+	// path of dockerfile to build with
 	// +optional
 	// +default="Dockerfile"
 	dockerfile string,
@@ -214,6 +215,7 @@ func (d *Docker) Build(
 
 // Build a multi-arch image index from Dockerfile and Publish to an OCI registry, returning a slice of image digest references.
 func (d *Docker) Publish(ctx context.Context,
+	// path of dockerfile to build with
 	// +optional
 	// +default="Dockerfile"
 	dockerfile string,
