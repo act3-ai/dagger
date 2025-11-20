@@ -21,8 +21,8 @@ func (r *Release) CreateGithub(ctx context.Context,
 	repo string,
 	// gitlab personal access token
 	token *dagger.Secret,
-	// Release version
-	version string,
+	// tag to create release with
+	tag string,
 	// Release notes file
 	notes *dagger.File,
 	// Release title. Default: version
@@ -32,11 +32,6 @@ func (r *Release) CreateGithub(ctx context.Context,
 	// +optional
 	assets []*dagger.File,
 ) (string, error) {
-	version = strings.TrimPrefix(version, "v")
-
-	if title == "" {
-		title = "v" + version
-	}
 
 	err := dag.Gh(
 		dagger.GhOpts{
@@ -45,7 +40,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 			Source: r.GitRef.Tree(),
 		}).
 		Release().
-		Create(ctx, "v"+version, title,
+		Create(ctx, tag, title,
 			dagger.GhReleaseCreateOpts{
 				NotesFile: notes,
 				Files:     assets,

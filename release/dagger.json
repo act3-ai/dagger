@@ -1,6 +1,6 @@
 {
   "name": "release",
-  "engineVersion": "v0.19.4",
+  "engineVersion": "v0.19.5",
   "sdk": {
     "source": "go"
   },
@@ -12,8 +12,7 @@
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.2",
-      "pin": "c2915e4ed29dfeceb2336ea61223d84288c0cceb"
+      "source": "../git-cliff"
     },
     {
       "name": "registry-config",

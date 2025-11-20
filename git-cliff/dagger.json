@@ -1,8 +1,11 @@
 {
   "name": "git-cliff",
-  "engineVersion": "v0.19.4",
+  "engineVersion": "v0.19.5",
   "sdk": {
-    "source": "go"
+    "source": "go",
+    "experimental": {
+      "SELF_CALLS": true
+    }
   },
   "disableDefaultFunctionCaching": true
 }
