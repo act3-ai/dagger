@@ -47,16 +47,15 @@ prepare)
     version=$(
       dagger -m release call --git-ref="." \
       version \
-      --config="$module/cliff.toml"
+      --working-dir="$module"
     )
     
     #generate and export new version/release notes
     dagger -m release call --git-ref="." -v prepare \
-    --path-prefix="$module" \
     --version="$version" \
-    --token=env://GITHUB_TOKEN \
-    --config="$module/cliff.toml" \
-    export --path="."
+    --github-token=env://GITHUB_TOKEN \
+    --working-dir="$module" \
+    export --path="$module"
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     ;;
@@ -87,7 +86,7 @@ publish)
         --token=env://GITHUB_TOKEN \
         --repo="act3-ai/dagger" \
         --title="$module/v$version" \
-        --version="$module/v$version" \
+        --tag="$module/v$version" \
         --notes="$notesPath"
 
     ;;
