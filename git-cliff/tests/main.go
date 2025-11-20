@@ -114,7 +114,7 @@ func (t *Tests) ChangelogOutput(ctx context.Context) error {
 	actual, err := dag.GitCliff(gitRef).Changelog().Contents(ctx)
 
 	if err != nil {
-		parseErr(err)
+		return parseErr(err)
 	}
 	if expected != actual {
 		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", actual, expected)
@@ -141,7 +141,7 @@ func (t *Tests) ChangelogPrepend(ctx context.Context) error {
 	actual, err := dag.GitCliff(gitRef).Changelog().Contents(ctx)
 
 	if err != nil {
-		parseErr(err)
+		return parseErr(err)
 	}
 	if expected != actual {
 		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", actual, expected)
@@ -168,7 +168,7 @@ func (t *Tests) ReleaseNotes(ctx context.Context) error {
 	actual, err := dag.GitCliff(gitRef).ReleaseNotes().Contents(ctx)
 
 	if err != nil {
-		parseErr(err)
+		return parseErr(err)
 	}
 	if expected != actual {
 		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", actual, expected)
@@ -196,7 +196,7 @@ extra notes
 	actual, err := dag.GitCliff(gitRef).ReleaseNotes(dagger.GitCliffReleaseNotesOpts{ExtraNotes: "extra notes"}).Contents(ctx)
 
 	if err != nil {
-		parseErr(err)
+		return parseErr(err)
 	}
 	if expected != actual {
 		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", actual, expected)
