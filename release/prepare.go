@@ -50,7 +50,7 @@ func (r *Release) Prepare(ctx context.Context,
 		src = src.Directory(workingDir)
 	}
 
-	gcOpts := dagger.GitCliffDevOpts{
+	gcOpts := dagger.GitCliffOpts{
 		GithubToken: githubToken,
 		GitlabToken: gitlabToken,
 		GiteaToken:  giteaToken,
@@ -58,13 +58,13 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// generate changelog if one is not found, else prepend to an existing one
-	changelogFile := dag.GitCliffDev(r.GitRef, gcOpts).
-		Changelog(dagger.GitCliffDevChangelogOpts{
+	changelogFile := dag.GitCliff(r.GitRef, gcOpts).
+		Changelog(dagger.GitCliffChangelogOpts{
 			Tag: version})
 
 	// generate release notes with optional extraNotes if provided
-	releaseNotesFile := dag.GitCliffDev(r.GitRef, gcOpts).
-		ReleaseNotes(dagger.GitCliffDevReleaseNotesOpts{
+	releaseNotesFile := dag.GitCliff(r.GitRef, gcOpts).
+		ReleaseNotes(dagger.GitCliffReleaseNotesOpts{
 			Tag:        version,
 			ExtraNotes: extraNotes})
 
@@ -110,7 +110,7 @@ func (r *Release) Version(ctx context.Context,
 	giteaToken *dagger.Secret,
 ) (string, error) {
 
-	bumpedTag, err := dag.GitCliffDev(r.GitRef, dagger.GitCliffDevOpts{
+	bumpedTag, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{
 		GithubToken: githubToken,
 		GitlabToken: gitlabToken,
 		GiteaToken:  giteaToken,

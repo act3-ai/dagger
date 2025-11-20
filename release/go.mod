@@ -34,7 +34,7 @@ require (
 )
 
 require (
-	github.com/Masterminds/semver/v3 v3.4.0 // indirect
+	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
