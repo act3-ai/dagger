@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.8] - 2025-11-20
+
+### 🐛 Bug Fixes
+
+- Bug in publish with build call [33a193e](https://github.com/act3-ai/dagger/commit/33a193ed062c3ec0020f569378feba209d844d22) by @pspurlock
+
+
 ## [0.1.7] - 2025-11-20
 
 ### 🐛 Bug Fixes
