@@ -47,6 +47,7 @@ prepare)
     version=$(
       dagger -m release call --git-ref="." \
       version \
+      --github-token=env://GITHUB_TOKEN \
       --working-dir="$module"
     )
     
