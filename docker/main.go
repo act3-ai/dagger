@@ -238,7 +238,7 @@ func (d *Docker) Publish(ctx context.Context,
 	//check for platforms and build each one
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
 	for _, platform := range platforms {
-		ctr, err := d.Build(ctx, target, dockerfile, platform)
+		ctr, err := d.Build(ctx, dockerfile, target, platform)
 		if err != nil {
 			return nil, fmt.Errorf("building platform %s: %w", platform, err)
 		}
