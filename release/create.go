@@ -25,7 +25,7 @@ func (r *Release) CreateGithub(ctx context.Context,
 	tag string,
 	// Release notes file
 	notes *dagger.File,
-	// Release title. Default: version
+	// Release title. Default: tag
 	// +optional
 	title string,
 	// Release assets
@@ -61,18 +61,17 @@ func (r *Release) CreateGitlab(ctx context.Context,
 	project string,
 	// GitLab personal access token
 	token *dagger.Secret,
-	// Release version
-	version string,
+	// Release tag
+	tag string,
 	// Release notes file
 	notes *dagger.File,
-	// Release title. Default: version
+	// Release title. Default: tag
 	// +optional
 	title string,
 	// Release assets
 	// +optional
 	assets []*dagger.File,
 ) (string, error) {
-	version = strings.TrimPrefix(version, "v")
 
 	notesFileName, err := notes.Name(ctx)
 	if err != nil {
@@ -81,17 +80,17 @@ func (r *Release) CreateGitlab(ctx context.Context,
 
 	hostRepo := fmt.Sprintf("%s/%s", host, project)
 	if title == "" {
-		title = "v" + version
+		title = tag
 	}
 
 	_, err = dag.Container().
 		From(imageGlabCLI).
 		WithMountedFile(notesFileName, notes).
 		WithSecretVariable("GITLAB_TOKEN", token).
-		WithEnvVariable("GITLAB_HOST", host).
+		WithEnvVariable("GITLAB_HOST", host).Terminal().
 		WithExec([]string{"glab", "release", "create",
-			"-R", project, // repository
-			"v" + version, // tag
+			"-R=" + project, // repository
+			tag,             // tag
 			"--name=" + title,
 			"--notes-file=" + notesFileName, // description
 		}).
@@ -101,9 +100,9 @@ func (r *Release) CreateGitlab(ctx context.Context,
 	}
 
 	if len(assets) > 0 {
-		_, err := r.gitlabUploadAssets(ctx, host, project, token, version, assets)
+		_, err := r.gitlabUploadAssets(ctx, host, project, token, tag, assets)
 		if err != nil {
-			return "", fmt.Errorf("uploading release assets for '%s' release '%s': %w", hostRepo, version, err)
+			return "", fmt.Errorf("uploading release assets for '%s' release '%s': %w", hostRepo, tag, err)
 		}
 	}
 
@@ -118,15 +117,13 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 	project string,
 	// GitLab personal access token
 	token *dagger.Secret,
-	// Release version
-	version string,
+	// Release tag
+	tag string,
 	// Release assets
 	assets []*dagger.File,
 ) (string, error) {
 	ctx, span := Tracer().Start(ctx, "Upload Assets")
 	defer span.End()
-
-	version = strings.TrimPrefix(version, "v")
 
 	p := pool.NewWithResults[string]().WithContext(ctx)
 	for _, asset := range assets {
@@ -142,7 +139,7 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 				WithEnvVariable("GITLAB_HOST", host).
 				WithExec([]string{"glab", "release", "upload",
 					"-R", project,
-					"v" + version,
+					tag,
 					assetName},
 				).
 				Stdout(ctx)
