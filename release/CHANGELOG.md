@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2025-11-23
+
+### 🐛 Bug Fixes
+
+- Switch to using a tag instead of version for CreateGitlab [8fa1317](https://github.com/act3-ai/dagger/commit/8fa1317bf7e2eeb5707cf77114984a9ef4f31d5c) by @pspurlock
+
+
 ## [0.3.2] - 2025-11-20
 
 ### 🐛 Bug Fixes
