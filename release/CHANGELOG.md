@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2025-11-24
+
+### 🐛 Bug Fixes
+
+- Bug using terminal, enable default caching [75c87a7](https://github.com/act3-ai/dagger/commit/75c87a7e18da12239036efeda3df4ed564a12201) by **Paul Spurlock**
+
+
 ## [0.3.3] - 2025-11-23
 
 ### 🐛 Bug Fixes
