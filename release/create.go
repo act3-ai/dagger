@@ -87,7 +87,7 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		From(imageGlabCLI).
 		WithMountedFile(notesFileName, notes).
 		WithSecretVariable("GITLAB_TOKEN", token).
-		WithEnvVariable("GITLAB_HOST", host).Terminal().
+		WithEnvVariable("GITLAB_HOST", host).
 		WithExec([]string{"glab", "release", "create",
 			"-R=" + project, // repository
 			tag,             // tag
