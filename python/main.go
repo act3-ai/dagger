@@ -82,7 +82,7 @@ func (python *Python) Container() *dagger.Container {
 }
 
 // Add creds for private UV packages
-func (python *Python) WithRegistryAuth(ctx context.Context,
+func (python *Python) WithIndexAuth(ctx context.Context,
 	//name of private package or index in pyproject.toml
 	name string,
 	// username to authenticate with
