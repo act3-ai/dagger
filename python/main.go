@@ -81,19 +81,20 @@ func (python *Python) Container() *dagger.Container {
 		)
 }
 
-// Add creds for private UV packages. Currently uses `uv auth login to handle credentials`
-func (python *Python) WithRegistryCreds(
-	// url of the registry
-	registry string,
-	// username for registry
+// Add creds for private UV packages using a UV environment variable.
+func (python *Python) WithRegistryAuth(ctx context.Context,
+	//name of private package or index in pyproject.toml
+	name string,
+	// username to authenticate with
 	username string,
-	// password for registry
+	// password to authenticate with
 	password *dagger.Secret,
 ) *Python {
-	python.Base = python.Base.WithSecretVariable("UV_REGISTRY_PASSWORD", password).
-		WithExec([]string{"sh", "-c",
-			fmt.Sprintf("uv auth login -u %s --password $UV_REGISTRY_PASSWORD %s",
-				username, registry)})
+
+	name = strings.ToUpper(strings.ReplaceAll(name, "-", "_"))
+	python.Base = python.Base.WithEnvVariable(fmt.Sprintf("UV_INDEX_%s_USERNAME", name), username).
+		WithSecretVariable(fmt.Sprintf("UV_INDEX_%s_PASSWORD", name), password)
+
 	return python
 }
 
