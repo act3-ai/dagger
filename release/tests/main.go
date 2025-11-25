@@ -18,7 +18,6 @@ import (
 	"context"
 	"dagger/tests/internal/dagger"
 	"fmt"
-	"reflect"
 
 	"github.com/sourcegraph/conc/pool"
 )
@@ -44,7 +43,8 @@ func (t *Tests) gitRepo() *dagger.Container {
 		WithExec([]string{"git", "init"}).
 		WithExec([]string{"git", "config", "user.name", "test"}).
 		WithExec([]string{"git", "config", "user.email", "test@dagger.io"}).
-		WithExec([]string{"git", "add", "README.md"}).
+		WithFile("cliff.toml", dag.CurrentModule().Source().File("test.cliff.toml")).
+		WithExec([]string{"git", "add", "README.md", "cliff.toml"}).
 		WithExec([]string{"git", "commit", "-m", "fix: Initial commit"}).
 		WithExec([]string{"git", "tag", "-a", "-m", "Initial commit", "v1.0.0"})
 
@@ -58,29 +58,43 @@ func (t *Tests) Prepare(ctx context.Context) error {
 		WithExec([]string{"git", "add", "test.md"}).
 		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	expectedDir := dag.Directory().
-		WithNewFile("VERSION", "1.0.1\n").
-		WithNewFile("CHANGELOG.md", "test log").
-		WithNewFile("releases/v1.0.1.md", "test release")
+	const expectedPatch = `diff --git b/CHANGELOG.md b/CHANGELOG.md
+new file mode 100644
+index 0000000..9427169
+--- /dev/null
++++ b/CHANGELOG.md
+@@ -0,0 +1,5 @@
++## [1.0.1]
++
++### 🐛 Bug Fixes
++
++- Test tag
+diff --git b/VERSION b/VERSION
+new file mode 100644
+index 0000000..7dea76e
+--- /dev/null
++++ b/VERSION
+@@ -0,0 +1 @@
++1.0.1
+diff --git b/releases/v1.0.1.md b/releases/v1.0.1.md
+new file mode 100644
+index 0000000..9427169
+--- /dev/null
++++ b/releases/v1.0.1.md
+@@ -0,0 +1,5 @@
++## [1.0.1]
++
++### 🐛 Bug Fixes
++
++- Test tag
+`
+	version, err := dag.Release(gitref).Version(ctx)
+	changes := dag.Release(gitref).Prepare(version)
 
-	actualDir := dag.Release(gitref).Prepare()
+	patch, err := changes.AsPatch().Contents(ctx)
 
-	expectedEntries, err := expectedDir.Entries(ctx)
-	if err != nil {
-		return err
-	}
-
-	actualEntries, err := actualDir.Entries(ctx)
-
-	if !reflect.DeepEqual(expectedEntries, actualEntries) {
-		return fmt.Errorf("files do not match:\nexpected: %v\ngot: %v", expectedEntries, actualEntries)
-	}
-
-	//hack needed because dagger does not search subdirectories when using entries
-	releaseFileCheck, err := actualDir.Exists(ctx, "releases/v1.0.1.md")
-
-	if !releaseFileCheck {
-		return fmt.Errorf("files does not exist: releases/v1.0.1.md")
+	if expectedPatch != patch {
+		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", patch, expectedPatch)
 	}
 
 	return err

@@ -1,6 +1,6 @@
 {
   "name": "tests",
-  "engineVersion": "v0.18.19",
+  "engineVersion": "v0.19.6",
   "sdk": {
     "source": "go"
   },
@@ -9,5 +9,6 @@
       "name": "docker",
       "source": ".."
     }
-  ]
+  ],
+  "disableDefaultFunctionCaching": true
 }

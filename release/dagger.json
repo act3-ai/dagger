@@ -1,6 +1,6 @@
 {
   "name": "release",
-  "engineVersion": "v0.19.2",
+  "engineVersion": "v0.19.6",
   "sdk": {
     "source": "go"
   },
@@ -12,33 +12,7 @@
     },
     {
       "name": "git-cliff",
-      "source": "github.com/act3-ai/dagger/git-cliff@git-cliff/v0.2.1",
-      "pin": "324669f01272fc59c6cf74f1e2b68898bb5b220d"
-    },
-    {
-      "name": "go",
-      "source": "github.com/sagikazarmark/daggerverse/go@main",
-      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
-    },
-    {
-      "name": "golangci-lint",
-      "source": "github.com/sagikazarmark/daggerverse/golangci-lint@main",
-      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
-    },
-    {
-      "name": "govulncheck",
-      "source": "github.com/act3-ai/dagger/govulncheck@govulncheck/v0.1.4",
-      "pin": "d87d3d1cfdb47b76b6e60730bd3b7be12b60395e"
-    },
-    {
-      "name": "markdownlint",
-      "source": "github.com/act3-ai/dagger/markdownlint@markdownlint/v0.1.3",
-      "pin": "7767feddd969e33b63e26ffb08ef9b6cd3937dab"
-    },
-    {
-      "name": "python",
-      "source": "github.com/act3-ai/dagger/python@python/v0.1.6",
-      "pin": "1708b212c3a2b6c7183179b326526f687f96c1d0"
+      "source": "../git-cliff"
     },
     {
       "name": "registry-config",
@@ -46,19 +20,9 @@
       "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
     },
     {
-      "name": "shellcheck",
-      "source": "github.com/dagger/dagger/modules/shellcheck@v0.18.19",
-      "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
-    },
-    {
       "name": "wolfi",
       "source": "github.com/dagger/dagger/modules/wolfi@v0.18.19",
       "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
-    },
-    {
-      "name": "yamllint",
-      "source": "github.com/act3-ai/dagger/yamllint@yamllint/v0.1.5",
-      "pin": "618fc03841460ba75223864107300a7784f2fbc9"
     }
   ]
 }

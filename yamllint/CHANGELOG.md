@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.9] - 2025-11-20
+
+### 🐛 Bug Fixes
+
+- Updating dagger engine to v0.19.6 [8f17423](https://github.com/act3-ai/dagger/commit/8f1742322df83abd367b7ad537d062f55221b5ee) by @pspurlock
+
+
+## [0.1.8] - 2025-11-06
+
+### 🐛 Bug Fixes
+
+- Add cliff.toml [521456d](https://github.com/act3-ai/dagger/commit/521456d6d2765b41e8a8667d22a2304f13c0c6c8) by @pspurlock
+
+
 ## [yamllint/v0.1.7] - 2025-10-21
 
 ### 🐛 Bug Fixes

@@ -1,6 +1,6 @@
 {
   "name": "yamllint",
-  "engineVersion": "v0.19.2",
+  "engineVersion": "v0.19.6",
   "sdk": {
     "source": "go"
   },
@@ -10,5 +10,6 @@
       "source": "github.com/dagger/dagger/modules/wolfi@v0.18.19",
       "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
     }
-  ]
+  ],
+  "disableDefaultFunctionCaching": true
 }
