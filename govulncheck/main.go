@@ -36,24 +36,12 @@ func New(
 	// +optional
 	// +default="latest"
 	version string,
-
-	// Mount netrc credentials for a private git repository.
-	// +optional
-	netrc *dagger.Secret,
 ) *Govulncheck {
 	if container == nil {
 		container = defaultContainer(version)
 	} else {
 		container = container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, version)})
 	}
-
-	container = container.With(
-		func(c *dagger.Container) *dagger.Container {
-			if netrc != nil {
-				c = c.WithMountedSecret("/root/.netrc", netrc)
-			}
-			return c
-		})
 
 	return &Govulncheck{
 		Container: container,
@@ -135,6 +123,20 @@ func (gv *Govulncheck) ScanBinary(ctx context.Context,
 		// exit code 0
 		return out, nil
 	}
+}
+
+func (gv *Govulncheck) WithGitAuth(
+	// registry's hostname
+	address string,
+	// username in registry
+	username string,
+	// password or token for registry
+	secret *dagger.Secret,
+) *Govulncheck {
+	user := dag.SetSecret("username", username)
+	netrc := dag.Netrc().WithLogin(address, user, secret)
+	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret())
+	return gv
 }
 
 // Specify a vulnerability database url.

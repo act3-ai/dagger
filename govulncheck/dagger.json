@@ -1,6 +1,6 @@
 {
   "name": "govulncheck",
-  "engineVersion": "v0.19.6",
+  "engineVersion": "v0.19.7",
   "sdk": {
     "source": "go"
   },
@@ -9,6 +9,11 @@
       "name": "go",
       "source": "github.com/sagikazarmark/daggerverse/go@go/v0.9.0",
       "pin": "d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"
+    },
+    {
+      "name": "netrc",
+      "source": "github.com/purpleclay/daggerverse/netrc@netrc/v0.3.0",
+      "pin": "3893340aa32e2140d6181124740f0a0a23e59588"
     }
   ],
   "disableDefaultFunctionCaching": true
