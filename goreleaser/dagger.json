@@ -10,6 +10,5 @@
       "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
       "pin": "126b5fbbdad70dbf2a8689600baec2eb78c05ef4"
     }
-  ],
-  "disableDefaultFunctionCaching": true
+  ]
 }

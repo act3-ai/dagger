@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 
-list_modules() {
+function list_modules() {
   find . -maxdepth 2 -mindepth 2 -type f -name dagger.json -exec dirname {} \; | sed 's|^\./||'
 }
 
-list_modules_with_tests() {
+function list_modules_with_tests() {
   find . -maxdepth 3 -type f -path './*/tests/dagger.json' -exec dirname {} \; | sed 's|^\./||'
 }
 
-detect_latest_dagger_version() {
+function detect_latest_dagger_version() {
   curl -s https://api.github.com/repos/dagger/dagger/releases/latest | jq -r '.tag_name'
 }
 
-
-
-check_git_status() {
+function check_git_status() {
   local path="${1:-}"
 
   if [[ -z "$path" ]]; then
@@ -26,7 +24,7 @@ check_git_status() {
   fi
 }
 
-upgrade_dagger_engine() {
+function upgrade_dagger_engine() {
   if [[ -z "$1" ]]; then
     #Check if module name given
     echo "Error: No module name given to upgrade"
@@ -47,7 +45,7 @@ upgrade_dagger_engine() {
 }
 
 #update dagger engine to latest version in all modules
-upgrade_dagger_engine_all() {
+function upgrade_dagger_engine_all() {
 
   #upgrade dagger engine locally first
   brew upgrade dagger
@@ -86,11 +84,10 @@ upgrade_dagger_engine_all() {
     fi
   done
 
-
 }
 
 #find any act3 module updates and update release module with latest
-upgrade_act3_module_deps() {
+function upgrade_act3_module_deps() {
 
   dagger -m github.com/act3-ai/dagger/renovate call \
     --platform=github \
@@ -101,13 +98,13 @@ upgrade_act3_module_deps() {
     --token=env:GITHUB_TOKEN \
     --git-private-key=env:GITHUB_PRIVATE_KEY \
     --enabled-managers="custom.regex" \
-      update
+    update
 
 }
 
 #call function
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-  if declare -f "$1" > /dev/null; then
+  if declare -f "$1" >/dev/null; then
     "$@"
   else
     echo "Error: '$1' is not a valid function."
