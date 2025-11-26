@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2025-11-26
+
+### 🐛 Bug Fixes
+
+- Update dagger to v0.19.7 [2a37e6b](https://github.com/act3-ai/dagger/commit/2a37e6b48a4e91a603f4caf21618941233f5dc4c) by @pspurlock
+
+
+### 🚜 Refactor
+
+- WithRegistryAuth [f1190ce](https://github.com/act3-ai/dagger/commit/f1190ce4fe83fc42f175cfb51b9de57acb658e03) by @pspurlock
+
+
+## [python/v0.2.0] - 2025-10-28
+
+### 🚀 Features
+
+- Add WithRegistryCreds function and remove netrc flag [75a5fb1](https://github.com/act3-ai/dagger/commit/75a5fb1ddc3cb07d8c41873561f17d38526f009a) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Upgrade dagger engine to v0.19.3 [036d46d](https://github.com/act3-ai/dagger/commit/036d46d1f04addf2bbf4f9c92c90a5c883ca8050) by @pspurlock
+
+- Improve descriptions on publish [a180cc0](https://github.com/act3-ai/dagger/commit/a180cc0fb25a9c673d8e1e760c8c746ab36ba57b) by @pspurlock
+
+- Add WithNetrc function [09e8181](https://github.com/act3-ai/dagger/commit/09e8181a341dadd068836a84a20e2df85905ef72) by @pspurlock
+
+
 ## [0.1.8] - 2025-11-20
 
 ### 🐛 Bug Fixes
