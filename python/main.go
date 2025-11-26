@@ -24,9 +24,6 @@ type Python struct {
 	Source *dagger.Directory
 
 	// +private
-	Netrc *dagger.Secret
-
-	// +private
 	SyncArgs []string
 }
 
