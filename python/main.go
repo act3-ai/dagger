@@ -37,9 +37,6 @@ func New(
 	// base development container
 	// +optional
 	base *dagger.Container,
-	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
-	// +optional
-	netrc *dagger.Secret,
 	// extra arguments for uv sync command
 	// +optional
 	syncArgs []string,
@@ -58,7 +55,6 @@ func New(
 	return &Python{
 		Base:     base,
 		Source:   src,
-		Netrc:    netrc,
 		SyncArgs: syncArgs,
 	}
 }
@@ -70,13 +66,8 @@ func (python *Python) UV() *dagger.Container {
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
 		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-		With(func(c *dagger.Container) *dagger.Container {
-			if python.Netrc != nil {
-				return c.WithMountedSecret("/root/.netrc", python.Netrc)
-			}
-			return c
-		})
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
+
 }
 
 // build dev dependencies first before running test
@@ -90,9 +81,34 @@ func (python *Python) Container() *dagger.Container {
 		)
 }
 
+// Add creds for private UV packages
+func (python *Python) WithIndexAuth(ctx context.Context,
+	//name of private package or index in pyproject.toml
+	name string,
+	// username to authenticate with
+	username string,
+	// password to authenticate with
+	password *dagger.Secret,
+) *Python {
+
+	name = strings.ToUpper(strings.ReplaceAll(name, "-", "_"))
+	python.Base = python.Base.WithEnvVariable(fmt.Sprintf("UV_INDEX_%s_USERNAME", name), username).
+		WithSecretVariable(fmt.Sprintf("UV_INDEX_%s_PASSWORD", name), password)
+
+	return python
+}
+
 // add an environment variable to the base container
 func (python *Python) WithEnvVariable(name, value string) *Python {
 	python.Base = python.Base.WithEnvVariable(name, value)
+	return python
+}
+
+// adds a netrc file as a secret to the base container
+func (python *Python) WithNetrc(
+	//netrc file to add, in format of dagger.secret (--netrc file://mynetrc)
+	netrc *dagger.Secret) *Python {
+	python.Base = python.Base.WithMountedSecret("/root/.netrc", netrc)
 	return python
 }
 
