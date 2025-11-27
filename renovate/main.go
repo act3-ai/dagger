@@ -114,7 +114,7 @@ func New(
 	enabledManagers string,
 ) *Renovate {
 	if base == nil {
-		base = dag.Container().From("renovate/renovate:41.23.5-full")
+		base = dag.Container().From("renovate/renovate:full")
 	}
 	return &Renovate{
 		Project:         project,
