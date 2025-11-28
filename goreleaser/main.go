@@ -152,7 +152,8 @@ func (gr *Goreleaser) WithGitAuth(
 ) *Goreleaser {
 	user := dag.SetSecret("username", username)
 	netrc := dag.Netrc().WithLogin(address, user, secret)
-	gr.Container = gr.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret())
+	gr.Container = gr.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret()).
+		WithEnvVariable("GOPRIVATE", address)
 	return gr
 }
 

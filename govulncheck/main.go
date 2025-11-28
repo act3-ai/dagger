@@ -135,7 +135,8 @@ func (gv *Govulncheck) WithGitAuth(
 ) *Govulncheck {
 	user := dag.SetSecret("username", username)
 	netrc := dag.Netrc().WithLogin(address, user, secret)
-	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret())
+	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret()).
+		WithEnvVariable("GOPRIVATE", address)
 	return gv
 }
 
