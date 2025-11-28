@@ -1,10 +1,15 @@
 {
   "name": "goreleaser",
-  "engineVersion": "v0.19.6",
+  "engineVersion": "v0.19.7",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
+    {
+      "name": "netrc",
+      "source": "github.com/purpleclay/daggerverse/netrc@netrc/v0.3.0",
+      "pin": "3893340aa32e2140d6181124740f0a0a23e59588"
+    },
     {
       "name": "registry-config",
       "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
