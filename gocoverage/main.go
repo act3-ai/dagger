@@ -257,7 +257,7 @@ func (cr *CoverageResults) Directory(ctx context.Context) (*dagger.Directory, er
 	}
 
 	return dag.Directory().
-			WithFile("heat", cr.SVG()).
+			WithFile("heat.svg", cr.SVG()).
 			WithFile("index.html", cr.HTML()).
 			WithFile("coverage.txt", cr.TextFormat()).
 			WithFile("summary.txt", cr.Summary()).
