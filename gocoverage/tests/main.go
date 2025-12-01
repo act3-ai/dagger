@@ -18,35 +18,24 @@ import (
 	"context"
 	"dagger/tests/internal/dagger"
 	"fmt"
+	"math"
 
-	"golang.org/x/sync/errgroup"
+	"github.com/dagger/dagger/util/parallel"
 )
 
-type Tests struct {
-	// +private
-	Source *dagger.Directory
-}
-
-func New(
-	// testdata source directory
-	// +defaultPath="testdata"
-	src *dagger.Directory,
-) *Tests {
-	return &Tests{
-		Source: src,
-	}
-}
+type Tests struct{}
 
 // Run all tests.
 func (t *Tests) All(ctx context.Context) error {
-	p, ctx := errgroup.WithContext(ctx)
-
-	p.Go(func() error { return t.Check(ctx) })
-	p.Go(func() error { return t.HTML(ctx) })
-	p.Go(func() error { return t.SVG(ctx) })
-	p.Go(func() error { return t.Summary(ctx) })
-
-	return p.Wait()
+	return parallel.New().WithLimit(3).
+		WithJob("Check coverage", t.Check).
+		WithJob("Check coverage with excludes", t.CheckExcludes).
+		WithJob("HTML", t.HTML).
+		WithJob("SVG", t.SVG).
+		WithJob("Summary", t.Summary).
+		WithJob("Exec", t.Summary).
+		WithJob("Merge", t.Merge).
+		Run(ctx)
 }
 
 func (t *Tests) base() *dagger.Container {
@@ -58,9 +47,20 @@ func (t *Tests) base() *dagger.Container {
 		Container()
 }
 
+func (t *Tests) Debug(ctx context.Context) (string, error) {
+	results := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`.gen.go`}}).UnitTests()
+	return results.Summary().Contents(ctx)
+}
+
 // Test unit test coverage check
 func (t *Tests) Check(ctx context.Context) error {
 	results := dag.Coverage(t.base()).UnitTests()
+	return results.Check(ctx, 71)
+}
+
+// Test unit test coverage check
+func (t *Tests) CheckExcludes(ctx context.Context) error {
+	results := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`\.gen\.go`}}).UnitTests()
 	return results.Check(ctx, 80)
 }
 
@@ -102,6 +102,32 @@ func (t *Tests) Summary(ctx context.Context) error {
 	}
 	if i < 100 {
 		return fmt.Errorf("expected a larger Summary document: %d B", i)
+	}
+	return nil
+}
+
+// Test exec
+func (t *Tests) Exec(ctx context.Context) error {
+	results := dag.Coverage(t.base()).Exec(".", []string{"argument"})
+
+	return results.Check(ctx, 19)
+}
+
+// Test merge
+func (t *Tests) Merge(ctx context.Context) error {
+	results1 := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`.gen.go`}}).UnitTests()
+	results2 := dag.Coverage(t.base()).Exec(".", []string{"argument"})
+
+	results := results1.Merge(results2)
+
+	cov, err := results.Percent(ctx)
+	if err != nil {
+		return err
+	}
+
+	expected := 100.0
+	if math.Abs(cov-expected) > 0.01 {
+		return fmt.Errorf("expected %0.2f%% code coverage but saw %0.2f%%", expected, cov)
 	}
 	return nil
 }

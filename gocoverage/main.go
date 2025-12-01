@@ -16,6 +16,9 @@ import (
 type Coverage struct {
 	// +private
 	Base *dagger.Container
+
+	// +private
+	Excludes []string
 }
 
 func New(
@@ -23,9 +26,14 @@ func New(
 	// - working directory is set to the go.mod file
 	// - go tool works for go-cover-treemap (optional)
 	base *dagger.Container,
+
+	// Exclude files from coverage
+	// +optional
+	excludes []string,
 ) *Coverage {
 	return &Coverage{
-		Base: base,
+		Base:     base,
+		Excludes: excludes,
 	}
 }
 
@@ -33,82 +41,106 @@ func New(
 func (m *Coverage) UnitTests(
 	ctx context.Context,
 ) (*CoverageResults, error) {
-	pkg, err := m.Base.WithExec([]string{"go", "list", "-m"}).Stdout(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("unable to get the module name: %w: ", err)
-	}
-	pkg = strings.TrimSpace(pkg)
-
-	// TODO produce binary coverage results instead
+	// produce binary coverage results instead of the traditional textual format
 	// see https://github.com/thediveo/lxkns/blob/cef5a31d7517cb126378f81628f51672cb793527/scripts/cov.sh#L28
-	// go test -cover ./... -args -test.gocoverdir /coverage
 	raw := m.Base.
-		WithExec([]string{"go", "test", "./...", "-coverprofile", "/raw", "-coverpkg", pkg + "/..."}).
-		File("/raw")
-
-	filter, err := m.Base.Exists(ctx, "filter-coverage.sh")
-	if err != nil {
-		return nil, err
-	}
-	if filter {
-		raw = m.Base.
-			WithFile("/raw", raw).
-			WithExec([]string{"./filter-coverage.sh"}, dagger.ContainerWithExecOpts{
-				RedirectStdin:  "/raw",
-				RedirectStdout: "/filtered",
-			}).
-			File("/filtered")
-	}
+		WithDirectory("/coverage", dag.Directory()).
+		WithExec([]string{"go", "test", "-cover", "-args", "-test.gocoverdir", "/coverage", "./..."}).
+		Directory("/coverage")
 
 	return &CoverageResults{
-		Base: m.Base,
-		Raw:  raw,
+		Base:     m.Base,
+		Raw:      raw,
+		Excludes: m.Excludes,
 	}, nil
 }
 
-/*
-// Run a go package with coverage and combine the results
+// Run a go package with coverage
 func (m *Coverage) Exec(ctx context.Context,
 	pkg string,
 	args []string,
 ) (*CoverageResults, error) {
-	raw = m.Base.
-		WithExec([]string{"go", "build", "-cover", pkg, "-o", "/app"}).
+	raw := m.Base.
+		WithDirectory("/coverage", dag.Directory()).
+		WithExec([]string{"go", "build", "-cover", "-o", "/app", pkg}).
 		WithEnvVariable("GOCOVERDIR", "/coverage").
 		WithExec(append([]string{"/app"}, args...)).
 		Directory("/coverage")
 
 	return &CoverageResults{
-		Base: m.Base,
-		Raw:  raw,
+		Base:     m.Base,
+		Raw:      raw,
+		Excludes: m.Excludes,
 	}, nil
 }
-*/
 
 // Code coverage results
 type CoverageResults struct {
 	// +private
 	Base *dagger.Container
 
-	// Raw coverage results
-	Raw *dagger.File
+	// Raw coverage results directory (binary format)
+	// +private
+	Raw *dagger.Directory
+
+	// +private
+	Excludes []string
 }
 
-/*
+// Merge all results
 func (m *CoverageResults) Merge(ctx context.Context,
-	other []*CoverageResults) *CoverageResults {
-	raw := m.Base.
-		WithExec([]string{"go", "tool", "covdata", "merge", "-i", "-o", "/raw1,/raw2", "/raw"}).
-		File("/raw")
+	// other coverage results to merge into the returned results
+	other *CoverageResults,
 
+	// module paths to include
+	// +optional
+	pkgs []string,
+) *CoverageResults {
+	args := []string{"go", "tool", "covdata", "merge", "-i", "/left,/right", "-o", "/merged"}
+	if len(pkgs) != 0 {
+		args = append(args, "-pkg", strings.Join(pkgs, ","))
+	}
+
+	raw := m.Base.
+		WithDirectory("/left", m.Raw).
+		WithDirectory("/right", other.Raw).
+		WithDirectory("/merged", dag.Directory()).
+		WithExec(args).
+		Directory("/merged")
+
+	return &CoverageResults{
+		Base:     m.Base,
+		Raw:      raw,
+		Excludes: m.Excludes,
+	}
 }
-*/
+
+// Text format (older style) coverage format
+func (m *CoverageResults) TextFormat() *dagger.File {
+	c := m.Base.
+		WithDirectory("/coverage", m.Raw).
+		WithExec([]string{"go", "tool", "covdata", "textfmt", "-i", "/coverage", "-o", "/coverage.txt"})
+
+	if len(m.Excludes) != 0 {
+		args := []string{"grep", "-v"}
+		for _, exclude := range m.Excludes {
+			args = append(args, "-e", exclude)
+		}
+		return c.WithExec(args,
+			dagger.ContainerWithExecOpts{
+				RedirectStdin:  "/coverage.txt",
+				RedirectStdout: "/filtered.txt",
+			}).
+			File("/filtered.txt")
+	}
+	return c.File("/coverage.txt")
+}
 
 // SVG heat map of code coverage
 func (m *CoverageResults) SVG() *dagger.File {
 	return m.Base.
-		WithFile("/raw", m.Raw).
-		WithExec([]string{"go", "tool", "go-cover-treemap", "-coverprofile", "/raw"}, dagger.ContainerWithExecOpts{
+		WithFile("/coverage.txt", m.TextFormat()).
+		WithExec([]string{"go", "tool", "go-cover-treemap", "-coverprofile", "/coverage.txt"}, dagger.ContainerWithExecOpts{
 			RedirectStdout: "/heat.svg",
 		}).
 		File("/heat.svg")
@@ -117,23 +149,32 @@ func (m *CoverageResults) SVG() *dagger.File {
 // HTML report
 func (m *CoverageResults) HTML() *dagger.File {
 	return m.Base.
-		WithFile("/raw", m.Raw).
-		WithExec([]string{"go", "tool", "cover", "-html", "/raw", "-o", "/index.html"}).
+		WithFile("/coverage.txt", m.TextFormat()).
+		WithExec([]string{"go", "tool", "cover", "-html", "/coverage.txt", "-o", "/index.html"}).
 		File("/index.html")
 }
 
 // Summary of coverage by functions
 func (m *CoverageResults) Summary() *dagger.File {
 	return m.Base.
-		WithFile("/raw", m.Raw).
-		WithExec([]string{"go", "tool", "cover", "-func", "/raw", "-o", "/summary.txt"}).
+		WithFile("/coverage.txt", m.TextFormat()).
+		WithExec([]string{"go", "tool", "cover", "-func", "/coverage.txt", "-o", "/summary.txt"}).
 		File("/summary.txt")
+
+	/*
+		return m.Base.
+			WithDirectory("/coverage", m.Raw).
+			WithExec([]string{"go", "tool", "covdata", "func", "-i", "/coverage"}, dagger.ContainerWithExecOpts{
+				RedirectStdout: "/summary.txt",
+			}).
+			File("/summary.txt")
+	*/
 }
 
-// Percent code coverage
+// Percent code coverage (total of all statements)
 func (m *CoverageResults) Percent(ctx context.Context) (float64, error) {
 	// percent, err := m.Base.
-	// 	WithFile("/raw", m.Raw).
+	// 	WithFile("/coverage", m.Raw).
 	// 	WithExec([]string{"go", "tool", "covdata", "percent", "-i", "/raw"}).
 	// 	Stdout(ctx)
 	// if err != nil {
@@ -147,8 +188,8 @@ func (m *CoverageResults) Percent(ctx context.Context) (float64, error) {
 
 	re := regexp.MustCompile(`total:\s+\(statements\)\s+(?<percentage>.*)%`)
 	match := re.FindAllStringSubmatch(summary, -1)
-	if len(match) != 1 && len(match[0]) != 1 {
-		return math.NaN(), fmt.Errorf("expected a single match for %q in: %q", re, summary)
+	if len(match) != 1 || len(match[0]) != 2 {
+		return math.NaN(), fmt.Errorf("expected a single match for %s in: %s", re, summary)
 	}
 	percentage, err := strconv.ParseFloat(match[0][1], 64)
 	if err != nil {

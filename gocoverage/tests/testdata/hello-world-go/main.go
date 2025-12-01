@@ -4,7 +4,7 @@ package main
 import "fmt"
 
 func foo(x int) int {
-	x *= 2
+	x = doubleIt(x)
 	x = x * x
 	x += 10
 	return x
