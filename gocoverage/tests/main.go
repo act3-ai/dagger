@@ -18,7 +18,6 @@ import (
 	"context"
 	"dagger/tests/internal/dagger"
 	"fmt"
-	"math"
 
 	"github.com/dagger/dagger/util/parallel"
 )
@@ -34,7 +33,7 @@ func (t *Tests) All(ctx context.Context) error {
 		WithJob("SVG", t.SVG).
 		WithJob("Summary", t.Summary).
 		WithJob("Exec", t.Summary).
-		WithJob("Merge", t.Merge).
+		// WithJob("Merge", t.Merge).
 		Run(ctx)
 }
 
@@ -47,8 +46,10 @@ func (t *Tests) base() *dagger.Container {
 		Container()
 }
 
+var opts = dagger.CoverageOpts{Excludes: []string{`.gen.go`}}
+
 func (t *Tests) Debug(ctx context.Context) (string, error) {
-	results := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`.gen.go`}}).UnitTests()
+	results := dag.Coverage(t.base(), opts).UnitTests()
 	return results.Summary().Contents(ctx)
 }
 
@@ -60,7 +61,7 @@ func (t *Tests) Check(ctx context.Context) error {
 
 // Test unit test coverage check
 func (t *Tests) CheckExcludes(ctx context.Context) error {
-	results := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`\.gen\.go`}}).UnitTests()
+	results := dag.Coverage(t.base(), opts).UnitTests()
 	return results.Check(ctx, 80)
 }
 
@@ -108,15 +109,16 @@ func (t *Tests) Summary(ctx context.Context) error {
 
 // Test exec
 func (t *Tests) Exec(ctx context.Context) error {
-	results := dag.Coverage(t.base()).Exec(".", []string{"argument"})
+	results := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
 
 	return results.Check(ctx, 19)
 }
 
+/*
 // Test merge
 func (t *Tests) Merge(ctx context.Context) error {
-	results1 := dag.Coverage(t.base(), dagger.CoverageOpts{Excludes: []string{`.gen.go`}}).UnitTests()
-	results2 := dag.Coverage(t.base()).Exec(".", []string{"argument"})
+	results1 := dag.Coverage(t.base(), opts).UnitTests()
+	results2 := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
 
 	results := results1.Merge(results2)
 
@@ -131,3 +133,4 @@ func (t *Tests) Merge(ctx context.Context) error {
 	}
 	return nil
 }
+*/

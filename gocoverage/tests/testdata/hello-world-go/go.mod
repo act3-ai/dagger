@@ -1,4 +1,4 @@
-module github.com/act3-ai/hello-world
+module example.com/hello-world
 
 go 1.25.0
 

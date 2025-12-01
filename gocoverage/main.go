@@ -43,15 +43,32 @@ func (m *Coverage) UnitTests(
 ) (*CoverageResults, error) {
 	// produce binary coverage results instead of the traditional textual format
 	// see https://github.com/thediveo/lxkns/blob/cef5a31d7517cb126378f81628f51672cb793527/scripts/cov.sh#L28
-	raw := m.Base.
-		WithDirectory("/coverage", dag.Directory()).
-		WithExec([]string{"go", "test", "-cover", "-args", "-test.gocoverdir", "/coverage", "./..."}).
-		Directory("/coverage")
+
+	/*
+		// This does not work when there is no top level .go file.  Does not collect coverage properly.
+		const covDir = "/coverage"
+		raw := m.Base.
+			WithDirectory(covDir, dag.Directory()).
+			WithEnvVariable("GOCOVERDIR", covDir).
+			WithExec([]string{"go", "test", "-cover", "-args", "-test.gocoverdir", covDir, "./..."}).
+			Directory(covDir)
+	*/
+
+	// TODO use golang (don't shell out)
+	pkg, err := m.Base.WithExec([]string{"go", "list", "-m"}).Stdout(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get the module name: %w: ", err)
+	}
+	pkg = strings.TrimSpace(pkg)
+
+	text := m.Base.
+		WithDirectory("coverage", dag.Directory()).
+		WithExec([]string{"go", "test", "./...", "-coverprofile", "/raw.txt", "-coverpkg", pkg + "/..."}).
+		File("/raw.txt")
 
 	return &CoverageResults{
-		Base:     m.Base,
-		Raw:      raw,
-		Excludes: m.Excludes,
+		Coverage: m,
+		Text:     text,
 	}, nil
 }
 
@@ -60,86 +77,104 @@ func (m *Coverage) Exec(ctx context.Context,
 	pkg string,
 	args []string,
 ) (*CoverageResults, error) {
+	const covDir = "/coverage"
 	raw := m.Base.
-		WithDirectory("/coverage", dag.Directory()).
+		WithDirectory(covDir, dag.Directory()).
 		WithExec([]string{"go", "build", "-cover", "-o", "/app", pkg}).
-		WithEnvVariable("GOCOVERDIR", "/coverage").
+		WithEnvVariable("GOCOVERDIR", covDir).
 		WithExec(append([]string{"/app"}, args...)).
-		Directory("/coverage")
+		Directory(covDir)
 
 	return &CoverageResults{
-		Base:     m.Base,
+		Coverage: m,
 		Raw:      raw,
-		Excludes: m.Excludes,
 	}, nil
 }
 
 // Code coverage results
 type CoverageResults struct {
 	// +private
-	Base *dagger.Container
+	Coverage *Coverage
 
 	// Raw coverage results directory (binary format)
 	// +private
 	Raw *dagger.Directory
 
+	// Coverage results in older format (text format)
 	// +private
-	Excludes []string
+	Text *dagger.File
+}
+
+func (cr *CoverageResults) withRaw(raw *dagger.Directory) *CoverageResults {
+	return &CoverageResults{
+		Coverage: cr.Coverage,
+		Raw:      raw,
+	}
 }
 
 // Merge all results
-func (m *CoverageResults) Merge(ctx context.Context,
+func (cr *CoverageResults) Merge(ctx context.Context,
 	// other coverage results to merge into the returned results
 	other *CoverageResults,
 
 	// module paths to include
 	// +optional
 	pkgs []string,
-) *CoverageResults {
+) (*CoverageResults, error) {
+	if cr.Text != nil {
+		return nil, fmt.Errorf("Coverage results has older format.  Merge is not supported.")
+	}
+
 	args := []string{"go", "tool", "covdata", "merge", "-i", "/left,/right", "-o", "/merged"}
 	if len(pkgs) != 0 {
 		args = append(args, "-pkg", strings.Join(pkgs, ","))
 	}
 
-	raw := m.Base.
-		WithDirectory("/left", m.Raw).
+	raw := cr.Coverage.Base.
+		WithDirectory("/left", cr.Raw).
 		WithDirectory("/right", other.Raw).
 		WithDirectory("/merged", dag.Directory()).
 		WithExec(args).
 		Directory("/merged")
 
-	return &CoverageResults{
-		Base:     m.Base,
-		Raw:      raw,
-		Excludes: m.Excludes,
-	}
+	return cr.withRaw(raw), nil
 }
 
 // Text format (older style) coverage format
-func (m *CoverageResults) TextFormat() *dagger.File {
-	c := m.Base.
-		WithDirectory("/coverage", m.Raw).
-		WithExec([]string{"go", "tool", "covdata", "textfmt", "-i", "/coverage", "-o", "/coverage.txt"})
+func (cr *CoverageResults) TextFormat() *dagger.File {
+	var cov *dagger.File = cr.Text
 
-	if len(m.Excludes) != 0 {
+	// Do the conversion if needed
+	if cov == nil {
+		cov = cr.Coverage.Base.
+			WithDirectory("/coverage", cr.Raw).
+			WithExec([]string{"go", "tool", "covdata", "textfmt", "-i", "/coverage", "-o", "/coverage.txt"}).
+			File("/coverage.txt")
+	}
+
+	// Filter if needed
+	if len(cr.Coverage.Excludes) != 0 {
 		args := []string{"grep", "-v"}
-		for _, exclude := range m.Excludes {
+		for _, exclude := range cr.Coverage.Excludes {
 			args = append(args, "-e", exclude)
 		}
-		return c.WithExec(args,
-			dagger.ContainerWithExecOpts{
-				RedirectStdin:  "/coverage.txt",
-				RedirectStdout: "/filtered.txt",
-			}).
+		cov = cr.Coverage.Base.
+			WithFile("/coverage.txt", cov).
+			WithExec(args,
+				dagger.ContainerWithExecOpts{
+					RedirectStdin:  "/coverage.txt",
+					RedirectStdout: "/filtered.txt",
+				}).
 			File("/filtered.txt")
 	}
-	return c.File("/coverage.txt")
+
+	return cov
 }
 
 // SVG heat map of code coverage
-func (m *CoverageResults) SVG() *dagger.File {
-	return m.Base.
-		WithFile("/coverage.txt", m.TextFormat()).
+func (cr *CoverageResults) SVG() *dagger.File {
+	return cr.Coverage.Base.
+		WithFile("/coverage.txt", cr.TextFormat()).
 		WithExec([]string{"go", "tool", "go-cover-treemap", "-coverprofile", "/coverage.txt"}, dagger.ContainerWithExecOpts{
 			RedirectStdout: "/heat.svg",
 		}).
@@ -147,17 +182,17 @@ func (m *CoverageResults) SVG() *dagger.File {
 }
 
 // HTML report
-func (m *CoverageResults) HTML() *dagger.File {
-	return m.Base.
-		WithFile("/coverage.txt", m.TextFormat()).
+func (cr *CoverageResults) HTML() *dagger.File {
+	return cr.Coverage.Base.
+		WithFile("/coverage.txt", cr.TextFormat()).
 		WithExec([]string{"go", "tool", "cover", "-html", "/coverage.txt", "-o", "/index.html"}).
 		File("/index.html")
 }
 
 // Summary of coverage by functions
-func (m *CoverageResults) Summary() *dagger.File {
-	return m.Base.
-		WithFile("/coverage.txt", m.TextFormat()).
+func (cr *CoverageResults) Summary() *dagger.File {
+	return cr.Coverage.Base.
+		WithFile("/coverage.txt", cr.TextFormat()).
 		WithExec([]string{"go", "tool", "cover", "-func", "/coverage.txt", "-o", "/summary.txt"}).
 		File("/summary.txt")
 
@@ -172,7 +207,7 @@ func (m *CoverageResults) Summary() *dagger.File {
 }
 
 // Percent code coverage (total of all statements)
-func (m *CoverageResults) Percent(ctx context.Context) (float64, error) {
+func (cr *CoverageResults) Percent(ctx context.Context) (float64, error) {
 	// percent, err := m.Base.
 	// 	WithFile("/coverage", m.Raw).
 	// 	WithExec([]string{"go", "tool", "covdata", "percent", "-i", "/raw"}).
@@ -181,7 +216,7 @@ func (m *CoverageResults) Percent(ctx context.Context) (float64, error) {
 	// 	return math.NaN(), err
 	// }
 
-	summary, err := m.Summary().Contents(ctx)
+	summary, err := cr.Summary().Contents(ctx)
 	if err != nil {
 		return math.NaN(), err
 	}
@@ -200,11 +235,11 @@ func (m *CoverageResults) Percent(ctx context.Context) (float64, error) {
 }
 
 // Check that the coverage percentage is above a threshold
-func (m *CoverageResults) Check(ctx context.Context,
+func (cr *CoverageResults) Check(ctx context.Context,
 	// minimum percentage to accept
 	threshold float64,
 ) error {
-	percent, err := m.Percent(ctx)
+	percent, err := cr.Percent(ctx)
 	if err != nil {
 		return err
 	}
@@ -215,15 +250,15 @@ func (m *CoverageResults) Check(ctx context.Context,
 }
 
 // Get a directory of all the results
-func (m *CoverageResults) Directory(ctx context.Context) (*dagger.Directory, error) {
-	percent, err := m.Percent(ctx)
+func (cr *CoverageResults) Directory(ctx context.Context) (*dagger.Directory, error) {
+	percent, err := cr.Percent(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	return dag.Directory().
-			WithFile("heat", m.SVG()).
-			WithFile("index.html", m.HTML()).
+			WithFile("heat", cr.SVG()).
+			WithFile("index.html", cr.HTML()).
 			WithNewFile("percent", strconv.FormatFloat(percent, 'f', 2, 64)),
 		nil
 }
