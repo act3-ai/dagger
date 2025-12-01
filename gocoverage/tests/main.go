@@ -34,6 +34,7 @@ func (t *Tests) All(ctx context.Context) error {
 		WithJob("Summary", t.Summary).
 		WithJob("Exec", t.Summary).
 		// WithJob("Merge", t.Merge).
+		WithJob("Directory", t.Directory).
 		Run(ctx)
 }
 
@@ -134,3 +135,34 @@ func (t *Tests) Merge(ctx context.Context) error {
 	return nil
 }
 */
+
+func (t *Tests) Directory(ctx context.Context) error {
+	return parallel.New().
+		WithJob("with excludes", func(ctx context.Context) error {
+			results := dag.Coverage(t.base(), opts).Exec("./cmd/myapp", []string{"argument"})
+			dir := results.Directory()
+
+			matches, err := dir.File("summary.txt").Search(ctx, "gen")
+			if err != nil {
+				return err
+			}
+			if len(matches) != 0 {
+				return fmt.Errorf("expected no matches but found %d", len(matches))
+			}
+			return nil
+		}).
+		WithJob("without excludes", func(ctx context.Context) error {
+			results := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
+			dir := results.Directory()
+
+			matches, err := dir.File("summary.txt").Search(ctx, "gen")
+			if err != nil {
+				return err
+			}
+			if len(matches) != 2 {
+				return fmt.Errorf("expected 2 matches but found %d", len(matches))
+			}
+			return nil
+		}).
+		Run(ctx)
+}
