@@ -13,17 +13,37 @@ const baseImage = "ghcr.io/act3-ai/data-tool:v1.16.1"
 
 // ASCE Data Tool Module
 type DataTool struct {
-	// +private
-	RegistryConfig *dagger.RegistryConfig
-
-	// +private
-	GitAuth *dagger.Netrc
+	Container *dagger.Container
 }
 
-func New() *DataTool {
+func New(
+	// +optional
+	base *dagger.Container,
+) *DataTool {
+	if base != nil {
+		return &DataTool{
+			Container: base,
+		}
+	}
+
+	// Grab the acedt executable from its image
+	acedt := dag.Container().
+		From(baseImage).
+		// File("/ko-app/ace-dt")
+		File("/usr/local/bin/ace-dt")
+
+	const cachePath = "/oci"
+
+	// Use the git container (instead of bash) because we want "ace-dt git" to work
+	c := dag.Wolfi().Container(dagger.WolfiContainerOpts{
+		Packages: []string{"bash", "git", "git-lfs"},
+	}).
+		WithFile("/usr/local/bin/ace-dt", acedt).
+		WithUser("0").
+		WithMountedCache(cachePath, dag.CacheVolume("oci-cache")).
+		WithEnvVariable("ACE_DT_CACHE_PATH", cachePath)
 	return &DataTool{
-		RegistryConfig: dag.RegistryConfig(),
-		GitAuth:        dag.Netrc(),
+		Container: c,
 	}
 }
 
@@ -36,7 +56,8 @@ func (m *DataTool) WithRegistryAuth(
 	// password or token for registry
 	secret *dagger.Secret,
 ) *DataTool {
-	m.RegistryConfig = m.RegistryConfig.WithRegistryAuth(address, username, secret)
+	regConfig := dag.RegistryConfig().WithRegistryAuth(address, username, secret)
+	m.Container = m.Container.WithMountedSecret("/root/.docker/config.json", regConfig.Secret())
 	return m
 }
 
@@ -50,34 +71,9 @@ func (m *DataTool) WithGitAuth(
 	secret *dagger.Secret,
 ) *DataTool {
 	user := dag.SetSecret("username", username)
-	m.GitAuth = m.GitAuth.WithLogin(address, user, secret)
+	netrc := dag.Netrc().WithLogin(address, user, secret)
+	m.Container = m.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret())
 	return m
-}
-
-// Container with data tool
-func (m *DataTool) Container() *dagger.Container {
-	// Grab the acedt executable from its image
-	acedt := dag.Container().
-		From(baseImage).
-		// File("/ko-app/ace-dt")
-		File("/usr/local/bin/ace-dt")
-
-	// c := dag.Container().
-	// Use the git container (instead of bash) because we want "ace-dt git" to work
-	// From("cgr.dev/chainguard/git").
-	c := dag.Wolfi().Container(dagger.WolfiContainerOpts{
-		Packages: []string{"bash", "git", "git-lfs"},
-	}).
-		WithFile("/usr/local/bin/ace-dt", acedt).
-		WithUser("0").
-		WithMountedSecret("/root/.netrc", m.GitAuth.AsSecret())
-
-	const cachePath = "/oci"
-
-	return c.
-		WithMountedSecret("/root/.docker/config.json", m.RegistryConfig.Secret()).
-		WithMountedCache(cachePath, dag.CacheVolume("oci-cache")).
-		WithEnvVariable("ACE_DT_CACHE_PATH", cachePath)
 }
 
 // Gathers the images and returns the full image reference with digest
@@ -103,7 +99,7 @@ func (m *DataTool) Gather(ctx context.Context,
 		cmd = append(cmd, "--platforms", strings.Join(platformStrs, ","))
 	}
 
-	stdout, err := m.Container().
+	stdout, err := m.Container.
 		WithFile(artifactsPath, artifacts).
 		// WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec(cmd).
@@ -133,7 +129,7 @@ func (m *DataTool) Scatter(ctx context.Context,
 ) error {
 	// TODO support other types of mapping besides first-prefix
 	// TODO support selectors
-	_, err := m.Container().
+	_, err := m.Container.
 		WithFile("mapping.csv", mapping).
 		WithExec([]string{"ace-dt", "mirror", "scatter", ref, "first-prefix=mapping.csv"}).
 		Sync(ctx)
@@ -142,7 +138,7 @@ func (m *DataTool) Scatter(ctx context.Context,
 
 // Download the Grype vulnerability database
 func (m *DataTool) GrypeDB(ctx context.Context) *dagger.Directory {
-	const cachePath = "/cache/grype"
+	const cachePath = "/tmp/cache/grype"
 
 	return dag.Container().
 		From("anchore/grype:debug").
@@ -171,7 +167,7 @@ func (m *DataTool) Serialize(
 		args = append(args, "--manifest-json")
 	}
 
-	return m.Container().
+	return m.Container.
 		WithExec(args).
 		File(archivePath)
 }
@@ -206,7 +202,7 @@ func (m *DataTool) Archive(
 		args = append(args, "--platforms", strings.Join(platformStrs, ","))
 	}
 
-	return m.Container().
+	return m.Container.
 		WithFile(artifactsPath, artifacts).
 		WithExec(args).
 		File(archivePath)
@@ -237,7 +233,7 @@ func (m *DataTool) Scan(ctx context.Context,
 		From("anchore/syft:latest").
 		File("/syft")
 
-	return m.Container().
+	return m.Container.
 		WithFile("/usr/local/bin/grype", grype).
 		WithFile("/usr/local/bin/syft", syft).
 		WithMountedDirectory(cachePath, grypeDB).
