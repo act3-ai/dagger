@@ -1,0 +1,9 @@
+# ACE Data Tool Configuration
+apiVersion: config.dt.act3-ace.io/v1alpha1
+kind: Configuration
+# Registry configuration
+registryConfig:
+  registries:
+    registry:5000:
+      endpoints:
+        - http://registry:5000
