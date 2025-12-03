@@ -1,0 +1,2 @@
+docker.io/library/busybox:latest,registry:5000/busybox:latest
+docker.io/library/alpine:latest,registry:5000/alpine:latest

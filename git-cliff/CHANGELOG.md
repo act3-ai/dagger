@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.5] - 2025-12-03
+
+### 🐛 Bug Fixes
+
+- General cleanup [03cc59f](https://github.com/act3-ai/dagger/commit/03cc59f49992a4ba8620795bd3e73b19fc8090fb) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Bug with workdir when using WithMountedDirectory [2987b96](https://github.com/act3-ai/dagger/commit/2987b969853ebedb867d4c014b7d426289423ab4) by @pspurlock
+
+
 ## [0.2.4] - 2025-11-20
 
 ### 🐛 Bug Fixes

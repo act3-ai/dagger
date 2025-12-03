@@ -57,7 +57,7 @@ func New(ctx context.Context,
 	//base git-cliff container
 	ctr := dag.Container().
 		From(fmt.Sprintf("%s:%s", imageGitCliff, gitCliffVersion)).
-		WithMountedDirectory(srcDir, gitRefDir).
+		WithDirectory(srcDir, gitRefDir).
 		With(func(c *dagger.Container) *dagger.Container {
 			if workingDir != "" {
 				c = c.WithWorkdir(filepath.Join(srcDir, workingDir))

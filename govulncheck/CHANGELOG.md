@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2025-11-28
+
+### 🚀 Features
+
+- Netrc flag removed, added WithGitAuth [368524e](https://github.com/act3-ai/dagger/commit/368524e04a2d99ddf6ab4298c841ef9dec45de3c) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- General cleanup [03cc59f](https://github.com/act3-ai/dagger/commit/03cc59f49992a4ba8620795bd3e73b19fc8090fb) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Add GOPRIVATE var [bc62ade](https://github.com/act3-ai/dagger/commit/bc62adeae4c17a0bd3890a4d41cdd0b9bfbb7eaa) by @pspurlock
+
+
 ## [0.1.6] - 2025-11-20
 
 ### 🐛 Bug Fixes

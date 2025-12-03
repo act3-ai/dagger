@@ -1,5 +1,5 @@
 {
-  "name": "goreleaser",
+  "name": "data-tool",
   "engineVersion": "v0.19.7",
   "sdk": {
     "source": "go"
@@ -14,6 +14,11 @@
       "name": "registry-config",
       "source": "github.com/sagikazarmark/daggerverse/registry-config@registry-config/v0.8.0",
       "pin": "126b5fbbdad70dbf2a8689600baec2eb78c05ef4"
+    },
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.19.5",
+      "pin": "ab07dfd52d6f1956dc27de259143fcd8cb4a3c87"
     }
   ]
 }
