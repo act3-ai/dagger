@@ -44,3 +44,7 @@ jobs:
       - name: test-release
         working-directory: ./release/tests
         run: dagger call all
+
+      - name: test-gocoverage
+        working-directory: ./gocoverage/tests
+        run: dagger call all
