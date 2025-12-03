@@ -5,7 +5,6 @@ import (
 	"dagger/release/internal/dagger"
 	"fmt"
 	"path"
-	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -45,10 +44,6 @@ func (r *Release) Prepare(ctx context.Context,
 	if err != nil {
 		return nil, fmt.Errorf("invalid semver %q: %w", version, err)
 	}
-	//set working dir if provided
-	if workingDir != "" {
-		src = src.Directory(workingDir)
-	}
 
 	gcOpts := dagger.GitCliffOpts{
 		GithubToken: githubToken,
@@ -77,9 +72,9 @@ func (r *Release) Prepare(ctx context.Context,
 	// consider changing the construction of this diff
 	// instead just modify the source directory directly and then compute the changes
 	after := src.
-		WithFile("CHANGELOG.md", changelogFile).
-		WithFile(filepath.Join("releases", fmt.Sprintf("v%s.md", version)), releaseNotesFile).
-		WithNewFile("VERSION", version+"\n").
+		WithFile(path.Join(workingDir, "CHANGELOG.md"), changelogFile).
+		WithFile(path.Join(workingDir, "releases", fmt.Sprintf("v%s.md", version)), releaseNotesFile).
+		WithNewFile(path.Join(workingDir, "VERSION"), version+"\n").
 		With(func(d *dagger.Directory) *dagger.Directory {
 			if chartFile != nil {
 				d = d.WithFile(path.Join(chartPath, "Chart.yaml"), chartFile)
