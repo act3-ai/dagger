@@ -112,13 +112,13 @@ func (r *Release) Version(ctx context.Context,
 }
 
 // Set the version and appVersion of a helm chart.
-func (r *Release) SetHelmChartVersion(
+func (r *Release) PrepareHelmChart(
 	// release version
 	version string,
 	// path to the chart
 	chartPath string,
 ) *dagger.Changeset {
-	src := r.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})
+	src := r.GitRef.Tree()
 	version = strings.TrimPrefix(version, "v")
 	file := path.Join(chartPath, "Chart.yaml")
 	chart := dag.Wolfi().
