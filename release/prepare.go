@@ -16,9 +16,6 @@ import (
 func (r *Release) Prepare(ctx context.Context,
 	// prepare for a specific version. Must be a valid semantic version in format of x.x.x
 	version string,
-	// path to helm chart in source directory to bump chart version to release version.
-	// +optional
-	chartPath string,
 	// Additional information to include in release notes. Injected after header and before commit
 	// +optional
 	extraNotes string,
@@ -63,24 +60,13 @@ func (r *Release) Prepare(ctx context.Context,
 			Tag:        version,
 			ExtraNotes: extraNotes})
 
-	// set helm chart version
-	var chartFile *dagger.File
-	if chartPath != "" {
-		chartFile = r.setHelmChartVersion(version, chartPath)
-	}
-
 	// consider changing the construction of this diff
 	// instead just modify the source directory directly and then compute the changes
 	after := src.
 		WithFile(path.Join(workingDir, "CHANGELOG.md"), changelogFile).
 		WithFile(path.Join(workingDir, "releases", fmt.Sprintf("v%s.md", version)), releaseNotesFile).
-		WithNewFile(path.Join(workingDir, "VERSION"), version+"\n").
-		With(func(d *dagger.Directory) *dagger.Directory {
-			if chartFile != nil {
-				d = d.WithFile(path.Join(chartPath, "Chart.yaml"), chartFile)
-			}
-			return d
-		})
+		WithNewFile(path.Join(workingDir, "VERSION"), version+"\n")
+
 	return after.Changes(src), nil
 }
 
@@ -126,23 +112,26 @@ func (r *Release) Version(ctx context.Context,
 }
 
 // Set the version and appVersion of a helm chart.
-func (r *Release) setHelmChartVersion(
+func (r *Release) PrepareHelmChart(
 	// release version
 	version string,
 	// path to the chart
 	chartPath string,
-) *dagger.File {
+) *dagger.Changeset {
+	src := r.GitRef.Tree()
 	version = strings.TrimPrefix(version, "v")
 	file := path.Join(chartPath, "Chart.yaml")
-	return dag.Wolfi().
+	chart := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
-		WithMountedDirectory("/src", r.GitRef.Tree()).
+		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
 		WithEnvVariable("version", version).
 		WithExec([]string{"yq", "e",
 			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
 			"-i", file}).
 		File(file)
+
+	return src.WithFile(file, chart).Changes(src)
 }
