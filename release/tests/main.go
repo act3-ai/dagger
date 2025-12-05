@@ -19,18 +19,17 @@ import (
 	"dagger/tests/internal/dagger"
 	"fmt"
 
-	"github.com/sourcegraph/conc/pool"
+	"github.com/dagger/dagger/util/parallel"
 )
 
 type Tests struct{}
 
 // Run all tests.
 func (t *Tests) All(ctx context.Context) error {
-	p := pool.New().WithErrors().WithContext(ctx)
-
-	p.Go(t.Prepare)
-
-	return p.Wait()
+	return parallel.New().
+		WithJob("Prepare", t.Prepare).
+		WithJob("Prepare helm chart", t.PrepareHelmChart).
+		Run(ctx)
 }
 
 // return container with a git repo and an initial commit with tag v1.0.0
@@ -90,6 +89,45 @@ index 0000000..9427169
 `
 	version, err := dag.Release(gitref).Version(ctx)
 	changes := dag.Release(gitref).Prepare(version)
+
+	patch, err := changes.AsPatch().Contents(ctx)
+
+	if expectedPatch != patch {
+		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", patch, expectedPatch)
+	}
+
+	return err
+}
+
+func (t *Tests) PrepareHelmChart(ctx context.Context) error {
+	const chartYaml = `apiVersion: v2
+name: mychart
+description: A Helm chart for my cool stuff.
+type: application
+version: 1.4.1
+appVersion: "v1.4.1"
+`
+
+	gitref := t.gitRepo().
+		WithNewFile("charts/mychart/Chart.yaml", chartYaml).
+		WithExec([]string{"git", "add", "charts"}).
+		WithExec([]string{"git", "commit", "-m", "fix: test commit"}).Directory("/repo").AsGit().Head()
+
+	const expectedPatch = `diff --git a/charts/mychart/Chart.yaml b/charts/mychart/Chart.yaml
+index e539fc7..2ac64b8 100644
+--- a/charts/mychart/Chart.yaml
++++ b/charts/mychart/Chart.yaml
+@@ -2,5 +2,5 @@ apiVersion: v2
+ name: mychart
+ description: A Helm chart for my cool stuff.
+ type: application
+-version: 1.4.1
+-appVersion: "v1.4.1"
++version: 1.5.6
++appVersion: "v1.5.6"
+`
+
+	changes := dag.Release(gitref).PrepareHelmChart("v1.5.6", "charts/mychart")
 
 	patch, err := changes.AsPatch().Contents(ctx)
 

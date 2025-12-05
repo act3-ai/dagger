@@ -118,10 +118,12 @@ func (r *Release) PrepareHelmChart(
 	// path to the chart
 	chartPath string,
 ) *dagger.Changeset {
-	src := r.GitRef.Tree()
+	src := r.GitRef.Tree().Filter(dagger.DirectoryFilterOpts{
+		Include: []string{chartPath},
+	})
 	version = strings.TrimPrefix(version, "v")
 	file := path.Join(chartPath, "Chart.yaml")
-	chart := dag.Wolfi().
+	chartYaml := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
@@ -133,5 +135,5 @@ func (r *Release) PrepareHelmChart(
 			"-i", file}).
 		File(file)
 
-	return src.WithFile(file, chart).Changes(src)
+	return src.WithFile(file, chartYaml).Changes(src)
 }
