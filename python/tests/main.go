@@ -104,6 +104,8 @@ func (t *Tests) UnitTest(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
 	unitTest := dag.Python(src).UnitTest()
+	//pytest only returns a non-zero exit code on system level errors, not for coverage
+	//so we must parse results instead
 	jsonResults, err := unitTest.JSON().Contents(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get file contents: %s", err)
