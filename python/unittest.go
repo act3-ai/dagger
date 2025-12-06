@@ -3,7 +3,22 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
+	"fmt"
 )
+
+type UnitTestResults struct {
+	Stdout string
+	// returns results of unit-test as xml in a file.
+	Xml *dagger.File
+	// returns results of unit-test as junit-xml in a file.
+	Json *dagger.File
+	// returns results of unit-test html in a directory
+	Html *dagger.Directory
+	// returns exit code of unit-test
+	ExitCode int
+	// A directory with all results merged in
+	Merged *dagger.Directory
+}
 
 // Return the result of running unit test
 // returns directory "results/" with xml, junit, and html reports
@@ -12,9 +27,9 @@ func (python *Python) UnitTest(ctx context.Context,
 	// +optional
 	// +default="test"
 	unitTestDir string,
-) (*dagger.Directory, error) {
+) (*UnitTestResults, error) {
 
-	c := python.Container().
+	ctr, err := python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -27,12 +42,44 @@ func (python *Python) UnitTest(ctx context.Context,
 				"--cov-report",
 				"term",
 				"--cov-report",
-				"xml:./results/unit-test.xml",
+				"xml:/results.xml",
 				"--cov-report",
-				"html:./results/html/",
-				"--junitxml=./results/pytest-junit.xml",
-			})
+				"html:/html/",
+				"--cov-report",
+				"json:/results.json",
+			}).Sync(ctx)
+	if err != nil {
+		// unexpected error
+		return nil, fmt.Errorf("running unit-test: %w", err)
+	}
+	out, err := ctr.Stdout(ctx)
+	if err != nil {
+		// error getting stdout
+		return nil, fmt.Errorf("get stdout code: %w", err)
+	}
+	exitCode, err := ctr.ExitCode(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get exit code: %w", err)
+	}
 
-	// Return a directory of test results in various formats
-	return c.Directory("./results"), nil
+	xml := ctr.File("/results.xml")
+
+	json := ctr.File("/results.json")
+
+	html := ctr.Directory("/html")
+
+	//merge all result files into a single directory
+	merged := dag.Directory().WithFile("results.xml", xml).
+		WithFile("results.json", json).
+		WithDirectory("html", html)
+
+	return &UnitTestResults{
+		Stdout:   out,
+		Xml:      xml,
+		Json:     json,
+		Html:     html,
+		ExitCode: exitCode,
+		Merged:   merged,
+	}, nil
 }

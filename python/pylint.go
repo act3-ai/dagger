@@ -3,20 +3,24 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
-	"errors"
 	"fmt"
 )
+
+type PylintResults struct {
+	// returns results of pylint as a file
+	Results *dagger.File
+	// returns exit code of pylint
+	ExitCode int
+}
 
 // Return the result of running pylint
 func (python *Python) Pylint(ctx context.Context,
 	// +optional
 	// +default="text"
 	outputFormat string,
-	// ignore errors and return result
-	// +optional
-	ignoreError bool) (string, error) {
+) (*PylintResults, error) {
 
-	out, err := python.Container().
+	ctr, err := python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -28,23 +32,27 @@ func (python *Python) Pylint(ctx context.Context,
 				"--ignore-paths=.venv",
 				"--output-format", outputFormat,
 				// "--reports=y",
-				".",
-			}).Stdout(ctx)
+				"."},
+			dagger.ContainerWithExecOpts{
+				RedirectStdout: "/pylint-results.txt",
+				Expect:         dagger.ReturnTypeAny}).
+		Sync(ctx)
 
-	var e *dagger.ExecError
-
-	switch {
-	case errors.As(err, &e):
-		if ignoreError {
-			return fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr), nil
-		}
-		return "", fmt.Errorf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return "", fmt.Errorf("Stout:\n%w", err)
-	default:
-		// exit code 0
-		return out, nil
+	if err != nil {
+		// unexpected error
+		return nil, fmt.Errorf("running pylint: %w", err)
 	}
 
+	results := ctr.File("/pylint-results.txt")
+
+	exitCode, err := ctr.ExitCode(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get exit code: %w", err)
+	}
+
+	return &PylintResults{
+		Results:  results,
+		ExitCode: exitCode,
+	}, nil
 }
