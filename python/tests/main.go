@@ -118,7 +118,7 @@ func (t *Tests) UnitTest(ctx context.Context,
 
 	totals, ok := data["totals"].(map[string]interface{})
 	if !ok {
-		return fmt.Errorf("failed to parse totals: %s", err)
+		return fmt.Errorf("failed to parse totals: %s", totals)
 	}
 
 	pct, ok := totals["percent_covered"].(float64)
