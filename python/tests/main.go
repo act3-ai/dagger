@@ -123,11 +123,11 @@ func (t *Tests) UnitTest(ctx context.Context,
 
 	pct, ok := totals["percent_covered"].(float64)
 	if !ok {
-		return fmt.Errorf("failed to parse percent_covered: %s", err)
+		return fmt.Errorf("failed to parse percent_covered: %.2f", pct)
 	}
 
 	if pct < 100.0 {
-		return fmt.Errorf("Code coverage not at 100%: %s", pct)
+		return fmt.Errorf("code coverage not at 100: %.2f", pct)
 	}
 
 	return nil
