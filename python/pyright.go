@@ -13,8 +13,8 @@ type PyRightResults struct {
 	ExitCode int
 }
 
-// +check
-// Return the result of running Pyright
+// Runs pyright on a given source directory.
+// Returns a results file and an exit-code.
 func (python *Python) Pyright(ctx context.Context,
 ) (*PyRightResults, error) {
 

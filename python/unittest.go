@@ -7,12 +7,13 @@ import (
 )
 
 type UnitTestResults struct {
+	// prints the results to stdout
 	Stdout string
 	// returns results of unit-test as xml in a file.
 	Xml *dagger.File
-	// returns results of unit-test as junit-xml in a file.
+	// returns results of unit-test as json in a file.
 	Json *dagger.File
-	// returns results of unit-test html in a directory
+	// returns results of unit-test as html in a directory
 	Html *dagger.Directory
 	// returns exit code of unit-test
 	ExitCode int
@@ -20,8 +21,8 @@ type UnitTestResults struct {
 	Merged *dagger.Directory
 }
 
-// Return the result of running unit test
-// returns directory "results/" with xml, junit, and html reports
+// Runs pytest and returns results in multiple formats.
+// Current formats: Stdout, json, xml, and html.
 func (python *Python) UnitTest(ctx context.Context,
 	// unit test directory
 	// +optional

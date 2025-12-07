@@ -13,7 +13,8 @@ type RuffCheckResults struct {
 	ExitCode int
 }
 
-// Return the result of running ruff check
+// Runs ruff check on a given source directory.
+// Returns a results file and an exit-code.
 func (python *Python) RuffCheck(ctx context.Context,
 	// +optional
 	// +default="full"
@@ -52,7 +53,9 @@ func (python *Python) RuffCheck(ctx context.Context,
 
 }
 
-// Return the result of running ruff format
+// Runs ruff-format against a given source directory.
+// Returns a Changeset that can be used to apply any changes found
+// to the host.
 func (python *Python) RuffFormat(ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional

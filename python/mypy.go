@@ -13,7 +13,8 @@ type MypyResults struct {
 	ExitCode int
 }
 
-// Return the result of running mypy
+// Runs mypy on a given source directory.
+// Returns a results file and an exit-code.
 func (python *Python) Mypy(ctx context.Context,
 	// +optional
 	outputFormat string,

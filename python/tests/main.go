@@ -71,7 +71,7 @@ func (t *Tests) Pylint(ctx context.Context,
 }
 
 // +check
-// Run pylint, expect valid/no errors
+// Run pyright, expect valid/no errors
 func (t *Tests) Pyright(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
