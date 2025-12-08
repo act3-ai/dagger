@@ -47,7 +47,7 @@ func (t *Tests) checkExitCode(ctx context.Context,
 func (t *Tests) Mypy(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	mypy := dag.Python(src).Mypy()
+	mypy := dag.Python(src).Mypy().Check()
 	exitCode, err := mypy.ExitCode(ctx)
 	if err != nil {
 		return err
@@ -61,7 +61,7 @@ func (t *Tests) Mypy(ctx context.Context,
 func (t *Tests) Pylint(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	pylint := dag.Python(src).Pylint()
+	pylint := dag.Python(src).Pylint().Check()
 	exitCode, err := pylint.ExitCode(ctx)
 	if err != nil {
 		return err
@@ -75,7 +75,7 @@ func (t *Tests) Pylint(ctx context.Context,
 func (t *Tests) Pyright(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	pyright := dag.Python(src).Pyright()
+	pyright := dag.Python(src).Pyright().Check()
 	exitCode, err := pyright.ExitCode(ctx)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (t *Tests) Pyright(ctx context.Context,
 func (t *Tests) RuffCheck(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	ruffCheck := dag.Python(src).RuffCheck()
+	ruffCheck := dag.Python(src).Ruff().Check()
 	exitCode, err := ruffCheck.ExitCode(ctx)
 	if err != nil {
 		return err
@@ -103,7 +103,7 @@ func (t *Tests) RuffCheck(ctx context.Context,
 func (t *Tests) RuffFormat(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	ruffFormat := dag.Python(src).RuffFormat()
+	ruffFormat := dag.Python(src).Ruff().Format()
 	isEmpty, err := ruffFormat.IsEmpty(ctx)
 	if err != nil {
 		return err
@@ -125,7 +125,7 @@ func (t *Tests) RuffFormat(ctx context.Context,
 func (t *Tests) UnitTest(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	unitTest := dag.Python(src).UnitTest()
+	unitTest := dag.Python(src).Pytest().Check()
 	//pytest only returns a non-zero exit code on system level errors, not for coverage
 	//so we must parse results instead
 	jsonResults, err := unitTest.JSON().Contents(ctx)
