@@ -6,6 +6,10 @@ import (
 	"fmt"
 )
 
+type Ruff struct {
+	// +private
+	Python *Python
+}
 type RuffCheckResults struct {
 	// returns results of ruff-check as a file
 	Results *dagger.File
@@ -13,15 +17,14 @@ type RuffCheckResults struct {
 	ExitCode int
 }
 
-// Runs ruff check on a given source directory.
-// Returns a results file and an exit-code.
-func (python *Python) RuffCheck(ctx context.Context,
+// Runs ruff check on a given source directory. Returns a results file and an exit-code.
+func (r *Ruff) Check(ctx context.Context,
 	// +optional
 	// +default="full"
 	outputFormat string,
 ) (*RuffCheckResults, error) {
 	// Run ruff check with the provided output format
-	ctr, err := python.Container().WithExec(
+	ctr, err := r.Python.Container().WithExec(
 		[]string{
 			"uv",
 			"run",
@@ -53,10 +56,10 @@ func (python *Python) RuffCheck(ctx context.Context,
 
 }
 
-// Runs ruff-format against a given source directory.
+// Runs ruff format against a given source directory.
 // Returns a Changeset that can be used to apply any changes found
 // to the host.
-func (python *Python) RuffFormat(ctx context.Context,
+func (r *Ruff) Format(ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) (*dagger.Changeset, error) {
@@ -76,7 +79,7 @@ func (python *Python) RuffFormat(ctx context.Context,
 		}
 	}
 
-	ctr, err := python.Container().
+	ctr, err := r.Python.Container().
 		WithExec(args).
 		Sync(ctx)
 	if err != nil {
@@ -86,5 +89,5 @@ func (python *Python) RuffFormat(ctx context.Context,
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
-	return afterChanges.Changes(python.Source), nil
+	return afterChanges.Changes(r.Python.Source), nil
 }

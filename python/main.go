@@ -15,7 +15,6 @@ import (
 const uvImageDefault = "ghcr.io/astral-sh/uv:debian"
 
 type Python struct {
-
 	// +private
 	Base *dagger.Container
 
@@ -40,6 +39,13 @@ func New(
 	if base == nil {
 		base = dag.Container().From(uvImageDefault)
 	}
+	// base UV container with source and cache volumes
+	base = base.
+		WithDirectory("/app", src).
+		WithWorkdir("/app").
+		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
+		WithEnvVariable("UV_NATIVE_TLS", "true").
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
 
 	if syncArgs == nil {
 		syncArgs = []string{
@@ -55,20 +61,9 @@ func New(
 	}
 }
 
-// base UV container (with caching, source, and credentials injected)
-func (python *Python) UV() *dagger.Container {
-	return python.Base.
-		WithDirectory("/app", python.Source).
-		WithWorkdir("/app").
-		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
-		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-
-}
-
-// build dev dependencies first before running test
+// returns a base UV container and builds dev dependencies using `uv sync`
 func (python *Python) Container() *dagger.Container {
-	return python.UV().
+	return python.Base.
 		WithExec(
 			append(
 				[]string{"uv", "sync"},
@@ -110,7 +105,32 @@ func (python *Python) WithNetrc(
 
 // check that the lockfile is in sync with pyproject.toml
 func (python *Python) CheckLock(ctx context.Context) (string, error) {
-	return python.UV().
+	return python.Base.
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
+}
+
+// run mypy commands
+func (p *Python) Mypy() *Mypy {
+	return &Mypy{Python: p}
+}
+
+// run pylint commands
+func (p *Python) Pylint() *Pylint {
+	return &Pylint{Python: p}
+}
+
+// run pyright commands
+func (p *Python) Pyright() *Pyright {
+	return &Pyright{Python: p}
+}
+
+// run ruff commands
+func (p *Python) Ruff() *Ruff {
+	return &Ruff{Python: p}
+}
+
+// run pytest commands
+func (p *Python) Pytest() *Pytest {
+	return &Pytest{Python: p}
 }

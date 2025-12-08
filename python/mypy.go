@@ -6,6 +6,11 @@ import (
 	"fmt"
 )
 
+// run commands with mypy
+type Mypy struct {
+	// +private
+	Python *Python
+}
 type MypyResults struct {
 	// returns results of mypy check as a file
 	Results *dagger.File
@@ -13,9 +18,8 @@ type MypyResults struct {
 	ExitCode int
 }
 
-// Runs mypy on a given source directory.
-// Returns a results file and an exit-code.
-func (python *Python) Mypy(ctx context.Context,
+// Runs mypy on a given source directory. Returns a results file and an exit-code.
+func (m *Mypy) Check(ctx context.Context,
 	// +optional
 	outputFormat string,
 ) (*MypyResults, error) {
@@ -34,7 +38,7 @@ func (python *Python) Mypy(ctx context.Context,
 	// Add path
 	args = append(args, ".")
 
-	ctr, err := python.Container().
+	ctr, err := m.Python.Container().
 		WithExec(args, dagger.ContainerWithExecOpts{
 			RedirectStdout: "/mypy-results.txt",
 			Expect:         dagger.ReturnTypeAny}).Sync(ctx)

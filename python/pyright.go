@@ -6,6 +6,10 @@ import (
 	"fmt"
 )
 
+type Pyright struct {
+	// +private
+	Python *Python
+}
 type PyRightResults struct {
 	// returns results of pyright as a file
 	Results *dagger.File
@@ -13,12 +17,11 @@ type PyRightResults struct {
 	ExitCode int
 }
 
-// Runs pyright on a given source directory.
-// Returns a results file and an exit-code.
-func (python *Python) Pyright(ctx context.Context,
+// Runs pyright on a given source directory. Returns a results file and an exit-code.
+func (pr *Pyright) Check(ctx context.Context,
 ) (*PyRightResults, error) {
 
-	ctr, err := python.Container().
+	ctr, err := pr.Python.Container().
 		WithExec(
 			[]string{
 				"uv",

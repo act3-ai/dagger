@@ -6,6 +6,10 @@ import (
 	"fmt"
 )
 
+type Pylint struct {
+	// +private
+	Python *Python
+}
 type PylintResults struct {
 	// returns results of pylint as a file
 	Results *dagger.File
@@ -13,15 +17,14 @@ type PylintResults struct {
 	ExitCode int
 }
 
-// Runs pylint on a given source directory.
-// Returns a results file and an exit-code.
-func (python *Python) Pylint(ctx context.Context,
+// Runs pylint on a given source directory. Returns a results file and an exit-code.
+func (pl *Pylint) Check(ctx context.Context,
 	// +optional
 	// +default="text"
 	outputFormat string,
 ) (*PylintResults, error) {
 
-	ctr, err := python.Container().
+	ctr, err := pl.Python.Container().
 		WithExec(
 			[]string{
 				"uv",

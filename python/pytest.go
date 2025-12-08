@@ -6,7 +6,11 @@ import (
 	"fmt"
 )
 
-type UnitTestResults struct {
+type Pytest struct {
+	// +private
+	Python *Python
+}
+type PytestResults struct {
 	// prints the results to stdout
 	Stdout string
 	// returns results of unit-test as xml in a file.
@@ -21,16 +25,15 @@ type UnitTestResults struct {
 	Merged *dagger.Directory
 }
 
-// Runs pytest and returns results in multiple formats.
-// Current formats: Stdout, json, xml, and html.
-func (python *Python) UnitTest(ctx context.Context,
+// Runs pytest and returns results in multiple file formats. Current formats: Stdout, json, xml, and html.
+func (pt *Pytest) Check(ctx context.Context,
 	// unit test directory
 	// +optional
 	// +default="test"
 	unitTestDir string,
-) (*UnitTestResults, error) {
+) (*PytestResults, error) {
 
-	ctr, err := python.Container().
+	ctr, err := pt.Python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -75,7 +78,7 @@ func (python *Python) UnitTest(ctx context.Context,
 		WithFile("results.json", json).
 		WithDirectory("html", html)
 
-	return &UnitTestResults{
+	return &PytestResults{
 		Stdout:   out,
 		Xml:      xml,
 		Json:     json,
