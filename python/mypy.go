@@ -3,18 +3,26 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
-	"errors"
 	"fmt"
 )
 
-// Return the result of running mypy
-func (python *Python) Mypy(ctx context.Context,
+// run commands with mypy
+type Mypy struct {
+	// +private
+	Python *Python
+}
+type MypyResults struct {
+	// returns results of mypy check as a file
+	Results *dagger.File
+	// returns exit code of mypy check
+	ExitCode int
+}
+
+// Runs mypy on a given source directory. Returns a results file and an exit-code.
+func (m *Mypy) Check(ctx context.Context,
 	// +optional
 	outputFormat string,
-	// ignore errors and return result
-	// +optional
-	ignoreError bool) (string, error) {
-
+) (*MypyResults, error) {
 	args := []string{
 		"uv",
 		"run",
@@ -30,22 +38,27 @@ func (python *Python) Mypy(ctx context.Context,
 	// Add path
 	args = append(args, ".")
 
-	out, err := python.Container().
-		WithExec(args).Stdout(ctx)
+	ctr, err := m.Python.Container().
+		WithExec(args, dagger.ContainerWithExecOpts{
+			RedirectStdout: "/mypy-results.txt",
+			Expect:         dagger.ReturnTypeAny}).Sync(ctx)
 
-	var e *dagger.ExecError
-	switch {
-	case errors.As(err, &e):
-		if ignoreError {
-			return fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr), nil
-		}
-		return "", fmt.Errorf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return "", err
-	default:
-		// exit code 0
-		return out, nil
+	if err != nil {
+		// unexpected error
+		return nil, fmt.Errorf("running mypy: %w", err)
 	}
+
+	results := ctr.File("/mypy-results.txt")
+
+	exitCode, err := ctr.ExitCode(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get exit code: %w", err)
+	}
+
+	return &MypyResults{
+		Results:  results,
+		ExitCode: exitCode,
+	}, nil
 
 }

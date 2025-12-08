@@ -3,17 +3,25 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
-	"errors"
 	"fmt"
 )
 
-// Return the result of running Pyright
-func (python *Python) Pyright(ctx context.Context,
-	// ignore errors and return result
-	// +optional
-	ignoreError bool) (string, error) {
+type Pyright struct {
+	// +private
+	Python *Python
+}
+type PyRightResults struct {
+	// returns results of pyright as a file
+	Results *dagger.File
+	// returns exit code of pyright
+	ExitCode int
+}
 
-	out, err := python.Container().
+// Runs pyright on a given source directory. Returns a results file and an exit-code.
+func (pr *Pyright) Check(ctx context.Context,
+) (*PyRightResults, error) {
+
+	ctr, err := pr.Python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -21,22 +29,25 @@ func (python *Python) Pyright(ctx context.Context,
 				"--with=pyright",
 				"pyright",
 				".",
-			}).Stdout(ctx)
-
-	var e *dagger.ExecError
-
-	switch {
-	case errors.As(err, &e):
-		if ignoreError {
-			return fmt.Sprintf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr), nil
-		}
-		return "", fmt.Errorf("Stout:\n%s\n\nStderr:\n%s", e.Stdout, e.Stderr)
-	case err != nil:
-		// some other dagger error, e.g. graphql
-		return "", fmt.Errorf("Stout:\n%w", err)
-	default:
-		// exit code 0
-		return out, nil
+			}, dagger.ContainerWithExecOpts{
+				RedirectStdout: "/pyright-results.txt",
+				Expect:         dagger.ReturnTypeAny}).Sync(ctx)
+	if err != nil {
+		// unexpected error
+		return nil, fmt.Errorf("running pyright: %w", err)
 	}
+
+	results := ctr.File("/pyright-results.txt")
+
+	exitCode, err := ctr.ExitCode(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get exit code: %w", err)
+	}
+
+	return &PyRightResults{
+		Results:  results,
+		ExitCode: exitCode,
+	}, nil
 
 }

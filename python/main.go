@@ -9,8 +9,6 @@ import (
 	"dagger/python/internal/dagger"
 	"fmt"
 	"strings"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 // TODO add renovate to this
@@ -41,6 +39,13 @@ func New(
 	if base == nil {
 		base = dag.Container().From(uvImageDefault)
 	}
+	// base UV container with source and cache volumes
+	base = base.
+		WithDirectory("/app", src).
+		WithWorkdir("/app").
+		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
+		WithEnvVariable("UV_NATIVE_TLS", "true").
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
 
 	if syncArgs == nil {
 		syncArgs = []string{
@@ -56,20 +61,9 @@ func New(
 	}
 }
 
-// base UV container (with caching, source, and credentials injected)
-func (python *Python) UV() *dagger.Container {
-	return python.Base.
-		WithDirectory("/app", python.Source).
-		WithWorkdir("/app").
-		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
-		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-
-}
-
-// build dev dependencies first before running test
+// returns a base UV container and builds dev dependencies using `uv sync`
 func (python *Python) Container() *dagger.Container {
-	return python.UV().
+	return python.Base.
 		WithExec(
 			append(
 				[]string{"uv", "sync"},
@@ -111,108 +105,32 @@ func (python *Python) WithNetrc(
 
 // check that the lockfile is in sync with pyproject.toml
 func (python *Python) CheckLock(ctx context.Context) (string, error) {
-	return python.UV().
+	return python.Base.
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
 }
 
-// Return the result of all lint checks
-func (python *Python) Lint(ctx context.Context,
-	// ignore errors and return result
-	// +optional
-	ignoreError bool,
-	// skip any provided lint tests
-	// +optional
-	skip []string,
-) (*dagger.Directory, error) {
-
-	checks := map[string]func(context.Context) (*dagger.File, error){
-		"ruff-check": func(ctx context.Context) (*dagger.File, error) {
-			results, err := python.RuffCheck(ctx, "full", ignoreError)
-
-			return dag.Directory().WithNewFile("ruff-check.txt", results).File("ruff-check.txt"), err
-		},
-		"ruff-format": func(ctx context.Context) (*dagger.File, error) {
-			results, err := python.RuffFormat(ctx, ignoreError)
-
-			return dag.Directory().WithNewFile("ruff-format.txt", results).File("ruff-format.txt"), err
-		},
-		"mypy": func(ctx context.Context) (*dagger.File, error) {
-			results, err := python.Mypy(ctx, "", ignoreError)
-
-			return dag.Directory().WithNewFile("mypy.txt", results).File("mypy.txt"), err
-		},
-		"pylint": func(ctx context.Context) (*dagger.File, error) {
-			results, err := python.Pylint(ctx, "text", ignoreError)
-
-			return dag.Directory().WithNewFile("pylint.txt", results).File("pylint.txt"), err
-		},
-		"pyright": func(ctx context.Context) (*dagger.File, error) {
-			results, err := python.Pyright(ctx, ignoreError)
-
-			return dag.Directory().WithNewFile("pyright.txt", results).File("pyright.txt"), err
-		},
-	}
-
-	for _, check := range skip {
-		delete(checks, check)
-	}
-
-	p := pool.NewWithResults[*dagger.File]().WithContext(ctx).WithMaxGoroutines(3) //.WithCollectErrored()
-	for name, check := range checks {
-		p.Go(func(ctx context.Context) (*dagger.File, error) {
-			ctx, span := Tracer().Start(ctx, name)
-			defer span.End()
-			return check(ctx)
-		})
-	}
-
-	// Wait for all goroutines to finish
-	files, err := p.Wait()
-
-	//create new directory with result files
-	return dag.Directory().WithFiles("/", files), err
+// run mypy commands
+func (p *Python) Mypy() *Mypy {
+	return &Mypy{Python: p}
 }
 
-// Return the result of running all tests(lint and unit test)
-func (python *Python) Test(ctx context.Context,
-	// ignore errors and return result
-	// +optional
-	ignoreError bool,
-	// unit test directoy
-	// +optional
-	// +default="test"
-	unitTestDir string,
-	// skip any provided lint tests
-	// +optional
-	skip []string,
-) (*dagger.Directory, error) {
+// run pylint commands
+func (p *Python) Pylint() *Pylint {
+	return &Pylint{Python: p}
+}
 
-	var combinedErr []string // To aggregate errors
+// run pyright commands
+func (p *Python) Pyright() *Pyright {
+	return &Pyright{Python: p}
+}
 
-	// Run Lint
-	lintResultsDirectory, lintErr := python.Lint(ctx, ignoreError, skip)
+// run ruff commands
+func (p *Python) Ruff() *Ruff {
+	return &Ruff{Python: p}
+}
 
-	if lintErr != nil {
-		combinedErr = append(combinedErr, "Lint Error: "+lintErr.Error())
-	}
-
-	// run unit test
-	unitTestResults, err := python.UnitTest(ctx, unitTestDir)
-	if err != nil {
-		return nil, err
-	}
-
-	if unitTestResults == nil {
-		combinedErr = append(combinedErr, "Unit Test Error")
-	}
-
-	// If there are any errors, combine them into a single error
-	if len(combinedErr) > 0 {
-		return nil, fmt.Errorf(strings.Join(combinedErr, "\n"))
-	}
-
-	testResultsDir := dag.Directory().WithDirectory("lint-results", lintResultsDirectory).WithDirectory("unit-test-results", unitTestResults)
-
-	return testResultsDir, nil
+// run pytest commands
+func (p *Python) Pytest() *Pytest {
+	return &Pytest{Python: p}
 }
