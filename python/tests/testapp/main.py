@@ -6,5 +6,5 @@ def main():
     print("Hello from testapp!")
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()

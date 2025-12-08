@@ -89,13 +89,35 @@ func (t *Tests) Pyright(ctx context.Context,
 func (t *Tests) RuffCheck(ctx context.Context,
 ) error {
 	src := t.srcDir(ctx, []string{"err.py"})
-	ruffCheck := dag.Python(src).Pyright()
+	ruffCheck := dag.Python(src).RuffCheck()
 	exitCode, err := ruffCheck.ExitCode(ctx)
 	if err != nil {
 		return err
 	}
 
 	return t.checkExitCode(ctx, "ruff-check", exitCode, ruffCheck.Results())
+}
+
+// +check
+// Run ruff-format, expect valid/no errors
+func (t *Tests) RuffFormat(ctx context.Context,
+) error {
+	src := t.srcDir(ctx, []string{"err.py"})
+	ruffFormat := dag.Python(src).RuffFormat()
+	isEmpty, err := ruffFormat.IsEmpty(ctx)
+	if err != nil {
+		return err
+	}
+
+	if !isEmpty {
+		diff, err := ruffFormat.AsPatch().Contents(ctx)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("ruff-format failed: %s", diff)
+	}
+
+	return nil
 }
 
 // +check
