@@ -35,7 +35,7 @@ jobs:
 
       - name: test-python
         working-directory: ./python/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-yamllint
         working-directory: ./yamllint/tests
