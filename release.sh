@@ -55,8 +55,7 @@ prepare)
     dagger -m release call --git-ref="." -v prepare \
     --version="$version" \
     --github-token=env://GITHUB_TOKEN \
-    --working-dir="$module" \
-    export --path="$module"
+    --working-dir="$module"
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     ;;
