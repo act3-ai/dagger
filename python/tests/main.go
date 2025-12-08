@@ -111,21 +111,17 @@ func (t *Tests) UnitTest(ctx context.Context,
 		return fmt.Errorf("failed to get file contents: %s", err)
 	}
 
-	var data map[string]interface{}
-	if err := json.Unmarshal([]byte(jsonResults), &data); err != nil {
-		return fmt.Errorf("failed to parse json: %s", err)
+	type Coverage struct {
+		Totals struct {
+			PercentCovered float64 `json:"percent_covered"`
+		} `json:"totals"`
+	}
+	var cov Coverage
+	if err := json.Unmarshal([]byte(jsonResults), &cov); err != nil {
+		return fmt.Errorf("failed to parse json: %w", err)
 	}
 
-	totals, ok := data["totals"].(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("failed to parse totals: %s", totals)
-	}
-
-	pct, ok := totals["percent_covered"].(float64)
-	if !ok {
-		return fmt.Errorf("failed to parse percent_covered: %.2f", pct)
-	}
-
+	pct := cov.Totals.PercentCovered
 	if pct < 100.0 {
 		return fmt.Errorf("code coverage not at 100: %.2f", pct)
 	}
