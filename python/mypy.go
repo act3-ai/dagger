@@ -19,10 +19,9 @@ type MypyResults struct {
 }
 
 // Runs mypy on a given source directory. Returns a results file and an exit-code.
-func (m *Mypy) Check(ctx context.Context,
+func (p *Python) Mypy(ctx context.Context,
 	// +optional
-	outputFormat string,
-) (*MypyResults, error) {
+	outputFormat string) (*MypyResults, error) {
 	args := []string{
 		"uv",
 		"run",
@@ -38,27 +37,42 @@ func (m *Mypy) Check(ctx context.Context,
 	// Add path
 	args = append(args, ".")
 
-	ctr, err := m.Python.Container().
+	ctr, err := p.Container().
 		WithExec(args, dagger.ContainerWithExecOpts{
-			RedirectStdout: "/mypy-results.txt",
-			Expect:         dagger.ReturnTypeAny}).Sync(ctx)
+			Expect: dagger.ReturnTypeAny}).Sync(ctx)
 
 	if err != nil {
 		// unexpected error
 		return nil, fmt.Errorf("running mypy: %w", err)
 	}
 
-	results := ctr.File("/mypy-results.txt")
+	results, err := ctr.CombinedOutput(ctx)
+	if err != nil {
+		// unexpected error
+		return nil, fmt.Errorf("getting results: %w", err)
+	}
+
+	resultsFile := dag.File("mypy-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
+		// unexpected error
+		return nil, fmt.Errorf("getting exit code: %w", err)
 	}
-
 	return &MypyResults{
-		Results:  results,
+		Results:  resultsFile,
 		ExitCode: exitCode,
 	}, nil
+}
 
+// Check for any errors running mypy
+func (mr *MypyResults) Check(ctx context.Context) error {
+	if mr.ExitCode != 0 {
+		results, err := mr.Results.Contents(ctx)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("%s", results)
+	}
+	return nil
 }

@@ -18,13 +18,13 @@ type PylintResults struct {
 }
 
 // Runs pylint on a given source directory. Returns a results file and an exit-code.
-func (pl *Pylint) Check(ctx context.Context,
+func (p *Python) Pylint(ctx context.Context,
 	// +optional
 	// +default="text"
 	outputFormat string,
 ) (*PylintResults, error) {
 
-	ctr, err := pl.Python.Container().
+	ctr, err := p.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -38,8 +38,7 @@ func (pl *Pylint) Check(ctx context.Context,
 				// "--reports=y",
 				"."},
 			dagger.ContainerWithExecOpts{
-				RedirectStdout: "/pylint-results.txt",
-				Expect:         dagger.ReturnTypeAny}).
+				Expect: dagger.ReturnTypeAny}).
 		Sync(ctx)
 
 	if err != nil {
@@ -47,7 +46,13 @@ func (pl *Pylint) Check(ctx context.Context,
 		return nil, fmt.Errorf("running pylint: %w", err)
 	}
 
-	results := ctr.File("/pylint-results.txt")
+	results, err := ctr.CombinedOutput(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get exit code: %w", err)
+	}
+
+	resultsFile := dag.File("pylint-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -56,7 +61,20 @@ func (pl *Pylint) Check(ctx context.Context,
 	}
 
 	return &PylintResults{
-		Results:  results,
+		Results:  resultsFile,
 		ExitCode: exitCode,
 	}, nil
+}
+
+// Check for any errors running pylint
+func (pl *PylintResults) Check(ctx context.Context,
+) error {
+	if pl.ExitCode != 0 {
+		results, err := pl.Results.Contents(ctx)
+		if err != nil {
+			return err
+		}
+		return fmt.Errorf("%s", results)
+	}
+	return nil
 }

@@ -109,28 +109,3 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
 }
-
-// run mypy commands
-func (p *Python) Mypy() *Mypy {
-	return &Mypy{Python: p}
-}
-
-// run pylint commands
-func (p *Python) Pylint() *Pylint {
-	return &Pylint{Python: p}
-}
-
-// run pyright commands
-func (p *Python) Pyright() *Pyright {
-	return &Pyright{Python: p}
-}
-
-// run ruff commands
-func (p *Python) Ruff() *Ruff {
-	return &Ruff{Python: p}
-}
-
-// run pytest commands
-func (p *Python) Pytest() *Pytest {
-	return &Pytest{Python: p}
-}
