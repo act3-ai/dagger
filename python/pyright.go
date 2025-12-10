@@ -11,6 +11,9 @@ type Pyright struct {
 	Python *Python
 }
 type PyrightResults struct {
+	// prints the combined output of stdout and stderr as a string
+	// +private
+	Output string
 	// returns results of pyright as a file
 	Results *dagger.File
 	// returns exit code of pyright
@@ -36,13 +39,11 @@ func (p *Python) Pyright(ctx context.Context,
 		return nil, fmt.Errorf("running pyright: %w", err)
 	}
 
-	results, err := ctr.CombinedOutput(ctx)
+	output, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// exit code not found
 		return nil, fmt.Errorf("get results: %w", err)
 	}
-
-	resultsFile := dag.File("pyright-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -51,7 +52,8 @@ func (p *Python) Pyright(ctx context.Context,
 	}
 
 	return &PyrightResults{
-		Results:  resultsFile,
+		Output:   output,
+		Results:  dag.File("pyright-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
 
@@ -60,12 +62,8 @@ func (p *Python) Pyright(ctx context.Context,
 // Check for any errors running pyright
 func (pr *PyrightResults) Check(ctx context.Context,
 ) error {
-	if pr.ExitCode != 0 {
-		results, err := pr.Results.Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", results)
+	if pr.ExitCode == 0 {
+		return nil
 	}
-	return nil
+	return fmt.Errorf("%s", pr.Output)
 }

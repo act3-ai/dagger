@@ -12,7 +12,7 @@ type Pytest struct {
 }
 type PytestResults struct {
 	// prints the combined output of stdout and stderr as a string
-	CombinedOutput string
+	Output string
 	// returns results of unit-test as xml in a file.
 	Xml *dagger.File
 	// returns results of unit-test as json in a file.
@@ -58,11 +58,13 @@ func (p *Python) Pytest(ctx context.Context,
 		// unexpected error
 		return nil, fmt.Errorf("running pytest: %w", err)
 	}
+
 	out, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// error getting stdout
 		return nil, fmt.Errorf("get combined output: %w", err)
 	}
+
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
 		// exit code not found
@@ -81,18 +83,18 @@ func (p *Python) Pytest(ctx context.Context,
 		WithDirectory("html", html)
 
 	return &PytestResults{
-		CombinedOutput: out,
-		Xml:            xml,
-		Json:           json,
-		Html:           html,
-		ExitCode:       exitCode,
-		Merged:         merged,
+		Output:   out,
+		Xml:      xml,
+		Json:     json,
+		Html:     html,
+		ExitCode: exitCode,
+		Merged:   merged,
 	}, nil
 }
 
 func (pt *PytestResults) Check() error {
-	if pt.ExitCode != 0 {
-		return fmt.Errorf("%s", pt.CombinedOutput)
+	if pt.ExitCode == 0 {
+		return nil
 	}
-	return nil
+	return fmt.Errorf("%s", pt.Output)
 }

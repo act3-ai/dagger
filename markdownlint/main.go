@@ -24,6 +24,9 @@ type Markdownlint struct {
 }
 
 type MarkdownLintResults struct {
+	// prints the combined output of stdout and stderr as a string
+	// +private
+	Output string
 	// returns results of markdownlint-cli2 as a file
 	Results *dagger.File
 	// returns exit code of markdownlint-cli2
@@ -115,12 +118,11 @@ func (m *Markdownlint) Lint(ctx context.Context,
 		// unexpected error
 		return nil, fmt.Errorf("running markdownlint-cli2: %w", err)
 	}
-	results, err := ctr.CombinedOutput(ctx)
+	output, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// exit code not found
 		return nil, fmt.Errorf("getting output: %w", err)
 	}
-	resultsFile := dag.File("markdownlint-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -129,21 +131,18 @@ func (m *Markdownlint) Lint(ctx context.Context,
 	}
 
 	return &MarkdownLintResults{
-		Results:  resultsFile,
+		Output:   output,
+		Results:  dag.File("markdownlint-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
 }
 
 // Check for any errors running markdownlint-cli2
 func (ml *MarkdownLintResults) Check(ctx context.Context) error {
-	if ml.ExitCode != 0 {
-		results, err := ml.Results.Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", results)
+	if ml.ExitCode == 0 {
+		return nil
 	}
-	return nil
+	return fmt.Errorf("%s", ml.Output)
 }
 
 // AutoFix attempts to fix any linting errors reported by rules that emit fix information.

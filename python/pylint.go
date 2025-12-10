@@ -11,6 +11,9 @@ type Pylint struct {
 	Python *Python
 }
 type PylintResults struct {
+	// prints the combined output of stdout and stderr as a string
+	// +private
+	Output string
 	// returns results of pylint as a file
 	Results *dagger.File
 	// returns exit code of pylint
@@ -46,13 +49,11 @@ func (p *Python) Pylint(ctx context.Context,
 		return nil, fmt.Errorf("running pylint: %w", err)
 	}
 
-	results, err := ctr.CombinedOutput(ctx)
+	output, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// exit code not found
 		return nil, fmt.Errorf("get exit code: %w", err)
 	}
-
-	resultsFile := dag.File("pylint-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -61,7 +62,8 @@ func (p *Python) Pylint(ctx context.Context,
 	}
 
 	return &PylintResults{
-		Results:  resultsFile,
+		Output:   output,
+		Results:  dag.File("pylint-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
 }
@@ -69,12 +71,9 @@ func (p *Python) Pylint(ctx context.Context,
 // Check for any errors running pylint
 func (pl *PylintResults) Check(ctx context.Context,
 ) error {
-	if pl.ExitCode != 0 {
-		results, err := pl.Results.Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", results)
+	if pl.ExitCode == 0 {
+		return nil
 	}
-	return nil
+
+	return fmt.Errorf("%s", pl.Output)
 }

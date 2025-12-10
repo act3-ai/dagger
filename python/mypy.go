@@ -12,6 +12,9 @@ type Mypy struct {
 	Python *Python
 }
 type MypyResults struct {
+	// prints the combined output of stdout and stderr as a string
+	// +private
+	Output string
 	// returns results of mypy check as a file
 	Results *dagger.File
 	// returns exit code of mypy check
@@ -46,13 +49,11 @@ func (p *Python) Mypy(ctx context.Context,
 		return nil, fmt.Errorf("running mypy: %w", err)
 	}
 
-	results, err := ctr.CombinedOutput(ctx)
+	output, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// unexpected error
 		return nil, fmt.Errorf("getting results: %w", err)
 	}
-
-	resultsFile := dag.File("mypy-results.txt", results)
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -60,19 +61,17 @@ func (p *Python) Mypy(ctx context.Context,
 		return nil, fmt.Errorf("getting exit code: %w", err)
 	}
 	return &MypyResults{
-		Results:  resultsFile,
+		Output:   output,
+		Results:  dag.File("mypy-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
 }
 
 // Check for any errors running mypy
 func (mr *MypyResults) Check(ctx context.Context) error {
-	if mr.ExitCode != 0 {
-		results, err := mr.Results.Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", results)
+	if mr.ExitCode == 0 {
+		return nil
 	}
-	return nil
+
+	return fmt.Errorf("%s", mr.Output)
 }
