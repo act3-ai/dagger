@@ -31,7 +31,7 @@ jobs:
 
       - name: test-markdownlint
         working-directory: ./markdownlint/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-python
         working-directory: ./python/tests
@@ -39,7 +39,7 @@ jobs:
 
       - name: test-yamllint
         working-directory: ./yamllint/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-release
         working-directory: ./release/tests
