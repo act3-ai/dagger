@@ -17,84 +17,31 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
-	"fmt"
-	"strings"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 type Tests struct{}
 
-// Run all tests
-func (t *Tests) All(ctx context.Context,
-	// +defaultPath="testdata"
-	src *dagger.Directory) error {
-	p := pool.New().WithErrors().WithContext(ctx)
-	errDir := dag.Directory().WithFile("err.md", src.File("err.md")).WithFile(".markdownlint-cli2.yaml", src.File(".markdownlint-cli2.yaml"))
-	validDir := dag.Directory().WithFile("valid.md", src.File("valid.md")).WithFile(".markdownlint-cli2.yaml", src.File(".markdownlint-cli2.yaml"))
+// helper
+func (t *Tests) srcDir() *dagger.Directory {
+	src := dag.CurrentModule().
+		Source().
+		Directory("testdata").
+		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.md"}})
 
-	p.Go(func(ctx context.Context) error {
-		return t.Run(ctx, validDir)
-	})
-	p.Go(func(ctx context.Context) error {
-		return t.RunWithErr(ctx, errDir)
-	})
-	p.Go(func(ctx context.Context) error {
-		return t.IgnoreErr(ctx, errDir)
-	})
-	p.Go(func(ctx context.Context) error {
-		return t.AutoFix(ctx, errDir)
-	})
-
-	return p.Wait()
+	return src
 }
 
-// Returns results of run with valid markdown
-func (t *Tests) Run(ctx context.Context,
-	// +defaultPath="testdata"
-	// +ignore=["err.md"]
-	src *dagger.Directory) error {
+// +check
+// run markdownlint
+func (t *Tests) Lint(ctx context.Context,
+) error {
 
-	_, err := dag.Markdownlint(src).Run(ctx)
+	return dag.Markdownlint(t.srcDir()).Lint().Check(ctx)
 
-	return err
 }
 
-// Returns results of run with expected error
-func (t *Tests) RunWithErr(ctx context.Context,
-	// +defaultPath="testdata"
-	// +ignore=["valid.md"]
-	src *dagger.Directory) error {
-
-	_, err := dag.Markdownlint(src).Run(ctx)
-	if err != nil && strings.Contains(err.Error(), "MD047") {
-		return nil
-	}
-	return err
-}
-
-// Returns results of run with err, but expected pass since error is being ignored
-func (t *Tests) IgnoreErr(ctx context.Context,
-	// +defaultPath="testdata"
-	// +ignore=["valid.md"]
-	src *dagger.Directory) error {
-
-	_, err := dag.Markdownlint(src).Run(ctx, dagger.MarkdownlintRunOpts{IgnoreError: true})
-	if err != nil {
-		return fmt.Errorf("failed to ignore exec errors: %w", err)
-	}
-	return nil
-}
-
-// Returns results of run with err, but expected pass since error is being ignored
-func (t *Tests) AutoFix(ctx context.Context,
-	// +defaultPath="testdata"
-	// +ignore=["valid.md"]
-	src *dagger.Directory) error {
-
-	_, err := dag.Markdownlint(src).AutoFix().Sync(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("failed to ignore exec errors: %w", err)
-	// }
-	return err
+// +check
+// Run markdownlint autofix
+func (t *Tests) AutoFix(ctx context.Context) error {
+	return dag.Markdownlint(t.srcDir()).AutoFix().Check(ctx)
 }
