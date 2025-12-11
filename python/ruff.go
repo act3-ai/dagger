@@ -127,12 +127,14 @@ func (r *RuffFormatResults) Check(ctx context.Context) error {
 		return err
 	}
 
-	if !empty {
-		diff, err := r.Changes.AsPatch().Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("ruff format changes found: %s", diff)
+	if empty {
+		return nil
 	}
-	return nil
+
+	diff, err := r.Changes.AsPatch().Contents(ctx)
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("ruff format changes found:\n%s", diff)
 }

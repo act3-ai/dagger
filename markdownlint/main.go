@@ -187,13 +187,14 @@ func (mr *MarkdownLintAutoFixResults) Check(ctx context.Context) error {
 		return err
 	}
 
-	if !empty {
-		diff, err := mr.Changes.AsPatch().Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("markdownlint autofix changes found: %s", diff)
+	if empty {
+		return nil
 	}
-	dag.CurrentModule().Source().AsModule(dagger.DirectoryAsModuleOpts{SourceRootPath: "path/to/coolchain"}).Checks()
-	return nil
+
+	diff, err := mr.Changes.AsPatch().Contents(ctx)
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("ruff format changes found:\n%s", diff)
 }
