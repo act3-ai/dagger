@@ -215,16 +215,14 @@ func (d *Docker) Build(
 
 // Build a multi-arch image index from Dockerfile and Publish to an OCI registry, returning a slice of image digest references.
 func (d *Docker) Publish(ctx context.Context,
-	// path of dockerfile to build with
-	// +optional
+	// path of dockerfile to build
 	// +default="Dockerfile"
 	dockerfile string,
 	// registry address to publish to, without tag
 	address string,
-	// comma separated list of tags to publish
+	// tags to publish
 	tags []string,
 	// target stage of image build
-	// +optional
 	// +default=""
 	target string,
 	// platforms to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
