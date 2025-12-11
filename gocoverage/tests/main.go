@@ -24,20 +24,6 @@ import (
 
 type Tests struct{}
 
-// Run all tests.
-func (t *Tests) All(ctx context.Context) error {
-	return parallel.New().WithLimit(3).
-		WithJob("Check coverage", t.Check).
-		WithJob("Check coverage with excludes", t.CheckExcludes).
-		WithJob("HTML", t.HTML).
-		WithJob("SVG", t.SVG).
-		WithJob("Summary", t.Summary).
-		WithJob("Exec", t.Summary).
-		// WithJob("Merge", t.Merge).
-		WithJob("Directory", t.Directory).
-		Run(ctx)
-}
-
 func (t *Tests) base() *dagger.Container {
 	src := dag.CurrentModule().Source().Directory("testdata/hello-world-go")
 	return dag.
@@ -54,18 +40,21 @@ func (t *Tests) Debug(ctx context.Context) (string, error) {
 	return results.Summary().Contents(ctx)
 }
 
+// +check
 // Test unit test coverage check
 func (t *Tests) Check(ctx context.Context) error {
 	results := dag.Coverage(t.base()).UnitTests()
 	return results.Check(ctx, 71)
 }
 
+// +check
 // Test unit test coverage check
 func (t *Tests) CheckExcludes(ctx context.Context) error {
 	results := dag.Coverage(t.base(), opts).UnitTests()
 	return results.Check(ctx, 80)
 }
 
+// +check
 // Test HTML generation
 func (t *Tests) HTML(ctx context.Context) error {
 	results := dag.Coverage(t.base()).UnitTests()
@@ -80,6 +69,7 @@ func (t *Tests) HTML(ctx context.Context) error {
 	return nil
 }
 
+// +check
 // Test SVG generation
 func (t *Tests) SVG(ctx context.Context) error {
 	results := dag.Coverage(t.base()).UnitTests()
@@ -94,6 +84,7 @@ func (t *Tests) SVG(ctx context.Context) error {
 	return nil
 }
 
+// +check
 // Test Summary generation
 func (t *Tests) Summary(ctx context.Context) error {
 	results := dag.Coverage(t.base()).UnitTests()
@@ -108,6 +99,7 @@ func (t *Tests) Summary(ctx context.Context) error {
 	return nil
 }
 
+// +check
 // Test exec
 func (t *Tests) Exec(ctx context.Context) error {
 	results := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
@@ -135,7 +127,7 @@ func (t *Tests) Merge(ctx context.Context) error {
 	return nil
 }
 */
-
+// +check
 func (t *Tests) Directory(ctx context.Context) error {
 	return parallel.New().
 		WithJob("with excludes", func(ctx context.Context) error {

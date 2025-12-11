@@ -19,15 +19,15 @@ jobs:
 
       - name: test-docker
         working-directory: ./docker/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-git-cliff
         working-directory: ./git-cliff/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-goreleaser
         working-directory: ./goreleaser/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-markdownlint
         working-directory: ./markdownlint/tests
@@ -43,12 +43,12 @@ jobs:
 
       - name: test-release
         working-directory: ./release/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-gocoverage
         working-directory: ./gocoverage/tests
-        run: dagger call all
+        run: dagger checks
 
       - name: test-acedt
         working-directory: ./data-tool/tests
-        run: dagger call all
+        run: dagger checks

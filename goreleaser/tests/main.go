@@ -18,8 +18,6 @@ import (
 	"context"
 	"dagger/tests/internal/dagger"
 	"fmt"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 type Tests struct {
@@ -37,16 +35,7 @@ func New(
 	}
 }
 
-// Run all tests.
-func (t *Tests) All(ctx context.Context) error {
-	p := pool.New().WithErrors().WithContext(ctx)
-
-	p.Go(t.BuildAll)
-	p.Go(t.BuildPlatform)
-
-	return p.Wait()
-}
-
+// +check
 // Test build for all platforms defined in goreleaser config.
 func (t *Tests) BuildAll(ctx context.Context) error {
 	dist := dag.Goreleaser(t.gitRepoGo()).
@@ -68,6 +57,7 @@ func (t *Tests) BuildAll(ctx context.Context) error {
 	return nil
 }
 
+// +check
 // Test build for a specific platform.
 func (t *Tests) BuildPlatform(ctx context.Context) error {
 	bin := dag.Goreleaser(t.Source).

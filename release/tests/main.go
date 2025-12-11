@@ -18,19 +18,9 @@ import (
 	"context"
 	"dagger/tests/internal/dagger"
 	"fmt"
-
-	"github.com/dagger/dagger/util/parallel"
 )
 
 type Tests struct{}
-
-// Run all tests.
-func (t *Tests) All(ctx context.Context) error {
-	return parallel.New().
-		WithJob("Prepare", t.Prepare).
-		WithJob("Prepare helm chart", t.PrepareHelmChart).
-		Run(ctx)
-}
 
 // return container with a git repo and an initial commit with tag v1.0.0
 func (t *Tests) gitRepo() *dagger.Container {
@@ -49,6 +39,7 @@ func (t *Tests) gitRepo() *dagger.Container {
 
 }
 
+// +check
 // ensure prepare generates a CHANGELOG.md, VERSION, and releases/v1.0.1.md file after a bump
 func (t *Tests) Prepare(ctx context.Context) error {
 
@@ -99,6 +90,7 @@ index 0000000..9427169
 	return err
 }
 
+// +check
 func (t *Tests) PrepareHelmChart(ctx context.Context) error {
 	const chartYaml = `apiVersion: v2
 name: mychart
