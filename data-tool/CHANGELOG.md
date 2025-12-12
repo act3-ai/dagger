@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1] - 2025-12-12
+
+### 🐛 Bug Fixes
+
+- Switch tests to checks [42ce61d](https://github.com/act3-ai/dagger/commit/42ce61df01cb8bce197fbd916d62aabcb6608a24) by @pspurlock
+
+
 ## [0.1.0] - 2025-12-03
 
 ### 🚀 Features
