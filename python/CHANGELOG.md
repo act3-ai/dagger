@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2025-12-12
+
+### 🚀 Features
+
+- Refactor python to return results structs, add new Check() commands for errors [832be91](https://github.com/act3-ai/dagger/commit/832be91953d882c48a2ae466635777e6f5b90476) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Tests for refactor [9166c48](https://github.com/act3-ai/dagger/commit/9166c4845ff190f8f83fc7af04879ba3d0f28ed6) by @pspurlock
+
+- Make exit-code private [7531671](https://github.com/act3-ai/dagger/commit/75316710ef65f56f7c2dbae8d1ebe7ed4f83231c) by @pspurlock
+
+
 ## [0.2.2] - 2025-12-08
 
 ### 🐛 Bug Fixes
