@@ -24,12 +24,10 @@ type Markdownlint struct {
 }
 
 type MarkdownLintResults struct {
-	// prints the combined output of stdout and stderr as a string
-	// +private
-	Output string
 	// returns results of markdownlint-cli2 as a file
 	Results *dagger.File
 	// returns exit code of markdownlint-cli2
+	// +private
 	ExitCode int
 }
 
@@ -131,7 +129,6 @@ func (m *Markdownlint) Lint(ctx context.Context,
 	}
 
 	return &MarkdownLintResults{
-		Output:   output,
 		Results:  dag.File("markdownlint-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
@@ -142,7 +139,11 @@ func (ml *MarkdownLintResults) Check(ctx context.Context) error {
 	if ml.ExitCode == 0 {
 		return nil
 	}
-	return fmt.Errorf("%s", ml.Output)
+	results, err := ml.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }
 
 // AutoFix attempts to fix any linting errors reported by rules that emit fix information.

@@ -14,6 +14,7 @@ type RuffLintResults struct {
 	// returns results of ruff lint as a file
 	Results *dagger.File
 	// returns exit code of ruff lint
+	// +private
 	ExitCode int
 }
 
@@ -67,14 +68,14 @@ func (r *Ruff) Lint(ctx context.Context,
 
 // Check for any errors running ruff lint
 func (rl *RuffLintResults) Check(ctx context.Context) error {
-	if rl.ExitCode != 0 {
-		results, err := rl.Results.Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("%s", results)
+	if rl.ExitCode == 0 {
+		return nil
 	}
-	return nil
+	results, err := rl.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }
 
 // Runs ruff format against a given source directory.

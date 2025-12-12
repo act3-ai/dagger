@@ -23,12 +23,10 @@ type Yamllint struct {
 }
 
 type YamllintResults struct {
-	// prints the combined output of stdout and stderr as a string
-	// +private
-	Output string
 	// returns results of yamllint as a file
 	Results *dagger.File
 	// returns exit code of yamllint
+	// +private
 	ExitCode int
 }
 
@@ -125,7 +123,6 @@ func (y *Yamllint) Lint(ctx context.Context,
 	}
 
 	return &YamllintResults{
-		Output:   output,
 		Results:  dag.File("yamllint-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
@@ -138,7 +135,11 @@ func (yr *YamllintResults) Check(ctx context.Context,
 	if yr.ExitCode == 0 {
 		return nil
 	}
-	return fmt.Errorf("%s", yr.Output)
+	results, err := yr.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }
 
 // List YAML files that can be linted.

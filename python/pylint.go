@@ -11,12 +11,10 @@ type Pylint struct {
 	Python *Python
 }
 type PylintResults struct {
-	// prints the combined output of stdout and stderr as a string
-	// +private
-	Output string
 	// returns results of pylint as a file
 	Results *dagger.File
 	// returns exit code of pylint
+	// +private
 	ExitCode int
 }
 
@@ -62,7 +60,6 @@ func (p *Python) Pylint(ctx context.Context,
 	}
 
 	return &PylintResults{
-		Output:   output,
 		Results:  dag.File("pylint-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
@@ -75,5 +72,9 @@ func (pl *PylintResults) Check(ctx context.Context,
 		return nil
 	}
 
-	return fmt.Errorf("%s", pl.Output)
+	results, err := pl.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }

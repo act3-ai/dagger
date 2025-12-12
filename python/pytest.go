@@ -12,6 +12,7 @@ type Pytest struct {
 }
 type PytestResults struct {
 	// prints the combined output of stdout and stderr as a string
+	// +private
 	Output string
 	// returns results of unit-test as xml in a file.
 	Xml *dagger.File
@@ -20,6 +21,7 @@ type PytestResults struct {
 	// returns results of unit-test as html in a directory
 	Html *dagger.Directory
 	// returns exit code of unit-test
+	// +private
 	ExitCode int
 	// A directory with all results merged in
 	Merged *dagger.Directory
