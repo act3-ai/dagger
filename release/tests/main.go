@@ -129,3 +129,43 @@ index e539fc7..2ac64b8 100644
 
 	return err
 }
+
+// +check
+func (t *Tests) PrepareHelmChartWithAppVersion(ctx context.Context) error {
+	const chartYaml = `apiVersion: v2
+name: mychart
+description: A Helm chart for my cool stuff.
+type: application
+version: 1.4.1
+appVersion: "v1.4.1"
+`
+
+	gitref := t.gitRepo().
+		WithNewFile("charts/mychart/Chart.yaml", chartYaml).
+		WithExec([]string{"git", "add", "charts"}).
+		WithExec([]string{"git", "commit", "-m", "fix: test commit"}).Directory("/repo").AsGit().Head()
+
+	const expectedPatch = `diff --git a/charts/mychart/Chart.yaml b/charts/mychart/Chart.yaml
+index e539fc7..ab3dd8f 100644
+--- a/charts/mychart/Chart.yaml
++++ b/charts/mychart/Chart.yaml
+@@ -2,5 +2,5 @@ apiVersion: v2
+ name: mychart
+ description: A Helm chart for my cool stuff.
+ type: application
+-version: 1.4.1
+-appVersion: "v1.4.1"
++version: 1.5.6
++appVersion: "v1.5.7"
+`
+
+	changes := dag.Release(gitref).PrepareHelmChart("v1.5.6", "charts/mychart", dagger.ReleasePrepareHelmChartOpts{AppVersion: "v1.5.7"})
+
+	patch, err := changes.AsPatch().Contents(ctx)
+
+	if expectedPatch != patch {
+		return fmt.Errorf("unexpected patch\nACTUAL:\n%s\nEXPECTED:\n%s\n", patch, expectedPatch)
+	}
+
+	return err
+}
