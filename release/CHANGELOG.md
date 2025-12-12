@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.6] - 2025-12-12
+
+### 🐛 Bug Fixes
+
+- Added a test for PrepareHelmChart and improved caching performance [cf48d6f](https://github.com/act3-ai/dagger/commit/cf48d6fb6ebdab9e380a594d7c47d1636163e977) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Switch tests to checks [42ce61d](https://github.com/act3-ai/dagger/commit/42ce61df01cb8bce197fbd916d62aabcb6608a24) by @pspurlock
+
+- Upgrade dagger engine to v0.19.7 [93f35b6](https://github.com/act3-ai/dagger/commit/93f35b60e880c9d4559b128f1a2197c23dcc9564) by @pspurlock
+
+- Disable default caching to fix gitRef caching bug [244456a](https://github.com/act3-ai/dagger/commit/244456ae8ec1a9345ef4ca7c3e118d4b4e997f36) by @pspurlock
+
+- Add +cache=never to fix gitref caching bug [f530608](https://github.com/act3-ai/dagger/commit/f530608d97104fb6fb51bf5bd9674c1f0a111eb4) by @pspurlock
+
+- Add option for appVersion in prepare-helm-chart [2d9bbc1](https://github.com/act3-ai/dagger/commit/2d9bbc182ceafcf211696055d23fc760afd9e911) by @pspurlock
+
+- Add test for appVersion in prepare helm chart [8e151a1](https://github.com/act3-ai/dagger/commit/8e151a18f42d503aa5ad6f42bd734f5c35e5fb27) by @pspurlock
+
+
 ## [0.3.5] - 2025-12-04
 
 ### 🐛 Bug Fixes
