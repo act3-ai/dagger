@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.6] - 2025-12-12
+
+### 🐛 Bug Fixes
+
+- Switch tests to checks [42ce61d](https://github.com/act3-ai/dagger/commit/42ce61df01cb8bce197fbd916d62aabcb6608a24) by @pspurlock
+
+- Disable default caching to fix gitRef caching bug [244456a](https://github.com/act3-ai/dagger/commit/244456ae8ec1a9345ef4ca7c3e118d4b4e997f36) by @pspurlock
+
+- Add +cache=never to fix gitref caching bug [f530608](https://github.com/act3-ai/dagger/commit/f530608d97104fb6fb51bf5bd9674c1f0a111eb4) by @pspurlock
+
+
 ## [0.2.5] - 2025-12-03
 
 ### 🐛 Bug Fixes
