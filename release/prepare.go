@@ -120,22 +120,40 @@ func (r *Release) PrepareHelmChart(
 	version string,
 	// path to the chart
 	chartPath string,
+	// version to set Chart appVersion to.
+	// +optional
+	appVersion string,
 ) *dagger.Changeset {
 	src := r.GitRef.Tree().Filter(dagger.DirectoryFilterOpts{
 		Include: []string{chartPath},
 	})
+
 	version = strings.TrimPrefix(version, "v")
 	file := path.Join(chartPath, "Chart.yaml")
-	chartYaml := dag.Wolfi().
+
+	// Base container
+	ctr := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithEnvVariable("version", version).
-		WithExec([]string{"yq", "e",
-			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
-			"-i", file}).
+		WithEnvVariable("version", version)
+
+	// Build yq expression based on whether user provided appVersion
+	yqExpr := "(.version = env(version)) | (.appVersion = \"v\"+env(version))"
+	if appVersion != "" {
+		appVersion = strings.TrimPrefix(appVersion, "v")
+		ctr = ctr.WithEnvVariable("appVersion", appVersion)
+		yqExpr = "(.version = env(version)) | (.appVersion = \"v\"+env(appVersion))"
+	}
+
+	chartYaml := ctr.
+		WithExec([]string{
+			"yq", "e",
+			yqExpr,
+			"-i", file,
+		}).
 		File(file)
 
 	return src.WithFile(file, chartYaml).Changes(src)
