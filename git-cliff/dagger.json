@@ -6,6 +6,5 @@
     "experimental": {
       "SELF_CALLS": true
     }
-  },
-  "disableDefaultFunctionCaching": true
+  }
 }

@@ -13,6 +13,7 @@ import (
 
 // Generate release notes, changelog, and VERSION file with target release version.
 // Will also optionally bump a version in provided helm chart path.
+// +cache="never"
 func (r *Release) Prepare(ctx context.Context,
 	// prepare for a specific version. Must be a valid semantic version in format of x.x.x
 	version string,
@@ -76,6 +77,7 @@ var semverRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9_-]+/)?v?(\d+\.\d+\.\d+(?:-[
 // Generate the next version from conventional commit messages using git-cliff.
 // Will attempt to coerce a bumped tag if not in semantic version format and
 // Returns a version in format of MAJOR.MINOR.PATCH ex: 1.0.0
+// +cache="never"
 func (r *Release) Version(ctx context.Context,
 	//Working Directory in source directory to run git-cliff
 	// +optional
@@ -112,6 +114,7 @@ func (r *Release) Version(ctx context.Context,
 }
 
 // Set the version and appVersion of a helm chart.
+// +cache="never"
 func (r *Release) PrepareHelmChart(
 	// release version
 	version string,

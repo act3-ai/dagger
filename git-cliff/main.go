@@ -26,6 +26,7 @@ type GitCliff struct {
 	Command []string
 }
 
+// +cache="never"
 func New(ctx context.Context,
 	// Git repository source.
 	gitRef *dagger.GitRef,
@@ -90,6 +91,7 @@ func New(ctx context.Context,
 
 // generate a changelog file with unreleased changes and bumps the tag if tag is not provided
 // If file already exists, it will prepend to the existing changelog instead of creating a new one.
+// +cache="never"
 func (gc *GitCliff) Changelog(
 	ctx context.Context,
 	//file path to output or prepend generated changelog.
@@ -129,6 +131,7 @@ func (gc *GitCliff) Changelog(
 }
 
 // generate release notes file with unreleased changes and bumps the tag if tag is not provided
+// +cache="never"
 func (gc *GitCliff) ReleaseNotes(
 	ctx context.Context,
 	//file path to output release notes.
@@ -170,6 +173,7 @@ func (gc *GitCliff) ReleaseNotes(
 }
 
 // Prints a bumped tag for unreleased changes.
+// +cache="never"
 func (gc *GitCliff) BumpedVersion(ctx context.Context,
 ) (string, error) {
 	cmd := gc.Command

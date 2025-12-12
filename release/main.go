@@ -35,6 +35,7 @@ type Release struct {
 	Netrc *dagger.Secret
 }
 
+// +cache="never"
 func New(
 	// Git Ref Source, ex: https://gitlab.com/my/app.git
 	gitRef *dagger.GitRef,
