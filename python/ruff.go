@@ -10,19 +10,29 @@ type Ruff struct {
 	// +private
 	Python *Python
 }
-type RuffCheckResults struct {
-	// returns results of ruff-check as a file
+type RuffLintResults struct {
+	// returns results of ruff lint as a file
 	Results *dagger.File
-	// returns exit code of pyright
+	// returns exit code of ruff lint
+	// +private
 	ExitCode int
 }
 
+type RuffFormatResults struct {
+	Changes *dagger.Changeset
+}
+
+// run ruff commands on a given source directory.
+func (p *Python) Ruff() *Ruff {
+	return &Ruff{Python: p}
+}
+
 // Runs ruff check on a given source directory. Returns a results file and an exit-code.
-func (r *Ruff) Check(ctx context.Context,
+func (r *Ruff) Lint(ctx context.Context,
 	// +optional
 	// +default="full"
 	outputFormat string,
-) (*RuffCheckResults, error) {
+) (*RuffLintResults, error) {
 	// Run ruff check with the provided output format
 	ctr, err := r.Python.Container().WithExec(
 		[]string{
@@ -32,7 +42,7 @@ func (r *Ruff) Check(ctx context.Context,
 			"ruff",
 			"check", ".",
 			"--output-format", outputFormat}, dagger.ContainerWithExecOpts{
-			RedirectStdout: "/ruffcheck-results.txt",
+			RedirectStdout: "/rufflint-results.txt",
 			Expect:         dagger.ReturnTypeAny}).
 		Sync(ctx)
 
@@ -41,7 +51,7 @@ func (r *Ruff) Check(ctx context.Context,
 		return nil, fmt.Errorf("running ruff-check: %w", err)
 	}
 
-	results := ctr.File("/ruffcheck-results.txt")
+	results := ctr.File("/rufflint-results.txt")
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -49,11 +59,23 @@ func (r *Ruff) Check(ctx context.Context,
 		return nil, fmt.Errorf("get exit code: %w", err)
 	}
 
-	return &RuffCheckResults{
+	return &RuffLintResults{
 		Results:  results,
 		ExitCode: exitCode,
 	}, nil
 
+}
+
+// Check for any errors running ruff lint
+func (rl *RuffLintResults) Check(ctx context.Context) error {
+	if rl.ExitCode == 0 {
+		return nil
+	}
+	results, err := rl.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }
 
 // Runs ruff format against a given source directory.
@@ -62,7 +84,7 @@ func (r *Ruff) Check(ctx context.Context,
 func (r *Ruff) Format(ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional
-	exclude []string) (*dagger.Changeset, error) {
+	exclude []string) (*RuffFormatResults, error) {
 	args := []string{
 		"uv",
 		"run",
@@ -89,5 +111,31 @@ func (r *Ruff) Format(ctx context.Context,
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
-	return afterChanges.Changes(r.Python.Source), nil
+	return &RuffFormatResults{
+		Changes: afterChanges.Changes(r.Python.Source),
+	}, nil
+}
+
+// returns the results of ruff format as a changeset that can be applied to the host.
+func (r *RuffFormatResults) Fix() (*dagger.Changeset, error) {
+	return r.Changes, nil
+}
+
+// Returns an error if ruff format made any changes
+func (r *RuffFormatResults) Check(ctx context.Context) error {
+	empty, err := r.Changes.IsEmpty(ctx)
+	if err != nil {
+		return err
+	}
+
+	if empty {
+		return nil
+	}
+
+	diff, err := r.Changes.AsPatch().Contents(ctx)
+	if err != nil {
+		return err
+	}
+
+	return fmt.Errorf("ruff format changes found:\n%s", diff)
 }

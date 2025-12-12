@@ -13,6 +13,7 @@ import (
 
 // Generate release notes, changelog, and VERSION file with target release version.
 // Will also optionally bump a version in provided helm chart path.
+// +cache="never"
 func (r *Release) Prepare(ctx context.Context,
 	// prepare for a specific version. Must be a valid semantic version in format of x.x.x
 	version string,
@@ -76,6 +77,7 @@ var semverRegex = regexp.MustCompile(`^(?:[a-zA-Z0-9_-]+/)?v?(\d+\.\d+\.\d+(?:-[
 // Generate the next version from conventional commit messages using git-cliff.
 // Will attempt to coerce a bumped tag if not in semantic version format and
 // Returns a version in format of MAJOR.MINOR.PATCH ex: 1.0.0
+// +cache="never"
 func (r *Release) Version(ctx context.Context,
 	//Working Directory in source directory to run git-cliff
 	// +optional
@@ -112,27 +114,46 @@ func (r *Release) Version(ctx context.Context,
 }
 
 // Set the version and appVersion of a helm chart.
+// +cache="never"
 func (r *Release) PrepareHelmChart(
 	// release version
 	version string,
 	// path to the chart
 	chartPath string,
+	// version to set Chart appVersion to.
+	// +optional
+	appVersion string,
 ) *dagger.Changeset {
 	src := r.GitRef.Tree().Filter(dagger.DirectoryFilterOpts{
 		Include: []string{chartPath},
 	})
+
 	version = strings.TrimPrefix(version, "v")
 	file := path.Join(chartPath, "Chart.yaml")
-	chartYaml := dag.Wolfi().
+
+	// Base container
+	ctr := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
 		WithMountedDirectory("/src", src).
 		WithWorkdir("/src").
-		WithEnvVariable("version", version).
-		WithExec([]string{"yq", "e",
-			"(.version = env(version)) | (.appVersion = \"v\"+env(version))",
-			"-i", file}).
+		WithEnvVariable("version", version)
+
+	// Build yq expression based on whether user provided appVersion
+	yqExpr := "(.version = env(version)) | (.appVersion = \"v\"+env(version))"
+	if appVersion != "" {
+		appVersion = strings.TrimPrefix(appVersion, "v")
+		ctr = ctr.WithEnvVariable("appVersion", appVersion)
+		yqExpr = "(.version = env(version)) | (.appVersion = \"v\"+env(appVersion))"
+	}
+
+	chartYaml := ctr.
+		WithExec([]string{
+			"yq", "e",
+			yqExpr,
+			"-i", file,
+		}).
 		File(file)
 
 	return src.WithFile(file, chartYaml).Changes(src)

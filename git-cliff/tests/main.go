@@ -20,8 +20,6 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 type Tests struct{}
@@ -59,19 +57,7 @@ func (t *Tests) gitRepo() *dagger.Container {
 
 }
 
-// Run all tests
-func (t *Tests) All(ctx context.Context) error {
-	p := pool.New().WithErrors().WithContext(ctx)
-
-	p.Go(t.BumpedVersion)
-	p.Go(t.ChangelogOutput)
-	p.Go(t.ChangelogPrepend)
-	p.Go(t.ReleaseNotes)
-	p.Go(t.ReleaseNotesWithExtraNotes)
-
-	return p.Wait()
-}
-
+// +check
 // test BumpedVersion
 func (t *Tests) BumpedVersion(ctx context.Context) error {
 
@@ -96,6 +82,7 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 	return err
 }
 
+// +check
 // test changelog output
 func (t *Tests) ChangelogOutput(ctx context.Context) error {
 
@@ -123,6 +110,7 @@ func (t *Tests) ChangelogOutput(ctx context.Context) error {
 	return err
 }
 
+// +check
 // test changelog prepend
 func (t *Tests) ChangelogPrepend(ctx context.Context) error {
 
@@ -150,6 +138,7 @@ func (t *Tests) ChangelogPrepend(ctx context.Context) error {
 	return err
 }
 
+// +check
 // test releasenotes
 func (t *Tests) ReleaseNotes(ctx context.Context) error {
 
@@ -177,6 +166,7 @@ func (t *Tests) ReleaseNotes(ctx context.Context) error {
 	return err
 }
 
+// +check
 // test releasenotes with extra notes added
 func (t *Tests) ReleaseNotesWithExtraNotes(ctx context.Context) error {
 

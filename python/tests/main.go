@@ -5,148 +5,59 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
-	"encoding/json"
-	"fmt"
 )
 
 type Tests struct{}
 
 // helper
-func (t *Tests) srcDir(ctx context.Context,
-	// +optional
-	exclude []string,
-) *dagger.Directory {
+func (t *Tests) srcDir() *dagger.Directory {
 	src := dag.CurrentModule().
 		Source().
 		Directory("testapp").
-		Filter(dagger.DirectoryFilterOpts{Exclude: exclude})
+		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.py"}})
 
 	return src
-}
-
-// helper
-func (t *Tests) checkExitCode(ctx context.Context,
-	name string,
-	exitCode int,
-	results *dagger.File,
-) error {
-	if exitCode == 0 {
-		return nil
-	}
-
-	out, err := results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-
-	return fmt.Errorf("%s failed: %s", name, out)
 }
 
 // +check
 // Run mypy, expect valid/no errors
 func (t *Tests) Mypy(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	mypy := dag.Python(src).Mypy().Check()
-	exitCode, err := mypy.ExitCode(ctx)
-	if err != nil {
-		return err
-	}
-
-	return t.checkExitCode(ctx, "mypy", exitCode, mypy.Results())
+	return dag.Python(t.srcDir()).Mypy().Check(ctx)
 }
 
 // +check
 // Run pylint, expect valid/no errors
 func (t *Tests) Pylint(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	pylint := dag.Python(src).Pylint().Check()
-	exitCode, err := pylint.ExitCode(ctx)
-	if err != nil {
-		return err
-	}
-
-	return t.checkExitCode(ctx, "pylint", exitCode, pylint.Results())
+	return dag.Python(t.srcDir()).Pylint().Check(ctx)
 }
 
 // +check
 // Run pyright, expect valid/no errors
 func (t *Tests) Pyright(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	pyright := dag.Python(src).Pyright().Check()
-	exitCode, err := pyright.ExitCode(ctx)
-	if err != nil {
-		return err
-	}
+	return dag.Python(t.srcDir()).Pyright().Check(ctx)
 
-	return t.checkExitCode(ctx, "pyright", exitCode, pyright.Results())
 }
 
 // +check
-// Run ruff-check, expect valid/no errors
-func (t *Tests) RuffCheck(ctx context.Context,
+// Run ruff lint, expect valid/no errors
+func (t *Tests) RuffLint(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	ruffCheck := dag.Python(src).Ruff().Check()
-	exitCode, err := ruffCheck.ExitCode(ctx)
-	if err != nil {
-		return err
-	}
-
-	return t.checkExitCode(ctx, "ruff-check", exitCode, ruffCheck.Results())
+	return dag.Python(t.srcDir()).Ruff().Lint().Check(ctx)
 }
 
 // +check
 // Run ruff-format, expect valid/no errors
 func (t *Tests) RuffFormat(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	ruffFormat := dag.Python(src).Ruff().Format()
-	isEmpty, err := ruffFormat.IsEmpty(ctx)
-	if err != nil {
-		return err
-	}
-
-	if !isEmpty {
-		diff, err := ruffFormat.AsPatch().Contents(ctx)
-		if err != nil {
-			return err
-		}
-		return fmt.Errorf("ruff-format failed: %s", diff)
-	}
-
-	return nil
+	return dag.Python(t.srcDir()).Ruff().Format().Check(ctx)
 }
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) UnitTest(ctx context.Context,
+func (t *Tests) Pytest(ctx context.Context,
 ) error {
-	src := t.srcDir(ctx, []string{"err.py"})
-	unitTest := dag.Python(src).Pytest().Check()
-	//pytest only returns a non-zero exit code on system level errors, not for coverage
-	//so we must parse results instead
-	jsonResults, err := unitTest.JSON().Contents(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get file contents: %s", err)
-	}
-
-	type Coverage struct {
-		Totals struct {
-			PercentCovered float64 `json:"percent_covered"`
-		} `json:"totals"`
-	}
-	var cov Coverage
-	if err := json.Unmarshal([]byte(jsonResults), &cov); err != nil {
-		return fmt.Errorf("failed to parse json: %w", err)
-	}
-
-	pct := cov.Totals.PercentCovered
-	if pct < 100.0 {
-		return fmt.Errorf("code coverage not at 100: %.2f", pct)
-	}
-
-	return nil
+	return dag.Python(t.srcDir()).Pytest().Check(ctx)
 }

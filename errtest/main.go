@@ -1,4 +1,4 @@
-// A generated module for Tests functions
+// A generated module for Ci functions
 //
 // This module has been generated via dagger init and serves as a reference to
 // basic module structure as you get started with Dagger.
@@ -16,32 +16,22 @@ package main
 
 import (
 	"context"
-	"dagger/tests/internal/dagger"
+	"dagger/ci/internal/dagger"
 )
 
-type Tests struct{}
+type Ci struct{}
 
-// helper
-func (t *Tests) srcDir() *dagger.Directory {
-	src := dag.CurrentModule().
-		Source().
-		Directory("testdata").
-		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.md"}})
-
-	return src
+// Returns a container that echoes whatever string argument is provided
+func (m *Ci) ContainerEcho(stringArg string) *dagger.Container {
+	return dag.Container().From("alpine:latest").WithExec([]string{"echo", stringArg})
 }
 
-// +check
-// run markdownlint
-func (t *Tests) Lint(ctx context.Context,
-) error {
-
-	return dag.Markdownlint(t.srcDir()).Lint().Check(ctx)
-
-}
-
-// +check
-// Run markdownlint autofix
-func (t *Tests) AutoFix(ctx context.Context) error {
-	return dag.Markdownlint(t.srcDir()).AutoFix().Check(ctx)
+// Returns lines that match a pattern in the files of the provided Directory
+func (m *Ci) GrepDir(ctx context.Context, directoryArg *dagger.Directory, pattern string) (string, error) {
+	return dag.Container().
+		From("alpine:latest").
+		WithMountedDirectory("/mnt", directoryArg).
+		WithWorkdir("/mnt").
+		WithExec([]string{"grep", "-R", pattern, "."}).
+		Stdout(ctx)
 }

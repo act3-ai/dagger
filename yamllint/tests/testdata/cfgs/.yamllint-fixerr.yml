@@ -1,0 +1,8 @@
+---
+extends: default
+#ignores all errors in test.yaml
+rules:
+  empty-lines: disable
+
+ignore:
+  - "cfgs/**"

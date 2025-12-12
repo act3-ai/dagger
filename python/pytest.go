@@ -11,8 +11,9 @@ type Pytest struct {
 	Python *Python
 }
 type PytestResults struct {
-	// prints the results to stdout
-	Stdout string
+	// prints the combined output of stdout and stderr as a string
+	// +private
+	Output string
 	// returns results of unit-test as xml in a file.
 	Xml *dagger.File
 	// returns results of unit-test as json in a file.
@@ -20,20 +21,21 @@ type PytestResults struct {
 	// returns results of unit-test as html in a directory
 	Html *dagger.Directory
 	// returns exit code of unit-test
+	// +private
 	ExitCode int
 	// A directory with all results merged in
 	Merged *dagger.Directory
 }
 
-// Runs pytest and returns results in multiple file formats. Current formats: Stdout, json, xml, and html.
-func (pt *Pytest) Check(ctx context.Context,
+// Runs pytest and returns results in multiple file formats. Current formats: CombinedOutput, json, xml, and html.
+func (p *Python) Pytest(ctx context.Context,
 	// unit test directory
 	// +optional
 	// +default="test"
 	unitTestDir string,
 ) (*PytestResults, error) {
 
-	ctr, err := pt.Python.Container().
+	ctr, err := p.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -51,16 +53,20 @@ func (pt *Pytest) Check(ctx context.Context,
 				"html:/html/",
 				"--cov-report",
 				"json:/results.json",
-			}).Sync(ctx)
+				"--cov-fail-under=100",
+			}, dagger.ContainerWithExecOpts{
+				Expect: dagger.ReturnTypeAny}).Sync(ctx)
 	if err != nil {
 		// unexpected error
-		return nil, fmt.Errorf("running unit-test: %w", err)
+		return nil, fmt.Errorf("running pytest: %w", err)
 	}
-	out, err := ctr.Stdout(ctx)
+
+	out, err := ctr.CombinedOutput(ctx)
 	if err != nil {
 		// error getting stdout
-		return nil, fmt.Errorf("get stdout code: %w", err)
+		return nil, fmt.Errorf("get combined output: %w", err)
 	}
+
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
 		// exit code not found
@@ -79,11 +85,18 @@ func (pt *Pytest) Check(ctx context.Context,
 		WithDirectory("html", html)
 
 	return &PytestResults{
-		Stdout:   out,
+		Output:   out,
 		Xml:      xml,
 		Json:     json,
 		Html:     html,
 		ExitCode: exitCode,
 		Merged:   merged,
 	}, nil
+}
+
+func (pt *PytestResults) Check() error {
+	if pt.ExitCode == 0 {
+		return nil
+	}
+	return fmt.Errorf("%s", pt.Output)
 }

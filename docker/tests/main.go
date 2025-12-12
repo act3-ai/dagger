@@ -19,31 +19,11 @@ import (
 	"dagger/tests/internal/dagger"
 	"fmt"
 	"strings"
-
-	"github.com/sourcegraph/conc/pool"
 )
 
 type Tests struct{}
 
-// Run all tests
-func (t *Tests) All(ctx context.Context,
-	// +defaultPath="."
-	src *dagger.Directory) error {
-	p := pool.New().WithErrors().WithContext(ctx)
-
-	p.Go(func(ctx context.Context) error {
-		return t.WithLabels(ctx, src)
-	})
-	p.Go(func(ctx context.Context) error {
-		return t.WithBuildArg(ctx, src)
-	})
-	p.Go(func(ctx context.Context) error {
-		return t.WithSecret(ctx, src)
-	})
-
-	return p.Wait()
-}
-
+// +check
 // Test WithLabels to ensure name and value are being set properly
 func (t *Tests) WithLabels(ctx context.Context,
 	// +defaultPath="."
@@ -81,6 +61,7 @@ func (t *Tests) WithLabels(ctx context.Context,
 
 }
 
+// +check
 func (t *Tests) WithBuildArg(ctx context.Context,
 	// +defaultPath="."
 	src *dagger.Directory) error {
@@ -100,6 +81,7 @@ func (t *Tests) WithBuildArg(ctx context.Context,
 
 }
 
+// + check
 // Test WithSecrets to ensure name and value are being set properly
 func (t *Tests) WithSecret(ctx context.Context,
 	// +defaultPath="."

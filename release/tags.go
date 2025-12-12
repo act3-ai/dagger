@@ -25,6 +25,7 @@ func (r *Release) orasCtr() *dagger.Container {
 }
 
 // Publish additional tags to a remote OCI artifact.
+// +cache="never"
 func (r *Release) AddTags(ctx context.Context,
 	// Existing OCI reference
 	ref string,
@@ -42,6 +43,7 @@ func (r *Release) AddTags(ctx context.Context,
 // Ex: Given the patch release 'v1.2.3', which is the latest and greatest, it returns 'v1', 'v1.2', 'latest'.
 //
 // Notice: current issue with SSH AUTH SOCK: https://docs.dagger.io/api/remote-repositories/#multiple-ssh-keys-may-cause-ssh-forwarding-to-fail
+// +cache="never"
 func (r *Release) ExtraTags(ctx context.Context,
 	// OCI repository, e.g. localhost:5000/helloworld
 	ref string,
@@ -63,6 +65,7 @@ func (r *Release) ExtraTags(ctx context.Context,
 
 // Create extra tags based on the provided target tag.
 // Combines ExtraTags() and AddTags().
+// +cache="never"
 func (r *Release) CreateExtraTags(ctx context.Context,
 	// OCI image reference, e.g. localhost:5000/helloworld, localhost:5000/helloworld:v1.2.3
 	ref string,

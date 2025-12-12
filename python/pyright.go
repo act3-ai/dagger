@@ -10,18 +10,19 @@ type Pyright struct {
 	// +private
 	Python *Python
 }
-type PyRightResults struct {
+type PyrightResults struct {
 	// returns results of pyright as a file
 	Results *dagger.File
 	// returns exit code of pyright
+	// +private
 	ExitCode int
 }
 
 // Runs pyright on a given source directory. Returns a results file and an exit-code.
-func (pr *Pyright) Check(ctx context.Context,
-) (*PyRightResults, error) {
+func (p *Python) Pyright(ctx context.Context,
+) (*PyrightResults, error) {
 
-	ctr, err := pr.Python.Container().
+	ctr, err := p.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -30,14 +31,17 @@ func (pr *Pyright) Check(ctx context.Context,
 				"pyright",
 				".",
 			}, dagger.ContainerWithExecOpts{
-				RedirectStdout: "/pyright-results.txt",
-				Expect:         dagger.ReturnTypeAny}).Sync(ctx)
+				Expect: dagger.ReturnTypeAny}).Sync(ctx)
 	if err != nil {
 		// unexpected error
 		return nil, fmt.Errorf("running pyright: %w", err)
 	}
 
-	results := ctr.File("/pyright-results.txt")
+	output, err := ctr.CombinedOutput(ctx)
+	if err != nil {
+		// exit code not found
+		return nil, fmt.Errorf("get results: %w", err)
+	}
 
 	exitCode, err := ctr.ExitCode(ctx)
 	if err != nil {
@@ -45,9 +49,22 @@ func (pr *Pyright) Check(ctx context.Context,
 		return nil, fmt.Errorf("get exit code: %w", err)
 	}
 
-	return &PyRightResults{
-		Results:  results,
+	return &PyrightResults{
+		Results:  dag.File("pyright-results.txt", output),
 		ExitCode: exitCode,
 	}, nil
 
+}
+
+// Check for any errors running pyright
+func (pr *PyrightResults) Check(ctx context.Context,
+) error {
+	if pr.ExitCode == 0 {
+		return nil
+	}
+	results, err := pr.Results.Contents(ctx)
+	if err != nil {
+		return err
+	}
+	return fmt.Errorf("%s", results)
 }
