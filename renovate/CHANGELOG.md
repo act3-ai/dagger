@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.12] - 2025-12-15
+
+### 🐛 Bug Fixes
+
+- General cleanup [03cc59f](https://github.com/act3-ai/dagger/commit/03cc59f49992a4ba8620795bd3e73b19fc8090fb) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Use the latest full image as the default [5825c9e](https://github.com/act3-ai/dagger/commit/5825c9e7c93d819def327470d920224a85d331df) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Cleanup unused code [eadeac2](https://github.com/act3-ai/dagger/commit/eadeac20f27cf21d21a3e88731a67e8be45870e8) by @pspurlock
+
+
 ## [0.1.11] - 2025-11-20
 
 ### 🐛 Bug Fixes
