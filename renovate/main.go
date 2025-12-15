@@ -43,9 +43,6 @@ type Renovate struct {
 
 	// +private
 	Email string
-
-	// +private
-	EnabledManagers string
 }
 
 type Auth struct {
@@ -66,9 +63,9 @@ const globalExtends = `
 	":prHourlyLimitNone",
 	":prConcurrentLimit20",
 	":disableDependencyDashboard",
-	"regexManagers:dockerfileVersions",
-	"regexManagers:gitlabPipelineVersions",
-	"regexManagers:helmChartYamlAppVersions"
+	"customManagers:dockerfileVersions",
+	"customManagers:gitlabPipelineVersions",
+	"customManagers:helmChartYamlAppVersions"
 ]
 `
 
@@ -108,24 +105,19 @@ func New(
 	// +optional
 	// +default="bot@example.com"
 	email string,
-
-	// +optional
-	// +default=""
-	enabledManagers string,
 ) *Renovate {
 	if base == nil {
 		base = dag.Container().From("renovate/renovate:full")
 	}
 	return &Renovate{
-		Project:         project,
-		Base:            base,
-		Token:           token,
-		EndpointURL:     endpointURL,
-		Platform:        platform,
-		GitPrivateKey:   gitPrivateKey,
-		Author:          author,
-		Email:           email,
-		EnabledManagers: enabledManagers,
+		Project:       project,
+		Base:          base,
+		Token:         token,
+		EndpointURL:   endpointURL,
+		Platform:      platform,
+		GitPrivateKey: gitPrivateKey,
+		Author:        author,
+		Email:         email,
 	}
 }
 
@@ -248,7 +240,6 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		// WithEnvVariable("RENOVATE_GIT_IGNORED_AUTHORS", email).
 		WithEnvVariable("RENOVATE_REQUIRE_CONFIG", "optional").
 		WithEnvVariable("RENOVATE_ONBOARDING", "false").
-		WithEnvVariable("RENOVATE_ENABLED_MANAGERS", m.EnabledManagers).
 		WithEnvVariable("RENOVATE_CUSTOM_MANAGERS", customManagers).
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
