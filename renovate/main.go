@@ -147,7 +147,7 @@ func (m *Renovate) WithRegistryAuth(
 }
 
 // Add a renovate secret.
-// Can we referenced as "{{ secrets.MY_SECRET_NAME }}" in other renovate config.
+// Can be referenced as "{{ secrets.MY_SECRET_NAME }}" in other renovate config.
 func (m *Renovate) WithSecret(
 	// name of the secret
 	name string,
@@ -216,8 +216,6 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 
 // Run renovate to update dependencies on the remote repository
 func (m *Renovate) Update(ctx context.Context) (string, error) {
-	// const author = "Renovate Bot"
-	// const email = "bot@example.com"
 
 	hostRules, err := m.getHostRules(ctx)
 	if err != nil {
@@ -238,10 +236,6 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("RENOVATE_GLOBAL_EXTENDS", globalExtends).
 		WithEnvVariable("RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS", `["^.*$"]`).
 		WithSecretVariable("RENOVATE_HOST_RULES", hostRules).
-		// WithEnvVariable("GIT_AUTHOR_NAME", author).
-		// WithEnvVariable("GIT_AUTHOR_EMAIL", email).
-		// WithEnvVariable("GIT_COMMITTER_NAME", author).
-		// WithEnvVariable("GIT_COMMITTER_EMAIL", email).
 		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
 		With(func(c *dagger.Container) *dagger.Container {
 			if m.GitPrivateKey != nil {
@@ -258,15 +252,12 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("RENOVATE_CUSTOM_MANAGERS", customManagers).
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		// WithMountedSecret("/home/ubuntu/.docker/config.json", m.RegistryConfig.Secret()).
-		// WithEnvVariable("HELM_REGISTRY_CONFIG", "/root/.docker/config.json").
 		WithEnvVariable("LOG_LEVEL", "debug").
-		// Terminal(dagger.ContainerTerminalOpts{Cmd: []string{"bash"}}).
 		// We could use --platform=local to use the local source repo.
 		WithExec([]string{"renovate", m.Project}).
 		Stdout(ctx)
 
 	/*
-	  The error from OpenTelemetry is because OTEL_EXPORTER_OTLP_ENDPOINT env is set by Dagger and renovate used OpenTelemetry https://docs.renovatebot.com/opentelemetry/ so it tries to publish telemetroy to Dagger's OTEL stuff and fails (for an unknown reason).  The error is not fatal.
+	  The error from OpenTelemetry is because OTEL_EXPORTER_OTLP_ENDPOINT env is set by Dagger and renovate used OpenTelemetry https://docs.renovatebot.com/opentelemetry/ so it tries to publish telemetry to Dagger's OTEL stuff and fails (for an unknown reason).  The error is not fatal.
 	*/
 }
