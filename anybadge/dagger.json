@@ -1,0 +1,14 @@
+{
+  "name": "anybadge",
+  "engineVersion": "v0.19.8",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "python",
+      "source": "github.com/sagikazarmark/daggerverse/python@6133ad18e131b891d4723b8e25d69f5de077b472",
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
+    }
+  ]
+}
