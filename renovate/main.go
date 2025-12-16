@@ -121,6 +121,17 @@ func New(
 	}
 }
 
+// Add a secret env variable to the renovate container
+func (m *Renovate) WithSecretVariable(
+	// name of the secret variable
+	name string,
+	// value of the secret
+	value *dagger.Secret,
+) *Renovate {
+	m.Base = m.Base.WithSecretVariable(name, value)
+	return m
+}
+
 // Add authentication to a OCI registry
 func (m *Renovate) WithRegistryAuth(
 	// registry's hostname
@@ -244,11 +255,12 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithEnvVariable("LOG_LEVEL", "debug").
+		// HACK: OTEL_EXPORTER_OTLP_ENDPOINT is set by dagger and causes renovate to error, so we unset it
 		// We could use --platform=local to use the local source repo.
-		WithExec([]string{"renovate", m.Project}).
+		WithExec([]string{
+			"sh",
+			"-c",
+			"OTEL_EXPORTER_OTLP_ENDPOINT= renovate " + m.Project,
+		}).
 		Stdout(ctx)
-
-	/*
-	  The error from OpenTelemetry is because OTEL_EXPORTER_OTLP_ENDPOINT env is set by Dagger and renovate used OpenTelemetry https://docs.renovatebot.com/opentelemetry/ so it tries to publish telemetry to Dagger's OTEL stuff and fails (for an unknown reason).  The error is not fatal.
-	*/
 }
