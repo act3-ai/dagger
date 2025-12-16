@@ -47,7 +47,7 @@
 		"description": "Update dagger module dependencies in dagger.json files",
 		"managerFilePatterns": ["**/dagger.json"],
 		"matchStrings": [
-		"\"source\":\\s*\"github\\.com\/(?<depName>[^/]+/[^/]+)/[^@]+@(?<currentValue>[^\"]+)"
+		"\"source\":\\s*\"github\\.com\\/(?<depName>[^/]+\\/[^/]+)\\/[^@]+@(?<currentValue>[^\"]+)\"[\\s\\S]*?\"pin\":\\s*\"(?<currentDigest>[a-f0-9]{40})\""
 		],
 		"datasourceTemplate": "github-tags",
 		"versioningTemplate": "regex:^(?<compatibility>[^/]+/v)(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)$"

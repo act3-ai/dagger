@@ -178,7 +178,6 @@ func (gc *GitCliff) BumpedVersion(ctx context.Context,
 ) (string, error) {
 	cmd := gc.Command
 	cmd = append(cmd,
-		"--unreleased",
 		"--bumped-version",
 	)
 
