@@ -4,7 +4,7 @@ source ./update-deps.sh
 # Required env vars:
 # GITHUB_TOKEN - github repo api access
 
-force=false
+
 cmd=$1
 shift
 
@@ -23,10 +23,6 @@ confirm_continue() {
 # Loop through remaining args
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    -f|--force)
-      force=true
-      shift
-      ;;
     -*)
       echo "Unknown option: $1"
       exit 1
@@ -55,10 +51,10 @@ prepare)
     #run module tests
     dagger -m "$module/tests" checks
 
-    dagger call --module=$module prepare
+    dagger call --module="$module" prepare
 
     echo "Upgrading dagger engine if needed.."
-    upgrade_dagger_engine $module
+    upgrade_dagger_engine "$module"
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     if confirm_continue approve; then
