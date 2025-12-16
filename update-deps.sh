@@ -97,7 +97,6 @@ function upgrade_act3_module_deps() {
     --email="$GITHUB_EMAIL" \
     --token=env:GITHUB_TOKEN \
     --git-private-key=env:GITHUB_PRIVATE_KEY \
-    --enabled-managers="custom.regex" \
     update
 
 }
