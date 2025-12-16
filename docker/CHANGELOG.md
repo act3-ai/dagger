@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.10] - 2025-12-16
+
+### 🐛 Bug Fixes
+
+- Updating dagger engine to v0.19.8 [4e02692](https://github.com/act3-ai/dagger/commit/4e0269204d6066822347cac7ac3062cde87a50ef) by @pspurlock
+
+
 ## [0.1.9] - 2025-12-12
 
 ### 🐛 Bug Fixes
