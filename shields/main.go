@@ -23,9 +23,13 @@ import (
 	"strings"
 )
 
-// Can also use docker, but we choose ghcr to avoid docker rate limits.
-// shieldsio/shields:next
-const shieldsCtr = "ghcr.io/badges/shields:next"
+const (
+	// Can also use docker, but we choose ghcr to avoid docker rate limits.
+	// shieldsio/shields:next
+	shieldsCtr    = "ghcr.io/badges/shields:next"
+	shieldsPort   = 80
+	shieldsScheme = "http"
+)
 
 type Shields struct {
 	// shields as a service
@@ -57,19 +61,19 @@ func (m *Shields) Coverage(ctx context.Context,
 	if err != nil {
 		return nil, fmt.Errorf("starting shields as a service: %w", err)
 	}
-	// endpoint, err := svc.Endpoint(ctx)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("getting service endpoint: %w", err)
-	// }
+	endpoint, err := svc.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: shieldsPort, Scheme: shieldsScheme})
+	if err != nil {
+		return nil, fmt.Errorf("getting service endpoint: %w", err)
+	}
 
-	queryURL, err := staticQuery("http://shields:8080", "coverage", fmt.Sprintf("%.2f", value), color, "", "")
+	queryURL, err := staticQuery(endpoint, "coverage", fmt.Sprintf("%.1f", value), color, "", "")
 	if err != nil {
 		return nil, fmt.Errorf("building code coverage badge query: %w", err)
 	}
 
 	return dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{Packages: []string{"curl"}}).
-		WithServiceBinding("shields", svc).Terminal().
+		WithServiceBinding("shields", svc).
 		WithExec([]string{"curl", "-fsSL", queryURL, "-o", coverageFile}).
 		File(coverageFile), nil
 
@@ -91,7 +95,7 @@ func (m *Shields) WithService(
 func (m *Shields) AsService() *dagger.Service {
 	return dag.Container().
 		From(shieldsCtr).
-		WithExposedPort(8080).
+		WithExposedPort(shieldsPort).
 		AsService()
 }
 
