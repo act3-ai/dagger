@@ -134,7 +134,7 @@ func (m *Anybadge) GoReport(ctx context.Context,
 		WithExec([]string{goreportExecName}).
 		Stdout(ctx)
 
-	grade, value, _ := extractGradeAndValue(out)
+	grade, value, _ := extractGradeAndPercent(out)
 
 	var color string
 	switch {
@@ -159,6 +159,25 @@ func (m *Anybadge) GoReport(ctx context.Context,
 		File(goreportFile)
 }
 
+func (m *Anybadge) License(
+	// License name, e.g. "MIT"
+	name string,
+	// Badge color
+	// +optional
+	// +default="darkgoldenrod"
+	color string,
+) *dagger.File {
+	const licenseFile = "license.svg"
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			"--label=license",
+			fmt.Sprintf("--value=%s", name),
+			fmt.Sprintf("--file=%s", licenseFile),
+			fmt.Sprintf("--color=%s", color)}).
+		File(licenseFile)
+}
+
 // Container returns a python container with anybadge installed.
 func (m *Anybadge) Container() *dagger.Container {
 	return dag.Python().
@@ -166,7 +185,7 @@ func (m *Anybadge) Container() *dagger.Container {
 		WithExec([]string{"pip", "install", "anybadge"})
 }
 
-func extractGradeAndValue(report string) (grade string, value float64, err error) {
+func extractGradeAndPercent(report string) (grade string, percent float64, err error) {
 	// should be first line
 	for _, line := range strings.Split(report, "\n") {
 		if strings.HasPrefix(line, "Grade") {
@@ -177,15 +196,15 @@ func extractGradeAndValue(report string) (grade string, value float64, err error
 			}
 
 			grade = fields[len(fields)-2]
-			percentStr := fields[len(fields)-1]
 
+			percentStr := fields[len(fields)-1]
 			percentStr = strings.TrimSuffix(percentStr, "%")
-			value, err = strconv.ParseFloat(percentStr, 64)
+			percent, err = strconv.ParseFloat(percentStr, 64)
 			if err != nil {
 				return "", 0, fmt.Errorf("invalid percentage value: %w", err)
 			}
 
-			return grade, value, nil
+			return grade, percent, nil
 		}
 	}
 	return "", 0, fmt.Errorf("grade line not found")
