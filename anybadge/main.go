@@ -1,5 +1,7 @@
 // A module for generating svg badges using anybadge.
 //
+// This module does not require a remote service.
+//
 // https://pypi.org/project/anybadge/.
 
 package main
