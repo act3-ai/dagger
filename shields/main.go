@@ -47,7 +47,7 @@ func (m *Shields) Coverage(ctx context.Context,
 	var color string
 	switch {
 	case value >= 80:
-		color = "green"
+		color = "brightgreen"
 	case value >= 70:
 		color = "yellow"
 	case value >= 50:
