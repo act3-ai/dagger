@@ -23,7 +23,7 @@ func New() *Anybadge {
 // Generate a code coverage badge.
 func (m *Anybadge) Coverage(
 	// Coverage value
-	value int,
+	value float64,
 ) *dagger.File {
 	const (
 		coverageFile = "coverage.svg"
@@ -36,7 +36,7 @@ func (m *Anybadge) Coverage(
 
 	return m.Container().
 		WithExec([]string{"anybadge",
-			fmt.Sprintf("--value=%d", value),
+			fmt.Sprintf("--value=%.2f", value),
 			fmt.Sprintf("--file=%s", coverageFile),
 			fmt.Sprintf("%s=red", redThreshold),
 			fmt.Sprintf("%s=orange", orangeThreshold),
