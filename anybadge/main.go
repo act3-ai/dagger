@@ -12,14 +12,14 @@ import (
 	"strings"
 )
 
-type BadgeGen struct{}
+type Anybadge struct{}
 
-func New() *BadgeGen {
-	return &BadgeGen{}
+func New() *Anybadge {
+	return &Anybadge{}
 }
 
 // Generate a code coverage badge.
-func (m *BadgeGen) Coverage(
+func (m *Anybadge) Coverage(
 	// Coverage value
 	value float64,
 ) *dagger.File {
@@ -45,7 +45,7 @@ func (m *BadgeGen) Coverage(
 }
 
 // Generate a pylint badge.
-func (m *BadgeGen) Pylint(
+func (m *Anybadge) Pylint(
 	// Pylint value
 	value float64,
 ) *dagger.File {
@@ -60,7 +60,7 @@ func (m *BadgeGen) Pylint(
 }
 
 // Generate a general pipeline status badge.
-func (m *BadgeGen) PipelineStatus(
+func (m *Anybadge) PipelineStatus(
 	// Pipeline is passing
 	passing bool,
 ) *dagger.File {
@@ -82,7 +82,7 @@ func (m *BadgeGen) PipelineStatus(
 }
 
 // Generate a semantic version badge.
-func (m *BadgeGen) Version(
+func (m *Anybadge) Version(
 	// Semantic version, e.g. "1.2.3"
 	version string,
 	// Badge color
@@ -105,7 +105,7 @@ func (m *BadgeGen) Version(
 }
 
 // Generate a goreportcard badge. Does not rely on remote goreportcard server.
-func (m *BadgeGen) GoReport(ctx context.Context,
+func (m *Anybadge) GoReport(ctx context.Context,
 	// source code
 	src *dagger.GitRef,
 	// goreport reference
@@ -159,7 +159,7 @@ func (m *BadgeGen) GoReport(ctx context.Context,
 }
 
 // Generate a license badge.
-func (m *BadgeGen) License(
+func (m *Anybadge) License(
 	// License name, e.g. "MIT"
 	name string,
 	// Badge color
@@ -179,7 +179,7 @@ func (m *BadgeGen) License(
 }
 
 // Container returns a python container with anybadge installed.
-func (m *BadgeGen) Container() *dagger.Container {
+func (m *Anybadge) Container() *dagger.Container {
 	return dag.Python().
 		Container().
 		WithExec([]string{"pip", "install", "anybadge"})

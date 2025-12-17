@@ -1,5 +1,5 @@
 {
-  "name": "badge-gen",
+  "name": "anybadge",
   "engineVersion": "v0.19.8",
   "sdk": {
     "source": "go"
