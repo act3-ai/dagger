@@ -8,6 +8,8 @@ import (
 	"context"
 	"dagger/anybadge/internal/dagger"
 	"fmt"
+	"strconv"
+	"strings"
 )
 
 const badgeFile = "badge.svg"
@@ -18,149 +20,173 @@ func New() *Anybadge {
 	return &Anybadge{}
 }
 
-// Run runs anybadge, returning the badge svg.
-func (m *Anybadge) Run(ctx context.Context,
-	// Badge label.
-	// +optional
-	label string,
-	// Badge value.
-	// +optional
-	value string,
-	// Value formatting. Ex: "%.2f" for 2dp floats.
-	// +optional
-	valueFormat string,
-	// Fixed color, disregards thresholds.
-	// +optional
-	color string,
-	// Value prefix.
-	// +optional
-	prefix string,
-	// Value suffix.
-	// +optional
-	suffix string,
-	// Number of chars to pad on either size of text.
-	// +optional
-	padding string,
-	// Number of chars to pad on either side of label.
-	// +optional
-	labelPadding string,
-	// Number of chars to pad on either side of value.
-	// +optional
-	valuePadding string,
-	// Text font. Supports: Arial, Helvetica, DejaVu Sans, Verdana, Geneva, ans-serif.
-	// +optional
-	font string,
-	// Text font size.
-	// +optional
-	fontSize int,
-	// Built in template name, e.g. pylint, coverage.
-	// +optional
-	template string,
-	// Alternative badge style. Supports: gitlab-scoped, default.
-	// +optional
-	style string,
-	// Use maximum threshold color when value exceeds threshold.
-	// +optional
-	useMax bool,
-	// Text color. Single value affects both label and value, a comma separated pair affects label and value respectively.
-	// +optional
-	textColor string,
-	// Treat value and thresholds as semantic versions.
-	// +optional
-	semver bool,
-	// Do not escape the label text.
-	// +optional
-	noEscapedLabel bool,
-	// Do not escape the value text.
-	// +optional
-	noEscapedValue bool,
-	// Threshold args, pairs of <upper>=<color>. Ex: 2=red 4=orange 6=yellow 8=good, read as "less than 2 = red, less than 4 = orange, ...". https://github.com/jongracecox/anybadge?tab=readme-ov-file#colors.
-	// +optional
-	thresholds []string,
+// Generate a code coverage badge.
+func (m *Anybadge) Coverage(
+	// Coverage value
+	value int,
 ) *dagger.File {
-	ctr := dag.Python().
+	const (
+		coverageFile = "coverage.svg"
+		// color if less than:
+		redThreshold    = "30"
+		orangeThreshold = "50"
+		yellowThreshold = "80"
+		greenThreshold  = "100"
+	)
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			fmt.Sprintf("--value=%d", value),
+			fmt.Sprintf("--file=%s", coverageFile),
+			fmt.Sprintf("%s=red", redThreshold),
+			fmt.Sprintf("%s=orange", orangeThreshold),
+			fmt.Sprintf("%s=yellow", yellowThreshold),
+			fmt.Sprintf("%s=green", greenThreshold),
+		}).
+		File(coverageFile)
+}
+
+// Generate a pylint badge.
+func (m *Anybadge) Pylint(
+	// Pylint value
+	value float64,
+) *dagger.File {
+	const pylintFile = "pylint.svg"
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			fmt.Sprintf("--value=%.2f", value),
+			fmt.Sprintf("--file=%s", pylintFile),
+			"pylint"}).
+		File(pylintFile)
+}
+
+// Generate a general pipeline status badge.
+func (m *Anybadge) PipelineStatus(
+	// Pipeline is passing
+	passing bool,
+) *dagger.File {
+	const daggerFile = "dagger.svg"
+
+	value := "failing"
+	if passing {
+		value = "passing"
+	}
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			"--label=pipeline",
+			fmt.Sprintf("--value=%s", value),
+			fmt.Sprintf("--file=%s", daggerFile),
+			"passing=green",
+			"failing=red"}).
+		File(daggerFile)
+}
+
+// Generate a semantic version badge.
+func (m *Anybadge) Version(
+	// Semantic version, e.g. "1.2.3"
+	version string,
+	// Badge color
+	// +optional
+	// +default="dodgerblue"
+	color string,
+) *dagger.File {
+	const versionFile = "version.svg"
+
+	// since we have the "version" label, "v" is unnecessary
+	version = strings.TrimPrefix(version, "v")
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			"--label=version",
+			fmt.Sprintf("--value=%s", version),
+			fmt.Sprintf("--file=%s", versionFile),
+			fmt.Sprintf("--color=%s", color)}).
+		File(versionFile)
+}
+
+func (m *Anybadge) GoReport(ctx context.Context,
+	// source code
+	src *dagger.GitRef,
+	// goreport reference
+	// +optional
+	// +defaultPath="https://github.com/gojp/goreportcard.git"
+	goreportSrc *dagger.GitRef,
+) *dagger.File {
+	const (
+		srcDir           = "src"
+		goreportSrcDir   = "goreportSrc"
+		goreportExecName = "goreportcard-cli"
+		goreportFile     = "goreport.svg"
+	)
+
+	out, _ := dag.Go().
+		Container().
+		WithExec([]string{"apt", "install", "make"}).
+		WithDirectory(goreportSrcDir, goreportSrc.Tree()).
+		WithWorkdir(goreportSrcDir).
+		// use goreport's script for installing external, vendored, deps
+		WithExec([]string{"make", "install"}).
+		WithExec([]string{"go", "install", "./cmd/" + goreportExecName}).
+		WithDirectory("/"+srcDir, src.Tree()).
+		WithWorkdir("/" + srcDir).
+		WithExec([]string{goreportExecName}).
+		Stdout(ctx)
+
+	grade, value, _ := extractGradeAndValue(out)
+
+	var color string
+	switch {
+	case value >= 90:
+		color = "green"
+	case value >= 80:
+		color = "greenyellow"
+	case value >= 70:
+		color = "yellow"
+	case value >= 60:
+		color = "orange"
+	default:
+		color = "red"
+	}
+
+	return m.Container().
+		WithExec([]string{"anybadge",
+			"--label=goreport",
+			fmt.Sprintf("--value=%s", grade),
+			fmt.Sprintf("--file=%s", goreportFile),
+			fmt.Sprintf("--color=%s", color)}).
+		File(goreportFile)
+}
+
+// Container returns a python container with anybadge installed.
+func (m *Anybadge) Container() *dagger.Container {
+	return dag.Python().
 		Container().
 		WithExec([]string{"pip", "install", "anybadge"})
+}
 
-	args := make([]string, 0, len(thresholds)+3) // at a minimum we have "anybadge" + "--file" + thresholds + (label or value)
-	args = append(args, "anybadge")
-	args = append(args, fmt.Sprintf("--file=%s", badgeFile))
+func extractGradeAndValue(report string) (grade string, value float64, err error) {
+	// should be first line
+	for _, line := range strings.Split(report, "\n") {
+		if strings.HasPrefix(line, "Grade") {
+			// expected "Grade .......... A+ 100.0%"
+			fields := strings.Fields(line)
+			if len(fields) < 3 {
+				return "", 0, fmt.Errorf("unexpected grade line format: %s", line)
+			}
 
-	if label != "" {
-		args = append(args, fmt.Sprintf("--label=%s", label))
+			grade = fields[len(fields)-2]
+			percentStr := fields[len(fields)-1]
+
+			percentStr = strings.TrimSuffix(percentStr, "%")
+			value, err = strconv.ParseFloat(percentStr, 64)
+			if err != nil {
+				return "", 0, fmt.Errorf("invalid percentage value: %w", err)
+			}
+
+			return grade, value, nil
+		}
 	}
-
-	if value != "" {
-		args = append(args, fmt.Sprintf("--value=%s", value))
-	}
-
-	if valueFormat != "" {
-		args = append(args, fmt.Sprintf("--value-format=%s", valueFormat))
-	}
-
-	if color != "" {
-		args = append(args, fmt.Sprintf("--color=%s", color))
-	}
-
-	if prefix != "" {
-		args = append(args, fmt.Sprintf("--prefix=%s", prefix))
-	}
-
-	if suffix != "" {
-		args = append(args, fmt.Sprintf("--suffix=%s", suffix))
-	}
-
-	if padding != "" {
-		args = append(args, fmt.Sprintf("--padding=%s", padding))
-	}
-
-	if labelPadding != "" {
-		args = append(args, fmt.Sprintf("--label-padding=%s", labelPadding))
-	}
-
-	if valuePadding != "" {
-		args = append(args, fmt.Sprintf("--value-padding=%s", valuePadding))
-	}
-
-	if font != "" {
-		args = append(args, fmt.Sprintf("--font=%s", font))
-	}
-
-	if fontSize > 0 {
-		args = append(args, fmt.Sprintf("--font-size=%d", fontSize))
-	}
-
-	if template != "" {
-		args = append(args, fmt.Sprintf("--template=%s", template))
-	}
-
-	if style != "" {
-		args = append(args, fmt.Sprintf("--style=%s", style))
-	}
-
-	if useMax {
-		args = append(args, "--use-max")
-	}
-
-	if textColor != "" {
-		args = append(args, fmt.Sprintf("--text-color=%s", textColor))
-	}
-
-	if semver {
-		args = append(args, "--semver")
-	}
-
-	if noEscapedLabel {
-		args = append(args, "--no-escape-label")
-	}
-
-	if noEscapedValue {
-		args = append(args, "--no-escape-value")
-	}
-
-	if len(thresholds) > 0 {
-		args = append(args, thresholds...)
-	}
-
-	return ctr.WithExec(args).File(badgeFile)
+	return "", 0, fmt.Errorf("grade line not found")
 }

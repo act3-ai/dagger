@@ -6,9 +6,19 @@
   },
   "dependencies": [
     {
+      "name": "go",
+      "source": "github.com/sagikazarmark/daggerverse/go@6133ad18e131b891d4723b8e25d69f5de077b472",
+      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
+    },
+    {
       "name": "python",
       "source": "github.com/sagikazarmark/daggerverse/python@6133ad18e131b891d4723b8e25d69f5de077b472",
       "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
+    },
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.19.8",
+      "pin": "1c8379708f82e0f1543fbc0a806b4b995793e55b"
     }
   ]
 }
