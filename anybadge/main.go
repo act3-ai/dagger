@@ -12,8 +12,6 @@ import (
 	"strings"
 )
 
-const badgeFile = "badge.svg"
-
 type Anybadge struct{}
 
 func New() *Anybadge {
@@ -106,6 +104,7 @@ func (m *Anybadge) Version(
 		File(versionFile)
 }
 
+// Generate a goreportcard badge. Does not rely on remote goreportcard server.
 func (m *Anybadge) GoReport(ctx context.Context,
 	// source code
 	src *dagger.GitRef,
@@ -159,6 +158,7 @@ func (m *Anybadge) GoReport(ctx context.Context,
 		File(goreportFile)
 }
 
+// Generate a license badge.
 func (m *Anybadge) License(
 	// License name, e.g. "MIT"
 	name string,
