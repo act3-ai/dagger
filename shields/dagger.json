@@ -1,0 +1,14 @@
+{
+  "name": "shields",
+  "engineVersion": "v0.19.8",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.19.8",
+      "pin": "1c8379708f82e0f1543fbc0a806b4b995793e55b"
+    }
+  ]
+}
