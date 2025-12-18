@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -39,8 +40,6 @@ func (m *Shields) Coverage(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	const coverageFile = "coverage.svg"
-
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
 	switch {
@@ -57,7 +56,7 @@ func (m *Shields) Coverage(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "coverage", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
-	return badge
+	return badge.WithName("coverage.svg")
 }
 
 // Generate a pylint badge.
@@ -71,8 +70,6 @@ func (m *Shields) Pylint(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	const coverageFile = "pylint.svg"
-
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
 	switch {
@@ -89,7 +86,7 @@ func (m *Shields) Pylint(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "pylint", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
-	return badge
+	return badge.WithName("pylint.svg")
 }
 
 // Generate a pipeline status badge.
@@ -103,8 +100,6 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	const coverageFile = "pipeline.svg"
-
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	status := "failing"
 	color := "red"
@@ -114,7 +109,7 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "pipeline", status, color, "", "", "", remoteService, sheildsService)
-	return badge
+	return badge.WithName("pipeline-status.svg")
 }
 
 // Generate a semantic version badge.
@@ -132,12 +127,108 @@ func (m *Shields) Version(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	const coverageFile = "version.svg"
-
 	version = strings.TrimPrefix(version, "v")
 
 	badge, _ := m.SendQuery(ctx, "version", version, color, "", "", "", remoteService, sheildsService)
-	return badge
+	return badge.WithName("version.svg")
+}
+
+// Generate a license badge.
+func (m *Shields) License(ctx context.Context,
+	// License name, e.g. "MIT"
+	name string,
+	// Badge color. Default is a dark gold.
+	// +optional
+	// +default="B8860B"
+	color string,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
+	badge, _ := m.SendQuery(ctx, "license", name, color, "", "", "", remoteService, sheildsService)
+	return badge.WithName("license.svg")
+}
+
+// Generate a goreportcard badge.
+func (m *Shields) GoReport(ctx context.Context,
+	// source code
+	src *dagger.GitRef,
+	// goreport reference
+	// +optional
+	// +defaultPath="https://github.com/gojp/goreportcard.git"
+	goreportSrc *dagger.GitRef,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
+	const (
+		srcDir           = "src"
+		goreportSrcDir   = "goreportSrc"
+		goreportExecName = "goreportcard-cli"
+	)
+
+	out, _ := dag.Go().
+		Container().
+		WithExec([]string{"apt", "install", "make"}).
+		WithDirectory(goreportSrcDir, goreportSrc.Tree()).
+		WithWorkdir(goreportSrcDir).
+		// use goreport's script for installing external, vendored, deps
+		WithExec([]string{"make", "install"}).
+		WithExec([]string{"go", "install", "./cmd/" + goreportExecName}).
+		WithDirectory("/"+srcDir, src.Tree()).
+		WithWorkdir("/" + srcDir).
+		WithExec([]string{goreportExecName}).
+		Stdout(ctx)
+
+	grade, value, _ := extractGradeAndPercent(out)
+
+	var color string
+	switch {
+	case value >= 90:
+		color = "brightgreen"
+	case value >= 80:
+		color = "green"
+	case value >= 70:
+		color = "yellow"
+	case value >= 60:
+		color = "orange"
+	default:
+		color = "red"
+	}
+
+	badge, _ := m.SendQuery(ctx, "goreport", grade, color, "", "", "", remoteService, sheildsService)
+	return badge.WithName("goreport.svg")
+}
+
+func extractGradeAndPercent(report string) (grade string, percent float64, err error) {
+	// should be first line
+	for _, line := range strings.Split(report, "\n") {
+		if strings.HasPrefix(line, "Grade") {
+			// expected "Grade .......... A+ 100.0%"
+			fields := strings.Fields(line)
+			if len(fields) < 3 {
+				return "", 0, fmt.Errorf("unexpected grade line format: %s", line)
+			}
+
+			grade = fields[len(fields)-2]
+
+			percentStr := fields[len(fields)-1]
+			percentStr = strings.TrimSuffix(percentStr, "%")
+			percent, err = strconv.ParseFloat(percentStr, 64)
+			if err != nil {
+				return "", 0, fmt.Errorf("invalid percentage value: %w", err)
+			}
+
+			return grade, percent, nil
+		}
+	}
+	return "", 0, fmt.Errorf("grade line not found")
 }
 
 // A utility for querying a Sheilds service.
