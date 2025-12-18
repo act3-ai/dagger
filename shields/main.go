@@ -76,7 +76,7 @@ func (m *Shields) Pylint(ctx context.Context,
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
 	switch {
-	case value >= 9.95:
+	case value >= 9.9:
 		color = "brightgreen"
 	case value >= 8.5:
 		color = "green"
@@ -114,6 +114,29 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "pipeline", status, color, "", "", "", remoteService, sheildsService)
+	return badge
+}
+
+// Generate a semantic version badge.
+func (m *Shields) Version(ctx context.Context,
+	// Semantic version, e.g. "1.2.3", cleans "v" prefix.
+	version string,
+	// Badge color
+	// +optional
+	// +default="blue"
+	color string,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
+	const coverageFile = "version.svg"
+
+	version = strings.TrimPrefix(version, "v")
+
+	badge, _ := m.SendQuery(ctx, "version", version, color, "", "", "", remoteService, sheildsService)
 	return badge
 }
 
