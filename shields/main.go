@@ -44,8 +44,10 @@ func (m *Shields) Coverage(ctx context.Context,
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
 	switch {
-	case value >= 80:
+	case value >= 85:
 		color = "brightgreen"
+	case value >= 80:
+		color = "green"
 	case value >= 70:
 		color = "yellow"
 	case value >= 50:
@@ -55,6 +57,38 @@ func (m *Shields) Coverage(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "coverage", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	return badge
+}
+
+// Generate a pylint badge.
+func (m *Shields) Pylint(ctx context.Context,
+	// Pylint score value
+	value float64,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
+	const coverageFile = "coverage.svg"
+
+	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
+	var color string
+	switch {
+	case value >= 9.5:
+		color = "brightgreen"
+	case value >= 8.5:
+		color = "green"
+	case value >= 7.0:
+		color = "yellow"
+	case value >= 5.0:
+		color = "orange"
+	default:
+		color = "red"
+	}
+
+	badge, _ := m.SendQuery(ctx, "pylint", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
 	return badge
 }
 
