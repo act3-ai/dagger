@@ -12,17 +12,17 @@ Each module can be used independently and is versioned separately.
 
 |Module|Version|Description|
 |------|-------|-----------|
-|**Data-Tool**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdata-tool%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|General tooling for data workflows|
-|**Docker**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdocker%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Builds, tags, and publishes container images|
-|**Git-Cliff**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgit-cliff%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Changelog and version generation using Git-Cliff|
-|**GoCoverage**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgocoverage%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Go coverage tooling and reporting|
-|**GoReleaser**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgoreleaser%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Helpers for GoReleaser automation|
-|**GoVulnCheck**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgovulncheck%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Scan Go dependencies for vulnerabilities|
-|**MarkdownLint**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fmarkdownlint%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Lint Markdown files|
-|**Python**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fpython%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Python tooling workflows|
-|**Release**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frelease%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Release automation and versioning|
-|**Renovate**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frenovate%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Run Renovate in Dagger|
-|**YAMLLint**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fyamllint%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Lint YAML files|
+|**datatool**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdata-tool%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|General tooling for data workflows|
+|**docker**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdocker%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Builds, tags, and publishes container images|
+|**git-cliff**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgit-cliff%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Changelog and version generation using Git-Cliff|
+|**gocoverage**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgocoverage%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Go coverage tooling and reporting|
+|**goreleaser**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgoreleaser%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Helpers for GoReleaser automation|
+|**govulncheck**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgovulncheck%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Scan Go dependencies for vulnerabilities|
+|**markdownlint**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fmarkdownlint%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Lint Markdown files|
+|**python**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fpython%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Python tooling workflows|
+|**release**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frelease%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Release automation and versioning|
+|**renovate**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frenovate%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Run Renovate in Dagger|
+|**yamllint**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fyamllint%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Lint YAML files|
 
 ---
 
