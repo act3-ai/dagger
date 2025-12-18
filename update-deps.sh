@@ -89,7 +89,7 @@ function upgrade_dagger_engine_all() {
 #find any act3 module updates and update release module with latest
 function upgrade_act3_module_deps() {
 
-  dagger -m github.com/act3-ai/dagger/renovate call \
+  dagger -m ./renovate call \
     --platform=github \
     --endpoint-url=https://api.github.com \
     --project=act3-ai/dagger \
@@ -97,7 +97,6 @@ function upgrade_act3_module_deps() {
     --email="$GITHUB_EMAIL" \
     --token=env:GITHUB_TOKEN \
     --git-private-key=env:GITHUB_PRIVATE_KEY \
-    --enabled-managers="custom.regex" \
     update
 
 }
