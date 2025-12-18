@@ -11,6 +11,7 @@ type Mypy struct {
 	// +private
 	Python *Python
 }
+
 type MypyResults struct {
 	// returns results of mypy check as a file
 	Results *dagger.File
