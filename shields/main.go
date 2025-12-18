@@ -114,7 +114,11 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 
 // Generate a semantic version badge.
 func (m *Shields) Version(ctx context.Context,
-	// Semantic version, e.g. "1.2.3", cleans "v" prefix.
+	// Badge Label
+	// +optional
+	// +default="version"
+	label string,
+	// Semantic version, e.g. "v1.2.3"
 	version string,
 	// Badge color
 	// +optional
@@ -127,8 +131,6 @@ func (m *Shields) Version(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	version = strings.TrimPrefix(version, "v")
-
 	badge, _ := m.SendQuery(ctx, "version", version, color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("version.svg")
 }
