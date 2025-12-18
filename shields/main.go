@@ -1,17 +1,12 @@
-// A generated module for Shields functions
+// A module for creating badges using badges/sheilds.
 //
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
+// Provides utilities for building common badges used in READMEs, e.g. code coverage, license, etc. Capable of using a Sheilds image as a dagger service or the publicly available img.shields.io.
 //
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
+// Public img.shields.io example:
 //
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
-
+//	dagger call send-query --label="example" --value="foo" --color="brightgreen" --remote-service="https://img.shields.io" export --path badge.svg
+//
+// See https://github.com/badges/shields.
 package main
 
 import (
@@ -25,22 +20,25 @@ import (
 
 const (
 	// Can also use docker, but we choose ghcr to avoid docker rate limits.
-	// shieldsio/shields:next
+	// Docker image: shieldsio/shields:next
 	shieldsCtr    = "ghcr.io/badges/shields:next"
-	shieldsPort   = 80
+	shieldsPort   = 80 // not 8080, contrary to some documentation, refer to their Dockerfile
 	shieldsScheme = "http"
 )
 
-type Shields struct {
-	// shields as a service
-	// +private
-	svc *dagger.Service
-}
+type Shields struct{}
 
+// Generate a code coverage badge.
 func (m *Shields) Coverage(ctx context.Context,
 	// Code coverage percentage value
 	value float64,
-) (*dagger.File, error) {
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
 	const coverageFile = "coverage.svg"
 
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
@@ -56,42 +54,71 @@ func (m *Shields) Coverage(ctx context.Context,
 		color = "red"
 	}
 
-	svc := m.AsService()
-	svc, err := svc.Start(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("starting shields as a service: %w", err)
-	}
-	endpoint, err := svc.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: shieldsPort, Scheme: shieldsScheme})
-	if err != nil {
-		return nil, fmt.Errorf("getting service endpoint: %w", err)
-	}
-
-	queryURL, err := staticQuery(endpoint, "coverage", fmt.Sprintf("%.1f", value), color, "", "")
-	if err != nil {
-		return nil, fmt.Errorf("building code coverage badge query: %w", err)
-	}
-
-	return dag.Wolfi().
-		Container(dagger.WolfiContainerOpts{Packages: []string{"curl"}}).
-		WithServiceBinding("shields", svc).
-		WithExec([]string{"curl", "-fsSL", queryURL, "-o", coverageFile}).
-		File(coverageFile), nil
-
+	badge, _ := m.SendQuery(ctx, "coverage", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	return badge
 }
 
-// An optimization to persist the shields service when generating multiple badges.
+// A utility for querying a Sheilds service.
+func (m *Shields) SendQuery(ctx context.Context,
+	// Badge label.
+	// +optional
+	label string,
+	// Badge value.
+	value string,
+	// Badge color. Hex, rgb, rgba, hsl, hsla and css colors.
+	color string,
+	// Badge logo.
+	// +optional
+	logo string,
+	// Logo color. Hex, rgb, rgba, hsl, hsla and css colors.
+	// +optional
+	logoColor string,
+	// Badge style.
+	// +optional
+	style string,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
+	// +optional
+	sheildsService *dagger.Service,
+) (*dagger.File, error) {
+	switch {
+	case sheildsService == nil && remoteService != "":
+		// query remote
+		queryURL, err := staticQuery(remoteService, label, value, color, logo, logoColor, style)
+		if err != nil {
+			return nil, fmt.Errorf("building query: %w", err)
+		}
+
+		return dag.HTTP(queryURL), nil
+	case sheildsService == nil:
+		sheildsService = m.AsService()
+		fallthrough
+	default:
+		const badgeFileName = "badge.svg"
+
+		endpoint, err := sheildsService.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: shieldsPort, Scheme: shieldsScheme})
+		if err != nil {
+			return nil, fmt.Errorf("resolving dagger sheilds service endpoint: %w", err)
+		}
+		queryURL, err := staticQuery(endpoint, label, value, color, logo, logoColor, style)
+		if err != nil {
+			return nil, fmt.Errorf("building query: %w", err)
+		}
+
+		return dag.Wolfi().
+			Container(dagger.WolfiContainerOpts{Packages: []string{"curl"}}).
+			WithServiceBinding("shields", sheildsService).
+			WithExec([]string{"curl", "-fsSL", queryURL, "-o", badgeFileName}).
+			File(badgeFileName), nil
+	}
+}
+
+// Shields container as a service. An optimization to persist the shields service when generating multiple badges.
 //
 // Caller must use [Shields.AsService].Start and [Shields.AsService].Stop to take
 // advantage of optimization.
-func (m *Shields) WithService(
-	// Shields as a dagger service
-	svc *dagger.Service,
-) *Shields {
-	m.svc = svc
-	return m
-}
-
-// Shields container as a service.
 func (m *Shields) AsService() *dagger.Service {
 	return dag.Container().
 		From(shieldsCtr).
@@ -99,11 +126,11 @@ func (m *Shields) AsService() *dagger.Service {
 		AsService()
 }
 
-// staticQuery builds a full URL to query a shields service. label, logo, and style are optional.
+// staticQuery builds a full URL to query a shields service. Label, logo, and style are optional.
 //
 // Shields static badge format:
-// https://<host>/badge/<label>-<message>-<color>
-func staticQuery(endpoint string, label, value, color, logo, style string) (string, error) {
+// http://<host>/badge/<label>-<message>-<color>?logo=<logo>&style=<style>
+func staticQuery(endpoint string, label, value, color, logo, logoColor, style string) (string, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("parsing endpoint: %w", err)
@@ -129,9 +156,13 @@ func staticQuery(endpoint string, label, value, color, logo, style string) (stri
 	if logo != "" {
 		q.Set("logo", logo)
 	}
+	if logoColor != "" {
+		q.Set("logoColor", logo)
+	}
 	if style != "" {
 		q.Set("style", style)
 	}
+
 	u.RawQuery = q.Encode()
 
 	return u.String(), nil
@@ -140,11 +171,10 @@ func staticQuery(endpoint string, label, value, color, logo, style string) (stri
 
 var (
 	underscoreRegex = regexp.MustCompile(`_`)
-	spaceRegex      = regexp.MustCompile(`\s+`)
 	dashRegex       = regexp.MustCompile(`-`)
 )
 
-// formatString formats an input string as a query.
+// formatString formats an partial path string as a query.
 //
 // See https://shields.io/badges.
 func formatString(s string) string {
