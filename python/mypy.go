@@ -19,7 +19,7 @@ type MypyResults struct {
 	ExitCode int
 }
 
-// Runs mypy on a given source directory. Returns a results file and an exit-code.
+// Runs mypy on a given source directory.
 func (p *Python) Mypy(ctx context.Context,
 	// +optional
 	outputFormat string) (*MypyResults, error) {

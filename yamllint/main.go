@@ -86,8 +86,6 @@ func New(ctx context.Context,
 }
 
 // Runs 'yamllint' with all previously provided 'with' options.
-//
-// May be used as a "catch-all" in case functions are not implemented via extraArgs.
 func (y *Yamllint) Lint(ctx context.Context,
 	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
 	// +optional
