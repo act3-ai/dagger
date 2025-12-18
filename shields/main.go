@@ -55,7 +55,7 @@ func (m *Shields) Coverage(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "coverage", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "coverage", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("coverage.svg")
 }
 
@@ -85,7 +85,7 @@ func (m *Shields) Pylint(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pylint", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "pylint", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("pylint.svg")
 }
 
@@ -108,7 +108,7 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 		color = "brightgreen"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pipeline", status, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "pipeline", "", status, color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("pipeline-status.svg")
 }
 
@@ -131,7 +131,7 @@ func (m *Shields) Version(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, "version", version, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "version", "", version, color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("version.svg")
 }
 
@@ -150,7 +150,7 @@ func (m *Shields) License(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, "license", name, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "license", "", name, color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("license.svg")
 }
 
@@ -204,7 +204,7 @@ func (m *Shields) GoReport(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "goreport", grade, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "goreport", "", grade, color, "", "", "", remoteService, sheildsService)
 	return badge.WithName("goreport.svg")
 }
 
@@ -238,10 +238,13 @@ func (m *Shields) SendQuery(ctx context.Context,
 	// Badge label.
 	// +optional
 	label string,
+	// Badge label color.
+	// +optional
+	labelColor string,
 	// Badge value.
 	value string,
-	// Badge color. Hex, rgb, rgba, hsl, hsla and css colors.
-	color string,
+	// Badge value color. Hex, rgb, rgba, hsl, hsla and css colors.
+	valueColor string,
 	// Badge logo.
 	// +optional
 	logo string,
@@ -261,7 +264,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 	switch {
 	case sheildsService == nil && remoteService != "":
 		// query remote
-		queryURL, err := staticQuery(remoteService, label, value, color, logo, logoColor, style)
+		queryURL, err := staticQuery(remoteService, label, labelColor, value, valueColor, logo, logoColor, style)
 		if err != nil {
 			return nil, fmt.Errorf("building query: %w", err)
 		}
@@ -277,7 +280,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 		if err != nil {
 			return nil, fmt.Errorf("resolving dagger sheilds service endpoint: %w", err)
 		}
-		queryURL, err := staticQuery(endpoint, label, value, color, logo, logoColor, style)
+		queryURL, err := staticQuery(endpoint, label, labelColor, value, valueColor, logo, logoColor, style)
 		if err != nil {
 			return nil, fmt.Errorf("building query: %w", err)
 		}
@@ -305,7 +308,9 @@ func (m *Shields) AsService() *dagger.Service {
 //
 // Shields static badge format:
 // http://<host>/badge/<label>-<message>-<color>?logo=<logo>&style=<style>
-func staticQuery(endpoint string, label, value, color, logo, logoColor, style string) (string, error) {
+//
+// See https://shields.io/badges.
+func staticQuery(endpoint string, label, labelColor, value, valueColor, logo, logoColor, style string) (string, error) {
 	u, err := url.Parse(endpoint)
 	if err != nil {
 		return "", fmt.Errorf("parsing endpoint: %w", err)
@@ -322,12 +327,15 @@ func staticQuery(endpoint string, label, value, color, logo, logoColor, style st
 	path.WriteString("-")
 	path.WriteString(formatString(value))
 	path.WriteString("-")
-	path.WriteString(formatString(color))
+	path.WriteString(formatString(valueColor))
 
 	u.Path = strings.TrimRight(u.Path, "/") + path.String()
 
 	// Optional query parameters
 	q := u.Query()
+	if labelColor != "" {
+		q.Set("labelColor", labelColor)
+	}
 	if logo != "" {
 		q.Set("logo", logo)
 	}
