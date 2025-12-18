@@ -30,7 +30,7 @@ type Shields struct{}
 
 // Generate a code coverage badge.
 func (m *Shields) Coverage(ctx context.Context,
-	// Code coverage percentage value
+	// Code coverage percentage value.
 	value float64,
 	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
 	// +optional
@@ -62,7 +62,7 @@ func (m *Shields) Coverage(ctx context.Context,
 
 // Generate a pylint badge.
 func (m *Shields) Pylint(ctx context.Context,
-	// Pylint score value
+	// Pylint score value.
 	value float64,
 	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
 	// +optional
@@ -71,12 +71,12 @@ func (m *Shields) Pylint(ctx context.Context,
 	// +optional
 	sheildsService *dagger.Service,
 ) *dagger.File {
-	const coverageFile = "coverage.svg"
+	const coverageFile = "pylint.svg"
 
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
 	switch {
-	case value >= 9.5:
+	case value >= 9.95:
 		color = "brightgreen"
 	case value >= 8.5:
 		color = "green"
@@ -89,6 +89,31 @@ func (m *Shields) Pylint(ctx context.Context,
 	}
 
 	badge, _ := m.SendQuery(ctx, "pylint", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	return badge
+}
+
+// Generate a pipeline status badge.
+func (m *Shields) PipelineStatus(ctx context.Context,
+	// Pipeline passes.
+	passing bool,
+	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// +optional
+	remoteService string,
+	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// +optional
+	sheildsService *dagger.Service,
+) *dagger.File {
+	const coverageFile = "pipeline.svg"
+
+	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
+	status := "failing"
+	color := "red"
+	if passing {
+		status = "passing"
+		color = "brightgreen"
+	}
+
+	badge, _ := m.SendQuery(ctx, "pipeline", status, color, "", "", "", remoteService, sheildsService)
 	return badge
 }
 
