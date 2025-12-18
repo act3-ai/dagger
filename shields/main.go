@@ -1,6 +1,6 @@
-// A module for creating badges using badges/sheilds.
+// A module for creating badges using badges/shields.
 //
-// Provides utilities for building common badges used in READMEs, e.g. code coverage, license, etc. Capable of using a Sheilds image as a dagger service or the publicly available img.shields.io.
+// Provides utilities for building common badges used in READMEs, e.g. code coverage, license, etc. Capable of using a Shields image as a dagger service or the publicly available img.shields.io.
 //
 // Public img.shields.io example:
 //
@@ -29,16 +29,20 @@ const (
 
 type Shields struct{}
 
+func New() *Shields {
+	return &Shields{}
+}
+
 // Generate a code coverage badge.
 func (m *Shields) Coverage(ctx context.Context,
 	// Code coverage percentage value.
 	value float64,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
@@ -55,7 +59,7 @@ func (m *Shields) Coverage(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "coverage", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "coverage", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("coverage.svg")
 }
 
@@ -63,12 +67,12 @@ func (m *Shields) Coverage(ctx context.Context,
 func (m *Shields) Pylint(ctx context.Context,
 	// Pylint score value.
 	value float64,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	var color string
@@ -85,7 +89,7 @@ func (m *Shields) Pylint(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pylint", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "pylint", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("pylint.svg")
 }
 
@@ -93,12 +97,12 @@ func (m *Shields) Pylint(ctx context.Context,
 func (m *Shields) PipelineStatus(ctx context.Context,
 	// Pipeline passes.
 	passing bool,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
 	// https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
 	status := "failing"
@@ -108,7 +112,7 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 		color = "brightgreen"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pipeline", "", status, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "pipeline", "", status, color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("pipeline-status.svg")
 }
 
@@ -124,14 +128,14 @@ func (m *Shields) Version(ctx context.Context,
 	// +optional
 	// +default="blue"
 	color string,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, "version", "", version, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, label, "", version, color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("version.svg")
 }
 
@@ -143,14 +147,14 @@ func (m *Shields) License(ctx context.Context,
 	// +optional
 	// +default="B8860B"
 	color string,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, "license", "", name, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "license", "", name, color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("license.svg")
 }
 
@@ -162,12 +166,12 @@ func (m *Shields) GoReport(ctx context.Context,
 	// +optional
 	// +defaultPath="https://github.com/gojp/goreportcard.git"
 	goreportSrc *dagger.GitRef,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service, a new one is made if not provided. An optimization.
+	// Shields as a dagger service, a new one is made if not provided. An optimization.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) *dagger.File {
 	const (
 		srcDir           = "src"
@@ -204,7 +208,7 @@ func (m *Shields) GoReport(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "goreport", "", grade, color, "", "", "", remoteService, sheildsService)
+	badge, _ := m.SendQuery(ctx, "goreport", "", grade, color, "", "", "", remoteService, shieldsService)
 	return badge.WithName("goreport.svg")
 }
 
@@ -233,7 +237,7 @@ func extractGradeAndPercent(report string) (grade string, percent float64, err e
 	return "", 0, fmt.Errorf("grade line not found")
 }
 
-// A utility for querying a Sheilds service.
+// A utility for querying a Shields service.
 func (m *Shields) SendQuery(ctx context.Context,
 	// Badge label.
 	// +optional
@@ -254,15 +258,15 @@ func (m *Shields) SendQuery(ctx context.Context,
 	// Badge style.
 	// +optional
 	style string,
-	// Remote Sheilds service, with scheme, host, and port. Ignored if a dagger sheildsService is provided.
+	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteService string,
-	// Sheilds as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
+	// Shields as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
 	// +optional
-	sheildsService *dagger.Service,
+	shieldsService *dagger.Service,
 ) (*dagger.File, error) {
 	switch {
-	case sheildsService == nil && remoteService != "":
+	case shieldsService == nil && remoteService != "":
 		// query remote
 		queryURL, err := staticQuery(remoteService, label, labelColor, value, valueColor, logo, logoColor, style)
 		if err != nil {
@@ -270,15 +274,15 @@ func (m *Shields) SendQuery(ctx context.Context,
 		}
 
 		return dag.HTTP(queryURL), nil
-	case sheildsService == nil:
-		sheildsService = m.AsService()
+	case shieldsService == nil:
+		shieldsService = m.AsService()
 		fallthrough
 	default:
 		const badgeFileName = "badge.svg"
 
-		endpoint, err := sheildsService.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: shieldsPort, Scheme: shieldsScheme})
+		endpoint, err := shieldsService.Endpoint(ctx, dagger.ServiceEndpointOpts{Port: shieldsPort, Scheme: shieldsScheme})
 		if err != nil {
-			return nil, fmt.Errorf("resolving dagger sheilds service endpoint: %w", err)
+			return nil, fmt.Errorf("resolving dagger shields service endpoint: %w", err)
 		}
 		queryURL, err := staticQuery(endpoint, label, labelColor, value, valueColor, logo, logoColor, style)
 		if err != nil {
@@ -287,7 +291,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 
 		return dag.Wolfi().
 			Container(dagger.WolfiContainerOpts{Packages: []string{"curl"}}).
-			WithServiceBinding("shields", sheildsService).
+			WithServiceBinding("shields", shieldsService).
 			WithExec([]string{"curl", "-fsSL", queryURL, "-o", badgeFileName}).
 			File(badgeFileName), nil
 	}
