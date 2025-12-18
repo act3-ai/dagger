@@ -59,10 +59,10 @@ type Secret struct {
 const globalExtends = `
 [
 	"config:recommended",
+	":dependencyDashboard",
 	":semanticCommitTypeAll(fix)",
 	":prHourlyLimitNone",
 	":prConcurrentLimit20",
-	":disableDependencyDashboard",
 	"customManagers:dockerfileVersions",
 	"customManagers:gitlabPipelineVersions",
 	"customManagers:helmChartYamlAppVersions"
