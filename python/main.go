@@ -15,7 +15,7 @@ import (
 const uvImageDefault = "ghcr.io/astral-sh/uv:debian"
 
 type Python struct {
-	// +private
+	// Base container (with cache mounts added)
 	Base *dagger.Container
 
 	// +private
