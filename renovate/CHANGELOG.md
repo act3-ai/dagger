@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.15] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- Enable dependencydashboard [5c8d4ed](https://github.com/act3-ai/dagger/commit/5c8d4ed0153eb21adbc591033249d9a24b8e3531) by @pspurlock
+
+
 ## [0.1.14] - 2025-12-16
 
 ### 🐛 Bug Fixes
