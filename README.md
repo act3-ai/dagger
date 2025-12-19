@@ -12,7 +12,7 @@ Each module can be used independently and is versioned separately.
 
 |Module|Version|Description|Documentation|
 |------|-------|-----------|-----------|
-|**datatool**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdata-tool%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|General tooling for data workflows|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/datatool)|
+|**datatool**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdata-tool%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|General tooling for data workflows|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/data-tool)|
 |**docker**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fdocker%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Builds, tags, and publishes container images|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/docker)|
 |**git-cliff**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgit-cliff%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Changelog and version generation using Git-Cliff|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/git-cliff)|
 |**gocoverage**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fgocoverage%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Go coverage tooling and reporting|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/gocoverage)|
