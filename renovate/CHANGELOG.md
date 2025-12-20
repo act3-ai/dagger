@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.16] - 2025-12-20
+
+### 🐛 Bug Fixes
+
+- Disable caching [d4d901b](https://github.com/act3-ai/dagger/commit/d4d901b10d0dab5185b740177d96fb19ba7cf263) by **Paul Spurlock**
+
+
 ## [0.1.15] - 2025-12-19
 
 ### 🐛 Bug Fixes
