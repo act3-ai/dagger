@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.8] - 2025-12-22
+
+### 🐛 Bug Fixes
+
+- Move optional args after required [61f4bce](https://github.com/act3-ai/dagger/commit/61f4bce4c277832409ab6fda132d05e111e5f942) by **Paul Spurlock**
+
+
 ## [0.3.7] - 2025-12-16
 
 ### 🐛 Bug Fixes
