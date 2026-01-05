@@ -59,10 +59,10 @@ type Secret struct {
 const globalExtends = `
 [
 	"config:recommended",
+	":dependencyDashboard",
 	":semanticCommitTypeAll(fix)",
 	":prHourlyLimitNone",
 	":prConcurrentLimit20",
-	":disableDependencyDashboard",
 	"customManagers:dockerfileVersions",
 	"customManagers:gitlabPipelineVersions",
 	"customManagers:helmChartYamlAppVersions"
@@ -72,6 +72,7 @@ const globalExtends = `
 //go:embed renovate-managers.json
 var customManagers string
 
+// +cache="never"
 func New(
 	// repo project slug
 	project string,
@@ -217,6 +218,7 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 	return dag.SetSecret("renovate-secrets", string(secretsJson)), nil
 }
 
+// +cache="never"
 // Run renovate to update dependencies on the remote repository
 func (m *Renovate) Update(ctx context.Context) (string, error) {
 

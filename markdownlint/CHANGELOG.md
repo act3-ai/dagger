@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- Descriptions [1ff427c](https://github.com/act3-ai/dagger/commit/1ff427cd5e4038f818c8db20217b9e8fe8c45e4a) by @pspurlock
+
+
 ## [0.2.1] - 2025-12-16
 
 ### 🐛 Bug Fixes

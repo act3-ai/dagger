@@ -18,7 +18,7 @@ type PylintResults struct {
 	ExitCode int
 }
 
-// Runs pylint on a given source directory. Returns a results file and an exit-code.
+// Runs pylint on a given source directory.
 func (p *Python) Pylint(ctx context.Context,
 	// +optional
 	// +default="text"

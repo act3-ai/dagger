@@ -33,29 +33,33 @@ func (p *Python) Pytest(ctx context.Context,
 	// +optional
 	// +default="test"
 	unitTestDir string,
+
+	// extra arguments to pytest, e.g., add "--cov-fail-under=80" to fail if coverage is below 80%
+	// +optional
+	extraArgs []string,
 ) (*PytestResults, error) {
+	args := []string{
+		"uv",
+		"run",
+		"--with=pytest",
+		"--with=pytest-cov",
+		"pytest",
+		unitTestDir,
+		"--cov=.",
+		"--cov-report",
+		"term",
+		"--cov-report",
+		"xml:/results.xml",
+		"--cov-report",
+		"html:/html/",
+		"--cov-report",
+		"json:/results.json",
+	}
+	args = append(args, extraArgs...)
 
 	ctr, err := p.Container().
-		WithExec(
-			[]string{
-				"uv",
-				"run",
-				"--with=pytest",
-				"--with=pytest-cov",
-				"pytest",
-				unitTestDir,
-				"--cov=.",
-				"--cov-report",
-				"term",
-				"--cov-report",
-				"xml:/results.xml",
-				"--cov-report",
-				"html:/html/",
-				"--cov-report",
-				"json:/results.json",
-				"--cov-fail-under=100",
-			}, dagger.ContainerWithExecOpts{
-				Expect: dagger.ReturnTypeAny}).Sync(ctx)
+		WithExec(args, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		Sync(ctx)
 	if err != nil {
 		// unexpected error
 		return nil, fmt.Errorf("running pytest: %w", err)

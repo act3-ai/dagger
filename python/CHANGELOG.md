@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.3] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- Descriptions [1ff427c](https://github.com/act3-ai/dagger/commit/1ff427cd5e4038f818c8db20217b9e8fe8c45e4a) by @pspurlock
+
+- Formatting [9ad4116](https://github.com/act3-ai/dagger/commit/9ad41168af663c43e98eee0923778cfe744cb7e5) by @pspurlock
+
+
+## [0.3.2] - 2025-12-19
+
+### 🐛 Bug Fixes
+
+- Expose the base container [71355f6](https://github.com/act3-ai/dagger/commit/71355f68426214ab0b2f7b1689d086945ce4b70e) by @ktarplee, Closes #89, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+- Remove "--cov-fail-under=100" [43be5c3](https://github.com/act3-ai/dagger/commit/43be5c383b04b8949458aa053c3e3ae38193619d) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+
 ## [0.3.1] - 2025-12-16
 
 ### 🐛 Bug Fixes

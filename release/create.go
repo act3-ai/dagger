@@ -53,10 +53,6 @@ func (r *Release) CreateGithub(ctx context.Context,
 
 // Create a release in a public or private GitLab instance.
 func (r *Release) CreateGitlab(ctx context.Context,
-	// GitLab host
-	// +optional
-	// +default="gitlab.com"
-	host string,
 	// GitLab repository, without host.
 	project string,
 	// GitLab personal access token
@@ -65,6 +61,10 @@ func (r *Release) CreateGitlab(ctx context.Context,
 	tag string,
 	// Release notes file
 	notes *dagger.File,
+	// GitLab host
+	// +optional
+	// +default="gitlab.com"
+	host string,
 	// Release title. Default: tag
 	// +optional
 	title string,

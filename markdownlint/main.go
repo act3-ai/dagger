@@ -95,7 +95,7 @@ func New(ctx context.Context,
 	}
 }
 
-// Runs markdownlint-cli2 against a given source directory. Returns a results file and an exit-code.
+// Runs markdownlint-cli2 against a given source directory.
 func (m *Markdownlint) Lint(ctx context.Context,
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional

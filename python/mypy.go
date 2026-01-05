@@ -11,6 +11,7 @@ type Mypy struct {
 	// +private
 	Python *Python
 }
+
 type MypyResults struct {
 	// returns results of mypy check as a file
 	Results *dagger.File
@@ -19,7 +20,7 @@ type MypyResults struct {
 	ExitCode int
 }
 
-// Runs mypy on a given source directory. Returns a results file and an exit-code.
+// Runs mypy on a given source directory.
 func (p *Python) Mypy(ctx context.Context,
 	// +optional
 	outputFormat string) (*MypyResults, error) {

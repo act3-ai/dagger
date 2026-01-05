@@ -19,6 +19,7 @@ type RuffLintResults struct {
 }
 
 type RuffFormatResults struct {
+	// +private
 	Changes *dagger.Changeset
 }
 
@@ -27,7 +28,7 @@ func (p *Python) Ruff() *Ruff {
 	return &Ruff{Python: p}
 }
 
-// Runs ruff check on a given source directory. Returns a results file and an exit-code.
+// Runs ruff check on a given source directory.
 func (r *Ruff) Lint(ctx context.Context,
 	// +optional
 	// +default="full"
