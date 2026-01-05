@@ -23,14 +23,6 @@ type Markdownlint struct {
 	disableDefaultGlobs bool
 }
 
-type MarkdownLintResults struct {
-	// returns results of markdownlint-cli2 as a file
-	Results *dagger.File
-	// returns exit code of markdownlint-cli2
-	// +private
-	ExitCode int
-}
-
 type MarkdownLintAutoFixResults struct {
 	// returns results of markdownlint autofix as a changeset
 	Changes *dagger.Changeset
@@ -95,12 +87,12 @@ func New(ctx context.Context,
 	}
 }
 
-// Runs markdownlint-cli2 against a given source directory.
-func (m *Markdownlint) Lint(ctx context.Context,
+// Runs markdownlint-cli2 against a given source directory. Returns a container that with fail with any errors.
+func (m *Markdownlint) Lint(
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
-) (*MarkdownLintResults, error) {
+) *dagger.Container {
 	cmd := m.Command
 	cmd = append(cmd, extraArgs...)
 
@@ -109,41 +101,34 @@ func (m *Markdownlint) Lint(ctx context.Context,
 		cmd = append(cmd, ".")
 	}
 
-	ctr, err := m.Base.WithExec(cmd, dagger.ContainerWithExecOpts{
-		Expect: dagger.ReturnTypeAny}).Sync(ctx)
+	ctr := m.Base.WithExec(cmd)
 
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running markdownlint-cli2: %w", err)
-	}
-	output, err := ctr.CombinedOutput(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("getting output: %w", err)
-	}
+	return ctr
 
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	return &MarkdownLintResults{
-		Results:  dag.File("markdownlint-results.txt", output),
-		ExitCode: exitCode,
-	}, nil
 }
 
-// Check for any errors running markdownlint-cli2
-func (ml *MarkdownLintResults) Check(ctx context.Context) error {
-	if ml.ExitCode == 0 {
-		return nil
+// Runs markdownlint-cli2 and returns results in a file.
+func (m *Markdownlint) Report(
+	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
+	// +optional
+	extraArgs []string,
+) *dagger.File {
+	cmd := m.Command
+	cmd = append(cmd, extraArgs...)
+
+	if !m.disableDefaultGlobs || len(extraArgs) <= 0 {
+		// match all markdown files, see "Dot-only glob" https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#command-line
+		cmd = append(cmd, ".")
 	}
-	results, err := ml.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
+
+	results := m.Base.WithExec(cmd,
+		dagger.ContainerWithExecOpts{
+			Expect:         dagger.ReturnTypeAny,
+			RedirectStdout: "markdownlint-results.txt"}).
+		File("markdownlint-results.txt")
+
+	return results
+
 }
 
 // AutoFix attempts to fix any linting errors reported by rules that emit fix information.

@@ -34,9 +34,9 @@ func (t *Tests) srcDir() *dagger.Directory {
 // +check
 // run markdownlint
 func (t *Tests) Lint(ctx context.Context,
-) error {
+) *dagger.Container {
 
-	return dag.Markdownlint(t.srcDir()).Lint().Check(ctx)
+	return dag.Markdownlint(t.srcDir()).Lint()
 
 }
 
