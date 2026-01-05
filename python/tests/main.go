@@ -16,7 +16,7 @@ func (t *Tests) srcDir() *dagger.Directory {
 	src := dag.CurrentModule().
 		Source().
 		Directory("testapp").
-		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.py"}})
+		Filter(dagger.DirectoryFilterOpts{Exclude: []string{""}})
 
 	return src
 }
@@ -51,37 +51,38 @@ func (t *Tests) Base(ctx context.Context) error {
 
 // +check
 // Run mypy, expect valid/no errors
-func (t *Tests) Mypy(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Mypy().Check(ctx)
+func (t *Tests) Mypy(ctx context.Context) *dagger.Container {
+	return dag.Python(t.srcDir()).Mypy().Lint()
 }
 
 // +check
 // Run pylint, expect valid/no errors
-func (t *Tests) Pylint(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Pylint().Check(ctx)
+func (t *Tests) Pylint(ctx context.Context) *dagger.Container {
+	return dag.Python(t.srcDir()).Pylint().Lint()
 }
 
 // +check
 // Run pyright, expect valid/no errors
-func (t *Tests) Pyright(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Pyright().Check(ctx)
+func (t *Tests) Pyright(ctx context.Context,
+) *dagger.Container {
+	return dag.Python(t.srcDir()).Pyright().Lint()
 
 }
 
 // +check
 // Run ruff lint, expect valid/no errors
-func (t *Tests) RuffLint(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Ruff().Lint().Check(ctx)
+func (t *Tests) RuffLint(ctx context.Context) *dagger.Container {
+	return dag.Python(t.srcDir()).Ruff().Lint()
 }
 
 // +check
 // Run ruff-format, expect valid/no errors
-func (t *Tests) RuffFormat(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Ruff().Format().Check(ctx)
+func (t *Tests) RuffFormat(ctx context.Context) *dagger.Container {
+	return dag.Python(t.srcDir()).Ruff().Format().Lint()
 }
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) Pytest(ctx context.Context) error {
-	return dag.Python(t.srcDir()).Pytest().Check(ctx)
+func (t *Tests) Pytest(ctx context.Context) *dagger.Container {
+	return dag.Python(t.srcDir()).Pytest().Test()
 }

@@ -1,8 +1,10 @@
 ---
 extends: default
-#ignores all errors in test.yaml
+# ignores all errors in test.yaml
 rules:
   empty-lines: disable
 
-ignore:
-  - "cfgs/**"
+ignore: |
+  cfgs/*
+  */cfgs/*
+  */*/cfgs/
