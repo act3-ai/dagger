@@ -55,6 +55,7 @@ prepare)
 
     echo "Upgrading dagger engine if needed.."
     upgrade_dagger_engine "$module"
+    upgrade_dagger_engine "$module/tests"
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     if confirm_continue approve; then
