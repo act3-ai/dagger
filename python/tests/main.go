@@ -16,7 +16,7 @@ func (t *Tests) srcDir() *dagger.Directory {
 	src := dag.CurrentModule().
 		Source().
 		Directory("testapp").
-		Filter(dagger.DirectoryFilterOpts{Exclude: []string{""}})
+		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.py"}})
 
 	return src
 }
@@ -77,8 +77,8 @@ func (t *Tests) RuffLint(ctx context.Context) *dagger.Container {
 
 // +check
 // Run ruff-format, expect valid/no errors
-func (t *Tests) RuffFormat(ctx context.Context) *dagger.Container {
-	return dag.Python(t.srcDir()).Ruff().Format().Lint()
+func (t *Tests) RuffFormat(ctx context.Context) error {
+	return dag.Python(t.srcDir()).Ruff().Format().Check(ctx)
 }
 
 // +check
