@@ -1,12 +1,12 @@
-// A module for creating badges using badges/shields.
+// A module for creating badges using badges/shields. See https://github.com/badges/shields.
 //
-// Provides utilities for building common badges used in READMEs, e.g. code coverage, license, etc. Capable of using a Shields image as a dagger service or the publicly available img.shields.io.
+// Provides utilities for building common badges used in READMEs, e.g. code coverage, license, etc. The primary, default, use case is starting a shields.io image as a local dagger service, with the option to utilizie the publicly available img.shields.io.
 //
-// Public img.shields.io example:
+// Most functions provide standard badge formats, such as 80% code coverage considered the "green" threshold.
 //
-//	dagger call send-query --label="example" --value="foo" --color="brightgreen" --remote-service="https://img.shields.io" export --path badge.svg
+// A general badge query is available if the base functions are insufficient:
 //
-// See https://github.com/badges/shields.
+//	dagger call send-query --label="example" --value="foo" --color="brightgreen" --remote-host= "https://img.shields.io" export --path badge.svg
 package main
 
 import (
@@ -23,8 +23,8 @@ const (
 	// Can also use docker, but we choose ghcr to avoid docker rate limits.
 	// Docker image: shieldsio/shields:next
 	shieldsCtr    = "ghcr.io/badges/shields:next"
-	shieldsPort   = 80 // not 8080, contrary to some documentation, refer to their Dockerfile
-	shieldsScheme = "http"
+	shieldsPort   = 80     // not 8080, contrary to some documentation, refer to their Dockerfile
+	shieldsScheme = "http" // local service scheme
 )
 
 type Shields struct{}
@@ -39,8 +39,8 @@ func (m *Shields) Coverage(ctx context.Context,
 	value float64,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -59,7 +59,7 @@ func (m *Shields) Coverage(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "coverage", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, "coverage", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("coverage.svg")
 }
 
@@ -69,8 +69,8 @@ func (m *Shields) Pylint(ctx context.Context,
 	value float64,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -89,7 +89,7 @@ func (m *Shields) Pylint(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pylint", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, "pylint", "", fmt.Sprintf("%.1f", value), color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("pylint.svg")
 }
 
@@ -99,8 +99,8 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 	passing bool,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -112,7 +112,7 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 		color = "brightgreen"
 	}
 
-	badge, _ := m.SendQuery(ctx, "pipeline", "", status, color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, "pipeline", "", status, color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("pipeline-status.svg")
 }
 
@@ -130,12 +130,12 @@ func (m *Shields) Version(ctx context.Context,
 	color string,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, label, "", version, color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, label, "", version, color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("version.svg")
 }
 
@@ -149,12 +149,12 @@ func (m *Shields) License(ctx context.Context,
 	color string,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
-	badge, _ := m.SendQuery(ctx, "license", "", name, color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, "license", "", name, color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("license.svg")
 }
 
@@ -168,8 +168,8 @@ func (m *Shields) GoReport(ctx context.Context,
 	goreportSrc *dagger.GitRef,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
-	// Shields as a dagger service, a new one is made if not provided. An optimization.
+	remoteHost string,
+	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -208,10 +208,12 @@ func (m *Shields) GoReport(ctx context.Context,
 		color = "red"
 	}
 
-	badge, _ := m.SendQuery(ctx, "goreport", "", grade, color, "", "", "", remoteService, shieldsService)
+	badge, _ := m.SendQuery(ctx, "goreport", "", grade, color, "", "", "", remoteHost, shieldsService)
 	return badge.WithName("goreport.svg")
 }
 
+// extractGradeAndPercent parses the output of goreportcard, returning the letter
+// grade and percentage value.
 func extractGradeAndPercent(report string) (grade string, percent float64, err error) {
 	// should be first line
 	for _, line := range strings.Split(report, "\n") {
@@ -258,17 +260,17 @@ func (m *Shields) SendQuery(ctx context.Context,
 	// Badge style.
 	// +optional
 	style string,
-	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
+	// Remotely hosted Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
-	remoteService string,
+	remoteHost string,
 	// Shields as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
 	// +optional
 	shieldsService *dagger.Service,
 ) (*dagger.File, error) {
 	switch {
-	case shieldsService == nil && remoteService != "":
+	case shieldsService == nil && remoteHost != "":
 		// query remote
-		queryURL, err := staticQuery(remoteService, label, labelColor, value, valueColor, logo, logoColor, style)
+		queryURL, err := staticQuery(remoteHost, label, labelColor, value, valueColor, logo, logoColor, style)
 		if err != nil {
 			return nil, fmt.Errorf("building query: %w", err)
 		}
@@ -297,7 +299,9 @@ func (m *Shields) SendQuery(ctx context.Context,
 	}
 }
 
-// Shields container as a service. An optimization to persist the shields service when generating multiple badges.
+// Shields container as a service. An optional optimization to persist the shields
+// service when generating multiple badges. A new one is created if not explicitly
+// provided an a remote host is not specified.
 //
 // Caller must use [Shields.AsService].Start and [Shields.AsService].Stop to take
 // advantage of optimization.
