@@ -23,60 +23,46 @@ type RuffFormatResults struct {
 	Changes *dagger.Changeset
 }
 
-// run ruff commands on a given source directory.
+// contains commands for running ruff on a Python project.
 func (p *Python) Ruff() *Ruff {
 	return &Ruff{Python: p}
 }
 
-// Runs ruff check on a given source directory.
-func (r *Ruff) Lint(ctx context.Context,
+// Runs ruff check and returns a container that will fail on any errors.
+func (r *Ruff) Lint(
 	// +optional
 	// +default="full"
 	outputFormat string,
-) (*RuffLintResults, error) {
+) *dagger.Container {
 	// Run ruff check with the provided output format
-	ctr, err := r.Python.Container().WithExec(
+	return r.Python.Container().WithExec(
 		[]string{
 			"uv",
 			"run",
 			"--with=ruff",
 			"ruff",
 			"check", ".",
-			"--output-format", outputFormat}, dagger.ContainerWithExecOpts{
-			RedirectStdout: "/rufflint-results.txt",
-			Expect:         dagger.ReturnTypeAny}).
-		Sync(ctx)
-
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running ruff-check: %w", err)
-	}
-
-	results := ctr.File("/rufflint-results.txt")
-
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	return &RuffLintResults{
-		Results:  results,
-		ExitCode: exitCode,
-	}, nil
+			"--output-format", outputFormat})
 
 }
 
-// Check for any errors running ruff lint
-func (rl *RuffLintResults) Check(ctx context.Context) error {
-	if rl.ExitCode == 0 {
-		return nil
-	}
-	results, err := rl.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
+// Runs ruff check and returns a results in a json file.
+func (r *Ruff) Report() *dagger.File {
+	// Run ruff check with the provided output format
+	return r.Python.Container().WithExec(
+		[]string{
+			"uv",
+			"run",
+			"--with=ruff",
+			"ruff",
+			"check", ".",
+			"--output-format",
+			"json",
+			"--output-file",
+			"ruff-results.json"},
+		dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		File("ruff-results.json")
+
 }
 
 // Runs ruff format against a given source directory.
