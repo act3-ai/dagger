@@ -40,7 +40,7 @@ func (m *Shields) Coverage(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -70,7 +70,7 @@ func (m *Shields) Pylint(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -100,7 +100,7 @@ func (m *Shields) PipelineStatus(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -131,7 +131,7 @@ func (m *Shields) Version(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -150,7 +150,7 @@ func (m *Shields) License(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -169,7 +169,7 @@ func (m *Shields) GoReport(ctx context.Context,
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
+	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	// +optional
 	shieldsService *dagger.Service,
 ) *dagger.File {
@@ -263,7 +263,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 	// Remotely hosted Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	// +optional
 	remoteHost string,
-	// Shields as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
+	// (default) Shields as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
 	// +optional
 	shieldsService *dagger.Service,
 ) (*dagger.File, error) {
