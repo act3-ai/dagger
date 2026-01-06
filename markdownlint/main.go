@@ -23,19 +23,6 @@ type Markdownlint struct {
 	disableDefaultGlobs bool
 }
 
-type MarkdownLintResults struct {
-	// returns results of markdownlint-cli2 as a file
-	Results *dagger.File
-	// returns exit code of markdownlint-cli2
-	// +private
-	ExitCode int
-}
-
-type MarkdownLintAutoFixResults struct {
-	// returns results of markdownlint autofix as a changeset
-	Changes *dagger.Changeset
-}
-
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
 	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
@@ -95,12 +82,12 @@ func New(ctx context.Context,
 	}
 }
 
-// Runs markdownlint-cli2 against a given source directory.
-func (m *Markdownlint) Lint(ctx context.Context,
+// Runs markdownlint-cli2 against a given source directory. Returns a container that with fail with any errors.
+func (m *Markdownlint) Lint(
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string,
-) (*MarkdownLintResults, error) {
+) *dagger.Container {
 	cmd := m.Command
 	cmd = append(cmd, extraArgs...)
 
@@ -109,51 +96,44 @@ func (m *Markdownlint) Lint(ctx context.Context,
 		cmd = append(cmd, ".")
 	}
 
-	ctr, err := m.Base.WithExec(cmd, dagger.ContainerWithExecOpts{
-		Expect: dagger.ReturnTypeAny}).Sync(ctx)
+	ctr := m.Base.WithExec(cmd)
 
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running markdownlint-cli2: %w", err)
-	}
-	output, err := ctr.CombinedOutput(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("getting output: %w", err)
-	}
+	return ctr
 
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	return &MarkdownLintResults{
-		Results:  dag.File("markdownlint-results.txt", output),
-		ExitCode: exitCode,
-	}, nil
 }
 
-// Check for any errors running markdownlint-cli2
-func (ml *MarkdownLintResults) Check(ctx context.Context) error {
-	if ml.ExitCode == 0 {
-		return nil
+// Runs markdownlint-cli2 and returns results in a file.
+func (m *Markdownlint) Report(
+	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
+	// +optional
+	extraArgs []string,
+) *dagger.File {
+	cmd := m.Command
+	cmd = append(cmd, extraArgs...)
+
+	if !m.disableDefaultGlobs || len(extraArgs) <= 0 {
+		// match all markdown files, see "Dot-only glob" https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#command-line
+		cmd = append(cmd, ".")
 	}
-	results, err := ml.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
+
+	results := m.Base.WithExec(cmd,
+		dagger.ContainerWithExecOpts{
+			Expect:         dagger.ReturnTypeAny,
+			RedirectStdout: "markdownlint-results.txt"}).
+		File("markdownlint-results.txt")
+
+	return results
+
 }
 
 // AutoFix attempts to fix any linting errors reported by rules that emit fix information.
 // Returns a Changeset that can be used to apply any changes made
 // to the host.
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) AutoFix(ctx context.Context,
+func (m *Markdownlint) AutoFix(
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
-	extraArgs []string) (*MarkdownLintAutoFixResults, error) {
+	extraArgs []string) *dagger.Changeset {
 	cmd := m.Command
 	cmd = append(cmd, "--fix")
 
@@ -161,41 +141,11 @@ func (m *Markdownlint) AutoFix(ctx context.Context,
 		// match all markdown files, see "Dot-only glob" https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#command-line
 		cmd = append(cmd, ".")
 	}
-	ctr, err := m.Base.WithUser("root").
+	ctr := m.Base.WithUser("root").
 		WithExec(cmd, dagger.ContainerWithExecOpts{
-			Expect: dagger.ReturnTypeAny}).Sync(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running markdownlint autofix: %w", err)
-	}
+			Expect: dagger.ReturnTypeAny})
 
 	afterChanges := ctr.Directory("/work/src").Filter(dagger.DirectoryFilterOpts{Exclude: []string{""}})
 
-	return &MarkdownLintAutoFixResults{
-		Changes: afterChanges.Changes(m.Base.Directory("/work/src")),
-	}, nil
-}
-
-// returns the results of markdownlint autofix as a changeset that can be applied to the host.
-func (mr *MarkdownLintAutoFixResults) Fix() (*dagger.Changeset, error) {
-	return mr.Changes, nil
-}
-
-// Returns an error if markdownlint autofix made any changes
-func (mr *MarkdownLintAutoFixResults) Check(ctx context.Context) error {
-	empty, err := mr.Changes.IsEmpty(ctx)
-	if err != nil {
-		return err
-	}
-
-	if empty {
-		return nil
-	}
-
-	diff, err := mr.Changes.AsPatch().Contents(ctx)
-	if err != nil {
-		return err
-	}
-
-	return fmt.Errorf("ruff format changes found:\n%s", diff)
+	return afterChanges.Changes(m.Base.Directory("/work/src"))
 }

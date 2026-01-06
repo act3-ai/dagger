@@ -34,14 +34,19 @@ func (t *Tests) srcDir() *dagger.Directory {
 // +check
 // run markdownlint
 func (t *Tests) Lint(ctx context.Context,
-) error {
+) *dagger.Container {
 
-	return dag.Markdownlint(t.srcDir()).Lint().Check(ctx)
+	return dag.Markdownlint(t.srcDir()).Lint()
 
 }
 
 // +check
 // Run markdownlint autofix
 func (t *Tests) AutoFix(ctx context.Context) error {
-	return dag.Markdownlint(t.srcDir()).AutoFix().Check(ctx)
+	empty, err := dag.Markdownlint(t.srcDir()).AutoFix().IsEmpty(ctx)
+
+	if !empty {
+		return err
+	}
+	return nil
 }

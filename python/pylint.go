@@ -1,31 +1,27 @@
 package main
 
 import (
-	"context"
 	"dagger/python/internal/dagger"
-	"fmt"
 )
 
 type Pylint struct {
 	// +private
 	Python *Python
 }
-type PylintResults struct {
-	// returns results of pylint as a file
-	Results *dagger.File
-	// returns exit code of pylint
-	// +private
-	ExitCode int
+
+// contains commands for running pylint on a Python project.
+func (p *Python) Pylint() *Pylint {
+	return &Pylint{Python: p}
 }
 
-// Runs pylint on a given source directory.
-func (p *Python) Pylint(ctx context.Context,
+// Runs pylint on a given source directory. Returns a container that will fail on any errors.
+func (pl *Pylint) Lint(
 	// +optional
 	// +default="text"
 	outputFormat string,
-) (*PylintResults, error) {
+) *dagger.Container {
 
-	ctr, err := p.Container().
+	ctr := pl.Python.Container().
 		WithExec(
 			[]string{
 				"uv",
@@ -35,46 +31,34 @@ func (p *Python) Pylint(ctx context.Context,
 				"--recursive=y",
 				"--persistent=n",
 				"--ignore-paths=.venv",
-				"--output-format", outputFormat,
-				// "--reports=y",
+				"--output-format",
+				outputFormat,
+				"."},
+		)
+	return ctr
+
+}
+
+// Runs pylint and returns results in a json file
+func (pl *Pylint) Report() *dagger.File {
+
+	return pl.Python.Container().
+		WithExec(
+			[]string{
+				"uv",
+				"run",
+				"--with=pylint",
+				"pylint",
+				"--recursive=y",
+				"--persistent=n",
+				"--ignore-paths=.venv",
+				"--output-format",
+				"json2",
+				"--output",
+				"pylint-results.json",
 				"."},
 			dagger.ContainerWithExecOpts{
 				Expect: dagger.ReturnTypeAny}).
-		Sync(ctx)
+		File("pylint-results.json")
 
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running pylint: %w", err)
-	}
-
-	output, err := ctr.CombinedOutput(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	return &PylintResults{
-		Results:  dag.File("pylint-results.txt", output),
-		ExitCode: exitCode,
-	}, nil
-}
-
-// Check for any errors running pylint
-func (pl *PylintResults) Check(ctx context.Context,
-) error {
-	if pl.ExitCode == 0 {
-		return nil
-	}
-
-	results, err := pl.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
 }

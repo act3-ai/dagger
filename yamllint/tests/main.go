@@ -38,11 +38,11 @@ func (t *Tests) DirectoryFilter(ctx context.Context) error {
 
 // +check
 // Config validates config mounting by mounting a yml file with errors and a config that ignores them
-func (t *Tests) Config(ctx context.Context) error {
+func (t *Tests) Config(ctx context.Context) *dagger.Container {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 
-	return dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).Lint().Check(ctx)
+	return dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).Lint()
 }
 
 // +check
@@ -51,8 +51,7 @@ func (t *Tests) Version(ctx context.Context) error {
 	version := "1.36.0"
 	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Version: version}).
 		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
-		Results().
-		Contents(ctx)
+		Stdout(ctx)
 	if err != nil {
 		return err
 	}
@@ -72,8 +71,7 @@ func (t *Tests) Base(ctx context.Context) error {
 
 	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Base: base}).
 		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
-		Results().
-		Contents(ctx)
+		Stdout(ctx)
 	if err != nil {
 		return err
 	}
@@ -85,12 +83,12 @@ func (t *Tests) Base(ctx context.Context) error {
 }
 
 // +check
-// OutputFormat tests the 'Format' option for 'Run'.
+// OutputFormat tests the 'Format' option for 'yamllint'.
 func (t *Tests) OutputFormat(ctx context.Context) error {
-	err := dag.Yamllint(t.srcDir()).
-		Lint(dagger.YamllintLintOpts{Format: "github"}).
-		Check(ctx)
-	if err != nil && strings.Contains(err.Error(), "::group::") {
+	out, err := dag.Yamllint(t.srcDir()).
+		Report(dagger.YamllintReportOpts{Format: "github"}).
+		Contents(ctx)
+	if err != nil && strings.Contains(out, "::group::") {
 		return nil
 	}
 	return err
@@ -116,15 +114,16 @@ func (t *Tests) WithStrict(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 	// expect err due to 'document-start' warning
-	err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
+	report := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
 		WithStrict().
-		Lint().
-		Check(ctx)
+		Report()
+
+	expectedErr, err := report.Contents(ctx)
 	switch {
-	case err == nil:
-		return fmt.Errorf("expected error on warnings, got nil error")
-	case !strings.Contains(err.Error(), "document-start"):
-		return fmt.Errorf("unexpected output, with no warnings test case not properly setup: output = %w", err)
+	case err != nil:
+		return fmt.Errorf("unexpected error: %w", err)
+	case !strings.Contains(expectedErr, "document-start"):
+		return fmt.Errorf("unexpected output, with no warnings test case not properly setup: output = %w", expectedErr)
 	default:
 		return nil
 	}
@@ -132,14 +131,13 @@ func (t *Tests) WithStrict(ctx context.Context) error {
 
 // +check
 // WithNoWarnings tests the 'WithNoWarnings' method.
-func (t *Tests) WithNoWarnings(ctx context.Context) error {
+func (t *Tests) WithNoWarnings(ctx context.Context) *dagger.Container {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 	// expect no err, despite a 'document-start' warning
 	return dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
 		WithNoWarnings().
-		Lint().
-		Check(ctx)
+		Lint()
 
 }
 

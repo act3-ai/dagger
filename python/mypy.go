@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"dagger/python/internal/dagger"
-	"fmt"
 )
 
 // run commands with mypy
@@ -12,18 +10,15 @@ type Mypy struct {
 	Python *Python
 }
 
-type MypyResults struct {
-	// returns results of mypy check as a file
-	Results *dagger.File
-	// returns exit code of mypy check
-	// +private
-	ExitCode int
+// contains commands for running mypy on a Python project.
+func (p *Python) Mypy() *Mypy {
+	return &Mypy{Python: p}
 }
 
-// Runs mypy on a given source directory.
-func (p *Python) Mypy(ctx context.Context,
+// Runs mypy on a given source directory. Returns a container that will fail on any errors.
+func (m *Mypy) Lint(
 	// +optional
-	outputFormat string) (*MypyResults, error) {
+	outputFormat string) *dagger.Container {
 	args := []string{
 		"uv",
 		"run",
@@ -39,40 +34,25 @@ func (p *Python) Mypy(ctx context.Context,
 	// Add path
 	args = append(args, ".")
 
-	ctr, err := p.Container().
-		WithExec(args, dagger.ContainerWithExecOpts{
-			Expect: dagger.ReturnTypeAny}).Sync(ctx)
+	return m.Python.Container().
+		WithExec(args)
 
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running mypy: %w", err)
-	}
-
-	output, err := ctr.CombinedOutput(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("getting results: %w", err)
-	}
-
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("getting exit code: %w", err)
-	}
-	return &MypyResults{
-		Results:  dag.File("mypy-results.txt", output),
-		ExitCode: exitCode,
-	}, nil
 }
 
-// Check for any errors running mypy
-func (mr *MypyResults) Check(ctx context.Context) error {
-	if mr.ExitCode == 0 {
-		return nil
-	}
-	results, err := mr.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
+// Runs mypy and returns results in a json file.
+func (m *Mypy) Report() *dagger.File {
+
+	return m.Python.Container().
+		WithExec([]string{
+			"uv",
+			"run",
+			"--with=mypy",
+			"mypy",
+			"--output",
+			"json"},
+			dagger.ContainerWithExecOpts{
+				Expect:         dagger.ReturnTypeAny,
+				RedirectStdout: "mypy-results.json"}).
+		File("mypy-results.json")
+
 }

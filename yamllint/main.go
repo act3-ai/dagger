@@ -22,14 +22,6 @@ type Yamllint struct {
 	Command []string
 }
 
-type YamllintResults struct {
-	// returns results of yamllint as a file
-	Results *dagger.File
-	// returns exit code of yamllint
-	// +private
-	ExitCode int
-}
-
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
 	// +ignore=["**", "!**/*.yaml", "!**/*.yml", "!**/.yamllint*", "!**/.yamlignore*", "!**/.gitignore"]
@@ -85,8 +77,8 @@ func New(ctx context.Context,
 	}
 }
 
-// Runs 'yamllint' with all previously provided 'with' options.
-func (y *Yamllint) Lint(ctx context.Context,
+// Runs yamllint with all previously provided 'with' options. Returns a container that will fail on any error.
+func (y *Yamllint) Lint(
 	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
 	// +optional
 	// +default="auto"
@@ -95,49 +87,38 @@ func (y *Yamllint) Lint(ctx context.Context,
 	// Additional arguments to pass to yamllint, without 'yamllint' itself.
 	// +optional
 	extraArgs []string,
-) (*YamllintResults, error) {
+) *dagger.Container {
 	cmd := y.Command
 	cmd = append(cmd, extraArgs...)
 	cmd = append(cmd, "--format", format, ".")
 
-	ctr, err := y.Base.
-		WithExec(cmd, dagger.ContainerWithExecOpts{
-			Expect: dagger.ReturnTypeAny}).Sync(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running yamllint: %w", err)
-	}
-
-	output, err := ctr.CombinedOutput(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("getting results: %w", err)
-	}
-
-	exitCode, err := ctr.ExitCode(ctx)
-	if err != nil {
-		// exit code not found
-		return nil, fmt.Errorf("get exit code: %w", err)
-	}
-
-	return &YamllintResults{
-		Results:  dag.File("yamllint-results.txt", output),
-		ExitCode: exitCode,
-	}, nil
+	return y.Base.
+		WithExec(cmd)
 
 }
 
-// Check for any errors running yamllint
-func (yr *YamllintResults) Check(ctx context.Context,
-) error {
-	if yr.ExitCode == 0 {
-		return nil
-	}
-	results, err := yr.Results.Contents(ctx)
-	if err != nil {
-		return err
-	}
-	return fmt.Errorf("%s", results)
+// Runs 'yamllint' with all previously provided 'with' options and returns a report file.
+func (y *Yamllint) Report(
+	// Output format. Supported values: 'parsable',' standard', 'colored', 'github', or 'auto'.
+	// +optional
+	// +default="auto"
+	format string,
+
+	// Additional arguments to pass to yamllint, without 'yamllint' itself.
+	// +optional
+	extraArgs []string,
+) *dagger.File {
+	cmd := y.Command
+	cmd = append(cmd, extraArgs...)
+	cmd = append(cmd, "--format", format, ".")
+
+	ctr := y.Base.
+		WithExec(cmd, dagger.ContainerWithExecOpts{
+			Expect:         dagger.ReturnTypeAny,
+			RedirectStdout: "yamllint-results.txt"})
+
+	return ctr.File("yamllint-results.txt")
+
 }
 
 // List YAML files that can be linted.
