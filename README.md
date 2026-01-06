@@ -22,6 +22,7 @@ Each module can be used independently and is versioned separately.
 |**python**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fpython%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Python tooling workflows|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/python)|
 |**release**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frelease%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Release automation and versioning|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/release)|
 |**renovate**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Frenovate%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Run Renovate in Dagger|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/renovate)|
+|**shields**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fshields%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Run Sheilds in Dagger|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/shields)|
 |**yamllint**|![v](https://img.shields.io/badge/dynamic/regex?url=https%3A%2F%2Fraw.githubusercontent.com%2Fact3-ai%2Fdagger%2Fmain%2Fyamllint%2FVERSION&search=^(\d%2B\.\d%2B\.\d%2B)\s*%24&label=)|Lint YAML files|[daggerverse](https://daggerverse.dev/mod/github.com/act3-ai/dagger/yamllint)|
 
 ---
