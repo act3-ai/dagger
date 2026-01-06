@@ -12,3 +12,4 @@ assignees: ''
 - [ ] Implement module
 - [ ] Add `tests` subdirectory to module dir, refer to [dagger testing docs](https://docs.dagger.io/reference/best-practices/modules/#module-tests)
 - [ ] Copy and existing cliff.toml to module directory, update regex at bottom of file to reflect module name, refer to [example](https://github.com/act3-ai/dagger/blob/main/release/cliff.toml#L118)
+- [ ] Add module to README.md
