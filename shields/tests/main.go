@@ -154,7 +154,6 @@ func (t *Tests) Version(ctx context.Context) error {
 		opts := dagger.ShieldsVersionOpts{
 			Label: t.label,
 			Color: strings.TrimPrefix(t.color, "#"),
-			// ShieldsService: shieldsService,
 		}
 		svgRaw, err := dag.Shields().Version(t.version, opts).Contents(ctx)
 		if err != nil {
@@ -205,7 +204,6 @@ func (t *Tests) License(ctx context.Context) error {
 	for _, t := range tests {
 		opts := dagger.ShieldsLicenseOpts{
 			Color: strings.TrimPrefix(t.color, "#"),
-			// ShieldsService: shieldsService,
 		}
 		svgRaw, err := dag.Shields().License(t.name, opts).Contents(ctx)
 		if err != nil {
