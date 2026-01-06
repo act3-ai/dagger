@@ -1,16 +1,4 @@
-// A generated module for Tests functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// A test module for the shields parent module.
 
 package main
 
@@ -38,16 +26,8 @@ func (t *Tests) Coverage(ctx context.Context) error {
 		{10.091, "#e05d44"}, // red
 	}
 
-	shieldsService := dag.Shields().AsService()
-	shieldsService, err := shieldsService.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("starting shields service: %w", err)
-	}
-	defer shieldsService.Stop(ctx)
-
-	opts := dagger.ShieldsCoverageOpts{ShieldsService: shieldsService}
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().Coverage(t.value, opts).Contents(ctx)
+		svgRaw, err := dag.Shields().Coverage(t.value).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -86,16 +66,8 @@ func (t *Tests) Pylint(ctx context.Context) error {
 		{3.2, "#e05d44"},   // red
 	}
 
-	shieldsService := dag.Shields().AsService()
-	shieldsService, err := shieldsService.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("starting shields service: %w", err)
-	}
-	defer shieldsService.Stop(ctx)
-
-	opts := dagger.ShieldsPylintOpts{ShieldsService: shieldsService}
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().Pylint(t.value, opts).Contents(ctx)
+		svgRaw, err := dag.Shields().Pylint(t.value).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -131,16 +103,8 @@ func (t *Tests) PipelineStatus(ctx context.Context) error {
 		{false, "#e05d44"}, // red
 	}
 
-	shieldsService := dag.Shields().AsService()
-	shieldsService, err := shieldsService.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("starting shields service: %w", err)
-	}
-	defer shieldsService.Stop(ctx)
-
-	opts := dagger.ShieldsPipelineStatusOpts{ShieldsService: shieldsService}
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().PipelineStatus(t.passing, opts).Contents(ctx)
+		svgRaw, err := dag.Shields().PipelineStatus(t.passing).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -186,18 +150,11 @@ func (t *Tests) Version(ctx context.Context) error {
 		{"bar", "v1.2.3", "#4c1"}, // custom label, custom color (brightgreen)
 	}
 
-	shieldsService := dag.Shields().AsService()
-	shieldsService, err := shieldsService.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("starting shields service: %w", err)
-	}
-	defer shieldsService.Stop(ctx)
-
 	for _, t := range tests {
 		opts := dagger.ShieldsVersionOpts{
-			Label:          t.label,
-			Color:          strings.TrimPrefix(t.color, "#"),
-			ShieldsService: shieldsService,
+			Label: t.label,
+			Color: strings.TrimPrefix(t.color, "#"),
+			// ShieldsService: shieldsService,
 		}
 		svgRaw, err := dag.Shields().Version(t.version, opts).Contents(ctx)
 		if err != nil {
@@ -245,17 +202,10 @@ func (t *Tests) License(ctx context.Context) error {
 		{"foo", "#4c1"}, // custom color
 	}
 
-	shieldsService := dag.Shields().AsService()
-	shieldsService, err := shieldsService.Start(ctx)
-	if err != nil {
-		return fmt.Errorf("starting shields service: %w", err)
-	}
-	defer shieldsService.Stop(ctx)
-
 	for _, t := range tests {
 		opts := dagger.ShieldsLicenseOpts{
-			Color:          strings.TrimPrefix(t.color, "#"),
-			ShieldsService: shieldsService,
+			Color: strings.TrimPrefix(t.color, "#"),
+			// ShieldsService: shieldsService,
 		}
 		svgRaw, err := dag.Shields().License(t.name, opts).Contents(ctx)
 		if err != nil {

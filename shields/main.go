@@ -22,9 +22,9 @@ import (
 const (
 	// Can also use docker, but we choose ghcr to avoid docker rate limits.
 	// Docker image: shieldsio/shields:next
-	shieldsCtr    = "ghcr.io/badges/shields:next"
-	shieldsPort   = 80     // not 8080, contrary to some documentation, refer to their Dockerfile
-	shieldsScheme = "http" // local service scheme
+	shieldsCtr    = "ghcr.io/badges/shields:next" // latest snapshot on main
+	shieldsPort   = 80                            // not 8080, contrary to some documentation, refer to their Dockerfile
+	shieldsScheme = "http"                        // local service scheme
 )
 
 type Shields struct{}
