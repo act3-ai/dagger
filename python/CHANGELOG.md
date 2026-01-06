@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Tests [a13d249](https://github.com/act3-ai/dagger/commit/a13d24979968d5502c03b6321bc98039da4f1877) by @pspurlock
+
+
+### 🚜 Refactor
+
+- Mypy check renamed lint and now returns a container  instead of err, report returns a json file [e7cfdbd](https://github.com/act3-ai/dagger/commit/e7cfdbdc077e18c9dae45a98991673b46ccc1163) by @pspurlock
+
+- Pylint check renamed lint and now returns a container  instead of err, report returns a json file [38d2dc5](https://github.com/act3-ai/dagger/commit/38d2dc54e2653fcd1590631986969ee0ae56e5b8) by @pspurlock
+
+- Pyright check renamed lint and now returns a container  instead of err, report returns a json file [22cc6a4](https://github.com/act3-ai/dagger/commit/22cc6a46fd402f91a3612664bd9c53ddbe18334b) by @pspurlock
+
+- Pytest check renamed test and now returns a container  instead of err, removed exitcode and output from report results [d7fc348](https://github.com/act3-ai/dagger/commit/d7fc34826c66f6378f5c2051fea8c3538dc27f45) by @pspurlock
+
+- Ruff lint now returns a container  instead of err, check func removed, report returns a json file [9c75036](https://github.com/act3-ai/dagger/commit/9c7503683f83fcc3209a6b8098ff978fe7630643) by @pspurlock
+
+- Ruff format returns a changeset directly [b79c48e](https://github.com/act3-ai/dagger/commit/b79c48ed8192548253e69fa2302ee58ed632e00e) by @pspurlock
+
+
 ## [0.3.3] - 2025-12-19
 
 ### 🐛 Bug Fixes
