@@ -1,0 +1,11 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.1.0] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Add cliff.toml [d2ff0ca](https://github.com/act3-ai/dagger/commit/d2ff0cafea1b1d3390304f1baed3c5f76986937f) by **Paul Spurlock**
+
+
