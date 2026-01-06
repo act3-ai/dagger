@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- Descriptions [1ff427c](https://github.com/act3-ai/dagger/commit/1ff427cd5e4038f818c8db20217b9e8fe8c45e4a) by @pspurlock
+
+- Tests [a13d249](https://github.com/act3-ai/dagger/commit/a13d24979968d5502c03b6321bc98039da4f1877) by @pspurlock
+
+
+### 🚜 Refactor
+
+- Lint now returns a container  instead of err, report returns a file [e865c2d](https://github.com/act3-ai/dagger/commit/e865c2d741b3ea078e3a1f11462c69fdff0a2b9a) by @pspurlock
+
+
 ## [0.2.1] - 2025-12-16
 
 ### 🐛 Bug Fixes
