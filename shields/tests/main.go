@@ -289,8 +289,8 @@ func (t *Tests) SendQuery(ctx context.Context) error {
 	label := "foo"
 	value := "bar"
 	opts := dagger.ShieldsSendQueryOpts{
-		Label:         label,
-		RemoteService: "https://img.shields.io",
+		Label:      label,
+		RemoteHost: "https://img.shields.io",
 	}
 
 	svgRaw, err := dag.Shields().SendQuery(value, value, opts).Contents(ctx)
