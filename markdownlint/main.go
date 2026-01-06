@@ -23,11 +23,6 @@ type Markdownlint struct {
 	disableDefaultGlobs bool
 }
 
-type MarkdownLintAutoFixResults struct {
-	// returns results of markdownlint autofix as a changeset
-	Changes *dagger.Changeset
-}
-
 func New(ctx context.Context,
 	// Source directory containing markdown files to be linted.
 	// +ignore=["**", "!**/*.md", "!.markdownlint*", "!package.json"]
@@ -135,10 +130,10 @@ func (m *Markdownlint) Report(
 // Returns a Changeset that can be used to apply any changes made
 // to the host.
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) AutoFix(ctx context.Context,
+func (m *Markdownlint) AutoFix(
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
-	extraArgs []string) (*MarkdownLintAutoFixResults, error) {
+	extraArgs []string) *dagger.Changeset {
 	cmd := m.Command
 	cmd = append(cmd, "--fix")
 
@@ -146,41 +141,11 @@ func (m *Markdownlint) AutoFix(ctx context.Context,
 		// match all markdown files, see "Dot-only glob" https://github.com/DavidAnson/markdownlint-cli2?tab=readme-ov-file#command-line
 		cmd = append(cmd, ".")
 	}
-	ctr, err := m.Base.WithUser("root").
+	ctr := m.Base.WithUser("root").
 		WithExec(cmd, dagger.ContainerWithExecOpts{
-			Expect: dagger.ReturnTypeAny}).Sync(ctx)
-	if err != nil {
-		// unexpected error
-		return nil, fmt.Errorf("running markdownlint autofix: %w", err)
-	}
+			Expect: dagger.ReturnTypeAny})
 
 	afterChanges := ctr.Directory("/work/src").Filter(dagger.DirectoryFilterOpts{Exclude: []string{""}})
 
-	return &MarkdownLintAutoFixResults{
-		Changes: afterChanges.Changes(m.Base.Directory("/work/src")),
-	}, nil
-}
-
-// returns the results of markdownlint autofix as a changeset that can be applied to the host.
-func (mr *MarkdownLintAutoFixResults) Fix() (*dagger.Changeset, error) {
-	return mr.Changes, nil
-}
-
-// Returns an error if markdownlint autofix made any changes
-func (mr *MarkdownLintAutoFixResults) Check(ctx context.Context) error {
-	empty, err := mr.Changes.IsEmpty(ctx)
-	if err != nil {
-		return err
-	}
-
-	if empty {
-		return nil
-	}
-
-	diff, err := mr.Changes.AsPatch().Contents(ctx)
-	if err != nil {
-		return err
-	}
-
-	return fmt.Errorf("ruff format changes found:\n%s", diff)
+	return afterChanges.Changes(m.Base.Directory("/work/src"))
 }

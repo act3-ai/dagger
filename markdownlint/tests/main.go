@@ -43,5 +43,10 @@ func (t *Tests) Lint(ctx context.Context,
 // +check
 // Run markdownlint autofix
 func (t *Tests) AutoFix(ctx context.Context) error {
-	return dag.Markdownlint(t.srcDir()).AutoFix().Check(ctx)
+	empty, err := dag.Markdownlint(t.srcDir()).AutoFix().IsEmpty(ctx)
+
+	if !empty {
+		return err
+	}
+	return nil
 }
