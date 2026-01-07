@@ -130,7 +130,7 @@ func (m *Markdownlint) Report(
 // Returns a Changeset that can be used to apply any changes made
 // to the host.
 // e.g. 'markdownlint-cli2 --fix'.
-func (m *Markdownlint) AutoFix(
+func (m *Markdownlint) Fix(
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	// +optional
 	extraArgs []string) *dagger.Changeset {
