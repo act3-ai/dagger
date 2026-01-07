@@ -52,6 +52,7 @@ prepare)
     dagger -m "$module/tests" checks
 
     dagger call --module="$module" prepare
+    version=$(cat "$module/VERSION")
 
     echo "Upgrading dagger engine if needed.."
     upgrade_dagger_engine "$module"
