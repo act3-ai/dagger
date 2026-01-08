@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-01-08
+
+### 🚀 Features
+
+- Rename Format to Fix, made pytest args more DRY [82332b1](https://github.com/act3-ai/dagger/commit/82332b1d479f644d35d35c68ed2afce1da6fd312) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Bug with Report [9d07825](https://github.com/act3-ai/dagger/commit/9d078257d896cd3c464ab282ac2e193f37e9b481) by @pspurlock
+
+
 ## [0.4.0] - 2026-01-06
 
 ### 🐛 Bug Fixes
