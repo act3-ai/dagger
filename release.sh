@@ -76,7 +76,7 @@ approve)
     # annotated and signed tag
     git tag -s -a -m "Official release $module/v$version" "$module/v$version"
 
-    if confirm_continue approve; then
+    if confirm_continue publish; then
       "$0" publish "$module"
     fi
 
