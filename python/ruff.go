@@ -54,7 +54,7 @@ func (r *Ruff) Report() *dagger.File {
 // Runs ruff format against a given source directory. Returns a Changeset
 // that can be used to apply any changes found
 // to the host.
-func (r *Ruff) Format(
+func (r *Ruff) Fix(
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.Changeset {

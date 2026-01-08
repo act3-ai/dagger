@@ -49,7 +49,8 @@ func (m *Mypy) Report() *dagger.File {
 			"--with=mypy",
 			"mypy",
 			"--output",
-			"json"},
+			"json",
+			"."},
 			dagger.ContainerWithExecOpts{
 				Expect:         dagger.ReturnTypeAny,
 				RedirectStdout: "mypy-results.json"}).
