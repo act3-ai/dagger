@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-01-08
+
+### 🚀 Features
+
+- Rename AutoFix to Fix [7702574](https://github.com/act3-ai/dagger/commit/7702574ba49d4a357b76e2eef7c7d0dbf28d1b8f) by @pspurlock
+
+
 ## [0.3.0] - 2026-01-06
 
 ### 🚜 Refactor
