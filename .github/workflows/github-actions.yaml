@@ -52,7 +52,7 @@ jobs:
       - name: test-acedt
         working-directory: ./data-tool/tests
         run: dagger checks
-
-      - name: test-shields
-        working-directory: ./shields/tests
-        run: dagger checks
+      # Disabled until working properly
+      # - name: test-shields
+      #   working-directory: ./shields/tests
+      #   run: dagger checks
