@@ -30,8 +30,7 @@ func New(
 }
 
 const (
-	repo      = "act3-ai/dagger"
-	notesPath = "/images.tar"
+	repo = "act3-ai/dagger"
 )
 
 func (m *Ci) Prepare(ctx context.Context,
@@ -51,30 +50,38 @@ func (m *Ci) Prepare(ctx context.Context,
 }
 
 func (m *Ci) Release(ctx context.Context,
-	tag string,
-	notes *dagger.File,
-	title string,
+	version string,
 ) (string, error) {
+	tag := m.Module + "/v" + version
+	notesPath := m.Module + "/releases/v" + version + ".md"
+	notesFile := m.GitRef.Tree().File(notesPath)
 
 	release, err := dag.Release(m.GitRef).
-		CreateGithub(ctx, repo, m.GithubToken, tag, notes, dagger.ReleaseCreateGithubOpts{Title: title})
+		CreateGithub(ctx,
+			repo,
+			m.GithubToken,
+			tag,
+			notesFile,
+			dagger.ReleaseCreateGithubOpts{Title: tag})
+
 	if err != nil {
 		return "", fmt.Errorf("%s", err)
 	}
+
 	return release, nil
 }
 
-func (m *Ci) UpgradeDagger(ctx context.Context,
+// func (m *Ci) UpgradeDagger(ctx context.Context,
 
-) (string, error) {
-	daggerVersion, err := dag.Container().From("registry.dagger.io/engine:latest").
-		WithDirectory("/src", m.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})).Terminal().
-		WithExec([]string{"sh", "-c",
-			"dagger --silent version | cut -f 2 -d ' '"}).
-		Stdout(ctx)
-	if err != nil {
-		return "", err
-	}
+// ) (string, error) {
+// 	daggerVersion, err := dag.Container().From("registry.dagger.io/engine:latest").
+// 		WithDirectory("/src", m.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})).Terminal().
+// 		WithExec([]string{"sh", "-c",
+// 			"dagger --silent version | cut -f 2 -d ' '"}).
+// 		Stdout(ctx)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	return daggerVersion, nil
-}
+// 	return daggerVersion, nil
+// }
