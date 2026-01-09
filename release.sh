@@ -85,17 +85,9 @@ publish)
     # push this branch and the associated tags
     git push --follow-tags
 
-    version=v$(cat "$module/VERSION")
-    notesPath="$module/releases/$version.md"
-    
-    # create release, upload artifacts
-    dagger -m release --git-ref="." call \
-        create-github \
-        --token=env://GITHUB_TOKEN \
-        --repo="act3-ai/dagger" \
-        --title="$module/$version" \
-        --tag="$module/$version" \
-        --notes="$notesPath"
+    version=$(cat "$module/VERSION")
+
+    dagger call --module="$module" release --version=$version
 
     ;;
 
