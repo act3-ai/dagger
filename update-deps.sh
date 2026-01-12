@@ -31,7 +31,7 @@ function upgrade_dagger_engine() {
     exit 1
   fi
 
-  module="$1"
+  local module="$1"
   LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
   CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
 
@@ -51,7 +51,7 @@ function upgrade_dagger_engine_and_commit() {
     exit 1
   fi
 
-  module="$1"
+  local module="$1"
   upgrade_dagger_engine "$module"
 
   changed_files=$(git diff --name-only -- "$module/dagger.json")
