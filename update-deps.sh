@@ -44,6 +44,34 @@ function upgrade_dagger_engine() {
 
 }
 
+function upgrade_dagger_engine_and_commit() {
+  if [[ -z "$1" ]]; then
+    #Check if module name given
+    echo "Error: No module name given to upgrade"
+    exit 1
+  fi
+
+  module="$1"
+  upgrade_dagger_engine "$module"
+
+  changed_files=$(git diff --name-only -- "$module/dagger.json")
+
+  if [[ -n "$changed_files" ]]; then
+    echo "📦 Module '$module' has changes:"
+    echo "$changed_files"
+
+    # Stage all changed files under the module
+    echo "$changed_files" | xargs git add
+
+    # Commit
+    echo "Creating commit: fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
+    git commit -S -m "fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
+  else
+    echo "No changes in $module"
+  fi
+
+}
+
 #update dagger engine to latest version in all modules
 function upgrade_dagger_engine_all() {
 
@@ -56,32 +84,12 @@ function upgrade_dagger_engine_all() {
 
   #upgrade dagger engine in modules
   for module in $(list_modules); do
-    upgrade_dagger_engine "$module"
+    upgrade_dagger_engine_and_commit "$module"
   done
 
   #upgrade dagger engine in test modules
   for module in $(list_modules_with_tests); do
-    upgrade_dagger_engine "$module"
-  done
-
-  #git add and create commits for each module changed
-  for module in $(list_modules); do
-    # Get changed files under this module
-    changed_files=$(git diff --name-only -- "$module")
-
-    if [[ -n "$changed_files" ]]; then
-      echo "📦 Module '$module' has changes:"
-      echo "$changed_files"
-
-      # Stage all changed files under the module
-      echo "$changed_files" | xargs git add
-
-      # Commit
-      echo "Creating commit: fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
-      git commit -S -m "fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
-    else
-      echo "No changes in $module"
-    fi
+    upgrade_dagger_engine_and_commit "$module"
   done
 
 }

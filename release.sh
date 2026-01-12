@@ -48,15 +48,17 @@ fi
 case "$cmd" in
 prepare)
     git fetch --tags
+
+    #upgrade dagger engine
+    echo "Upgrading dagger engine if needed.."
+    upgrade_dagger_engine_and_commit "$module"
+    upgrade_dagger_engine_and_commit "$module/tests"
+
     #run module tests
     dagger -m "$module/tests" checks
 
     dagger call --module="$module" prepare
     version=$(cat "$module/VERSION")
-
-    echo "Upgrading dagger engine if needed.."
-    upgrade_dagger_engine "$module"
-    upgrade_dagger_engine "$module/tests"
 
     echo "Please review the local changes, especially $module/releases/$version.md"
     if confirm_continue approve; then
