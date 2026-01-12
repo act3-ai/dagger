@@ -89,7 +89,7 @@ publish)
 
     version=$(cat "$module/VERSION")
 
-    dagger call --module="$module" release --version=$version
+    dagger call --module="$module" release --version="$version"
 
     ;;
 
