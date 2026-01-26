@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.2] - 2026-01-26
+
+### 🐛 Bug Fixes
+
+- Bug with changeset diff with source [20ba7b7](https://github.com/act3-ai/dagger/commit/20ba7b78e469331e0b65ce3758987e712b0856b3) by @pspurlock
+
+
 ## [0.5.1] - 2026-01-15
 
 ### 🐛 Bug Fixes
