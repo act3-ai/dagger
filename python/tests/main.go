@@ -51,27 +51,26 @@ func (t *Tests) Base(ctx context.Context) error {
 
 // +check
 // Run mypy, expect valid/no errors
-func (t *Tests) Mypy(ctx context.Context) *dagger.Container {
+func (t *Tests) Mypy() *dagger.Container {
 	return dag.Python(t.srcDir()).Mypy().Lint()
 }
 
 // +check
 // Run pylint, expect valid/no errors
-func (t *Tests) Pylint(ctx context.Context) *dagger.Container {
+func (t *Tests) Pylint() *dagger.Container {
 	return dag.Python(t.srcDir()).Pylint().Lint()
 }
 
 // +check
 // Run pyright, expect valid/no errors
-func (t *Tests) Pyright(ctx context.Context,
-) *dagger.Container {
+func (t *Tests) Pyright() *dagger.Container {
 	return dag.Python(t.srcDir()).Pyright().Lint()
 
 }
 
 // +check
 // Run ruff lint, expect valid/no errors
-func (t *Tests) RuffLint(ctx context.Context) *dagger.Container {
+func (t *Tests) RuffLint() *dagger.Container {
 	return dag.Python(t.srcDir()).Ruff().Lint()
 }
 
@@ -88,6 +87,6 @@ func (t *Tests) RuffFormat(ctx context.Context) error {
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) Pytest(ctx context.Context) *dagger.Container {
+func (t *Tests) Pytest() *dagger.Container {
 	return dag.Python(t.srcDir()).Pytest().Test()
 }
