@@ -68,10 +68,8 @@ func (r *Ruff) Fix(
 	}
 
 	// exclude any given file patterns
-	if len(exclude) != 0 {
-		for _, exclude := range exclude {
-			args = append(args, "--exclude", exclude)
-		}
+	for _, exclude := range exclude {
+		args = append(args, "--exclude", exclude)
 	}
 
 	ctr := r.Python.Container().
@@ -79,5 +77,5 @@ func (r *Ruff) Fix(
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
-	return afterChanges.Changes(r.Python.Source)
+	return afterChanges.Changes(r.Python.Base.Directory("/app"))
 }
