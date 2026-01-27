@@ -44,7 +44,8 @@ func New(
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
 		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv") // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
+		WithEnvVariable("UV_LINK_MODE", "copy")
 
 	if syncArgs == nil {
 		syncArgs = []string{
