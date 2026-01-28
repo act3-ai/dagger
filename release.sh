@@ -52,7 +52,7 @@ prepare)
     #upgrade dagger engine
     echo "Upgrading dagger engine if needed.."
     upgrade_dagger_engine_and_commit "$module"
-    upgrade_dagger_engine_and_commit "$module/tests"
+
 
     #run module tests
     dagger -m "$module/tests" checks
