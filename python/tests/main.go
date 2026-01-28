@@ -76,8 +76,25 @@ func (t *Tests) RuffLint() *dagger.Container {
 
 // +check
 // Run ruff-format, expect valid/no errors
-func (t *Tests) RuffFormat(ctx context.Context) error {
-	empty, err := dag.Python(t.srcDir()).Ruff().Fix().IsEmpty(ctx)
+func (t *Tests) RuffLintFix(ctx context.Context) error {
+	empty, err := dag.Python(t.srcDir()).Ruff().LintFix().IsEmpty(ctx)
+
+	if !empty {
+		return err
+	}
+	return nil
+}
+
+// +check
+// Run ruff-format, expect valid/no errors
+func (t *Tests) RuffFormat() *dagger.Container {
+	return dag.Python(t.srcDir()).Ruff().Format()
+}
+
+// +check
+// Run ruff-format, expect valid/no errors
+func (t *Tests) RuffFormatFix(ctx context.Context) error {
+	empty, err := dag.Python(t.srcDir()).Ruff().FormatFix().IsEmpty(ctx)
 
 	if !empty {
 		return err
