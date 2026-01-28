@@ -7,6 +7,7 @@ import (
 	"context"
 	"dagger/ci/internal/dagger"
 	"fmt"
+	"path/filepath"
 )
 
 type Ci struct {
@@ -71,17 +72,14 @@ func (m *Ci) Release(ctx context.Context,
 	return release, nil
 }
 
-// func (m *Ci) UpgradeDagger(ctx context.Context,
+func (m *Ci) UpgradeDagger() *dagger.Changeset {
+	src := m.GitRef.Tree()
+	after := dag.Container().From("registry.dagger.io/engine:latest").
+		WithDirectory("/src", src).
+		WithWorkdir(filepath.Join("/src", m.Module)).
+		WithExec([]string{"dagger", "develop"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
+		WithExec([]string{"dagger", "develop", "-m=tests"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
+		Directory("/src").Filter(dagger.DirectoryFilterOpts{Gitignore: true})
 
-// ) (string, error) {
-// 	daggerVersion, err := dag.Container().From("registry.dagger.io/engine:latest").
-// 		WithDirectory("/src", m.GitRef.Tree(dagger.GitRefTreeOpts{Depth: -1})).Terminal().
-// 		WithExec([]string{"sh", "-c",
-// 			"dagger --silent version | cut -f 2 -d ' '"}).
-// 		Stdout(ctx)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	return daggerVersion, nil
-// }
+	return after.Changes(src)
+}
