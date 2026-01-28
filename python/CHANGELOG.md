@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0] - 2026-01-28
+
+### 🚀 Features
+
+- Add fix function for lint, add cache for ruff_cache. [24ee443](https://github.com/act3-ai/dagger/commit/24ee443e6feb2190fd4df464af78096655859f79) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Remove unnecessary ctx from tests [e8de01f](https://github.com/act3-ai/dagger/commit/e8de01f1abdc5237eab6b7f427c531eaf5776900) by @pspurlock
+
+- Add UV_LINK_MODE to remove warning [b6ba31d](https://github.com/act3-ai/dagger/commit/b6ba31d7fa73ae76de9971a766c30d2e3d8d8bd4) by @pspurlock
+
+
 ## [0.5.2] - 2026-01-26
 
 ### 🐛 Bug Fixes
