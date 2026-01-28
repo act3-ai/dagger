@@ -24,25 +24,25 @@ function check_git_status() {
   fi
 }
 
-function upgrade_dagger_engine() {
-  if [[ -z "$1" ]]; then
-    #Check if module name given
-    echo "Error: No module name given to upgrade"
-    exit 1
-  fi
+# function upgrade_dagger_engine() {
+#   if [[ -z "$1" ]]; then
+#     #Check if module name given
+#     echo "Error: No module name given to upgrade"
+#     exit 1
+#   fi
 
-  local module="$1"
-  LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
-  CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
+#   local module="$1"
+#   LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
+#   CURRENT_DAGGER_VERSION=$(jq -r '.engineVersion' "$1/dagger.json")
 
-  if [[ "$CURRENT_DAGGER_VERSION" != "$LATEST_DAGGER_VERSION" ]]; then
-    echo "Upgrading Dagger Engine in $module from $CURRENT_DAGGER_VERSION to $LATEST_DAGGER_VERSION"
-    dagger -m "$module" develop
-  else
-    echo "$module is already using the latest Dagger Engine ($CURRENT_DAGGER_VERSION)"
-  fi
+#   if [[ "$CURRENT_DAGGER_VERSION" != "$LATEST_DAGGER_VERSION" ]]; then
+#     echo "Upgrading Dagger Engine in $module from $CURRENT_DAGGER_VERSION to $LATEST_DAGGER_VERSION"
+#     dagger -m "$module" develop
+#   else
+#     echo "$module is already using the latest Dagger Engine ($CURRENT_DAGGER_VERSION)"
+#   fi
 
-}
+# }
 
 function upgrade_dagger_engine_and_commit() {
   if [[ -z "$1" ]]; then
@@ -52,7 +52,7 @@ function upgrade_dagger_engine_and_commit() {
   fi
 
   local module="$1"
-  upgrade_dagger_engine "$module"
+  dagger call --module="$module" upgrade-dagger
 
   changed_files=$(git diff --name-only -- "$module/dagger.json")
 
