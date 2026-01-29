@@ -1,7 +1,9 @@
 package main
 
 import (
+	"context"
 	"dagger/python/internal/dagger"
+	"strings"
 )
 
 type Ruff struct {
@@ -14,20 +16,31 @@ func (p *Python) Ruff() *Ruff {
 	return &Ruff{Python: p}
 }
 
+// Gets the ruff version from the dependency tree.
+func (r *Ruff) RuffVersion(ctx context.Context) string {
+	// Use uv to get the version string for ruff and parse.
+	ruff_version, _ := r.Python.Base.WithExec([]string{"uv", "tree", "--frozen", "--package", "ruff"}).Stdout(ctx)
+	return strings.ReplaceAll(strings.Split(ruff_version, "v")[1], "\n", "")
+}
+
 // Runs ruff check and returns a container that will fail on any errors.
 func (r *Ruff) Lint(
+	ctx context.Context,
 	// +optional
 	// +default="full"
 	outputFormat string,
 ) *dagger.Container {
 	// Run ruff check with the provided output format
-	return r.Python.Container().
+
+	// Use the base image to avoid installing packages
+	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(
 			[]string{
 				"uv",
 				"run",
-				"--with=ruff",
+				"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+				"--no-project",
 				"ruff",
 				"check", ".",
 				"--output-format", outputFormat})
@@ -38,18 +51,22 @@ func (r *Ruff) Lint(
 // that can be used to apply any changes found
 // to the host. Will return an error if any errors found are not considered fixable by ruff.
 func (r *Ruff) LintFix(
+	ctx context.Context,
 	// +optional
 	// +default="full"
 	outputFormat string,
 ) *dagger.Changeset {
 	// Run ruff check with the provided output format
-	ctr := r.Python.Container().
+
+	// Use the base image to avoid installing packages
+	ctr := r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(
 			[]string{
 				"uv",
 				"run",
-				"--with=ruff",
+				"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+				"--no-project",
 				"ruff",
 				"check", ".",
 				"--output-format", outputFormat,
@@ -62,15 +79,18 @@ func (r *Ruff) LintFix(
 }
 
 // Runs ruff check and returns the results in a json file.
-func (r *Ruff) Report() *dagger.File {
+func (r *Ruff) Report(ctx context.Context) *dagger.File {
 	// Run ruff check with the provided output format
-	return r.Python.Container().
+
+	// Use the base image to avoid installing packages
+	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(
 			[]string{
 				"uv",
 				"run",
-				"--with=ruff",
+				"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+				"--no-project",
 				"ruff",
 				"check", ".",
 				"--output-format",
@@ -83,15 +103,18 @@ func (r *Ruff) Report() *dagger.File {
 }
 
 // Runs ruff format check and returns the results in a json file.
-func (r *Ruff) FormatReport() *dagger.File {
+func (r *Ruff) FormatReport(ctx context.Context) *dagger.File {
 	// Run ruff check with the provided output format
-	return r.Python.Container().
+
+	// Use the base image to avoid installing packages
+	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(
 			[]string{
 				"uv",
 				"run",
-				"--with=ruff",
+				"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+				"--no-project",
 				"ruff",
 				"format",
 				"--check",
@@ -105,13 +128,15 @@ func (r *Ruff) FormatReport() *dagger.File {
 
 // Runs ruff format and returns a container that will fail on any errors.
 func (r *Ruff) Format(
+	ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.Container {
 	args := []string{
 		"uv",
 		"run",
-		"--with=ruff",
+		"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+		"--no-project",
 		"ruff",
 		"format",
 		".",
@@ -124,7 +149,8 @@ func (r *Ruff) Format(
 		args = append(args, "--exclude", exclude)
 	}
 
-	return r.Python.Container().
+	// Use the base image to avoid installing packages
+	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(args)
 
@@ -134,6 +160,7 @@ func (r *Ruff) Format(
 // that can be used to apply any changes found
 // to the host.
 func (r *Ruff) FormatFix(
+	ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.Changeset {
@@ -141,7 +168,8 @@ func (r *Ruff) FormatFix(
 	args := []string{
 		"uv",
 		"run",
-		"--with=ruff",
+		"--with=ruff=='" + r.RuffVersion(ctx) + "'",
+		"--no-project",
 		"ruff",
 		"format",
 		".",
@@ -152,7 +180,8 @@ func (r *Ruff) FormatFix(
 	for _, exclude := range exclude {
 		args = append(args, "--exclude", exclude)
 	}
-	ctr := r.Python.Container().
+	// Use the base image to avoid installing packages
+	ctr := r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
 		WithExec(args)
 
