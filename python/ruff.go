@@ -82,6 +82,27 @@ func (r *Ruff) Report() *dagger.File {
 
 }
 
+// Runs ruff format check and returns the results in a json file.
+func (r *Ruff) FormatReport() *dagger.File {
+	// Run ruff check with the provided output format
+	return r.Python.Container().
+		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
+		WithExec(
+			[]string{
+				"uv",
+				"run",
+				"--with=ruff",
+				"ruff",
+				"format",
+				"--check",
+				".",
+				"--output-format",
+				"gitlab"},
+			dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny, RedirectStdout: "ruff-format-results.json"}).
+		File("ruff-fromat-results.json")
+
+}
+
 // Runs ruff format and returns a container that will fail on any errors.
 func (r *Ruff) Format(
 	// file pattern to exclude from ruff format
