@@ -120,7 +120,7 @@ func (r *Ruff) FormatReport(ctx context.Context) *dagger.File {
 				"--check",
 				".",
 				"--output-format",
-				"gitlab"},
+				"json"},
 			dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny, RedirectStdout: "ruff-format-results.json"}).
 		File("ruff-fromat-results.json")
 
