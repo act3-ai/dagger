@@ -21,7 +21,8 @@ func (python *Python) Publish(ctx context.Context,
 	buildCmd := []string{"uv", "build"}
 	buildCmd = append(buildCmd, buildArgs...)
 
-	c := python.Container().
+	// Use the base image to avoid installing packages
+	c := python.Base.
 		WithEnvVariable("UV_PUBLISH_CHECK_URL", publishUrl+"/simple").
 		WithEnvVariable("UV_PUBLISH_URL", publishUrl).
 		WithEnvVariable("UV_PUBLISH_USERNAME", username).

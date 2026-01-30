@@ -69,13 +69,53 @@ func (t *Tests) Pyright() *dagger.Container {
 }
 
 // +check
+// Run ruff-version, expect valid/no errors
+func (t *Tests) RuffVersion(ctx context.Context) error {
+
+	//latest version is used if RuffVersion returns empty. Check this first
+	latestVer, _ := dag.Python(t.srcDir()).Ruff().RuffVersion(ctx)
+
+	if latestVer != "" {
+		return fmt.Errorf("Version found, should be blank: %s", latestVer)
+	}
+
+	//checks for pinned version in pyproject.toml and uses that if found
+	pinnedVerDir := dag.Python(t.srcDir()).Base().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
+
+	pinnedVer, _ := dag.Python(pinnedVerDir).Ruff().RuffVersion(ctx)
+
+	if pinnedVer != "0.14.13" {
+		return fmt.Errorf("Version expected: 0.14.13, found: %s", pinnedVer)
+	}
+
+	return nil
+}
+
+// +check
 // Run ruff lint, expect valid/no errors
 func (t *Tests) RuffLint() *dagger.Container {
 	return dag.Python(t.srcDir()).Ruff().Lint()
 }
 
 // +check
-// Run ruff-format, expect valid/no errors
+// Run ruff lint-report, expect valid/no errors
+func (t *Tests) RuffLintReport(ctx context.Context) error {
+	report := dag.Python(t.srcDir()).Ruff().LintReport()
+	results, err := report.Contents(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if results != "[]" {
+		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	return nil
+}
+
+// +check
+// Run ruff lint-fix, expect valid/no errors
 func (t *Tests) RuffLintFix(ctx context.Context) error {
 	empty, err := dag.Python(t.srcDir()).Ruff().LintFix().IsEmpty(ctx)
 
@@ -86,13 +126,30 @@ func (t *Tests) RuffLintFix(ctx context.Context) error {
 }
 
 // +check
-// Run ruff-format, expect valid/no errors
+// Run ruff format, expect valid/no errors
 func (t *Tests) RuffFormat() *dagger.Container {
 	return dag.Python(t.srcDir()).Ruff().Format()
 }
 
 // +check
-// Run ruff-format, expect valid/no errors
+// Run ruff format-report, expect valid/no errors
+func (t *Tests) RuffFormatReport(ctx context.Context) error {
+	report := dag.Python(t.srcDir()).Ruff().FormatReport()
+	results, err := report.Contents(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if results != "" {
+		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	return nil
+}
+
+// +check
+// Run ruff format-fix, expect valid/no errors
 func (t *Tests) RuffFormatFix(ctx context.Context) error {
 	empty, err := dag.Python(t.srcDir()).Ruff().FormatFix().IsEmpty(ctx)
 
