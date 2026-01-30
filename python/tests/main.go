@@ -69,23 +69,16 @@ func (t *Tests) Pyright() *dagger.Container {
 }
 
 // +check
-// Run ruff-version, expect valid/no errors
+// Check if ruff version override works
 func (t *Tests) RuffVersion(ctx context.Context) error {
 
-	//latest version is used if RuffVersion returns empty. Check this first
-	latestVer, _ := dag.Python(t.srcDir()).Ruff().RuffVersion(ctx)
-
-	if latestVer != "" {
-		return fmt.Errorf("Version found, should be blank: %s", latestVer)
-	}
-
-	//checks for pinned version in pyproject.toml and uses that if found
+	//add ruff to pyproject.toml first, then use that version to run lint
 	pinnedVerDir := dag.Python(t.srcDir()).Base().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
 
-	pinnedVer, _ := dag.Python(pinnedVerDir).Ruff().RuffVersion(ctx)
+	pinnedVer, _ := dag.Python(pinnedVerDir).Ruff().Lint().WithExec([]string{"uv", "tree", "--package", "ruff"}).Stdout(ctx)
 
-	if pinnedVer != "0.14.13" {
-		return fmt.Errorf("Version expected: 0.14.13, found: %s", pinnedVer)
+	if pinnedVer != "ruff v0.14.13\n" {
+		return fmt.Errorf("Version expected: ruff v0.14.13, found: %s", pinnedVer)
 	}
 
 	return nil

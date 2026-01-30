@@ -18,7 +18,7 @@ func (p *Python) Ruff() *Ruff {
 }
 
 // Gets the ruff version from the dependency tree if it exists
-func (r *Ruff) RuffVersion(ctx context.Context) string {
+func (r *Ruff) version(ctx context.Context) string {
 	// Use uv to get the version string for ruff and parse.
 	ruffVersion, _ := r.Python.Base.WithExec([]string{"uv", "tree", "--frozen", "--package", "ruff"}).Stdout(ctx)
 
@@ -35,7 +35,7 @@ func (r *Ruff) Lint(
 	// +default="full"
 	outputFormat string,
 ) *dagger.Container {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
@@ -65,7 +65,7 @@ func (r *Ruff) LintFix(
 	// +default="full"
 	outputFormat string,
 ) *dagger.Changeset {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
@@ -94,7 +94,7 @@ func (r *Ruff) LintFix(
 
 // Runs ruff check and returns the results in a json file.
 func (r *Ruff) LintReport(ctx context.Context) *dagger.File {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
@@ -126,7 +126,7 @@ func (r *Ruff) Format(
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.Container {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
@@ -162,7 +162,7 @@ func (r *Ruff) FormatReport(ctx context.Context,
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.File {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
@@ -201,7 +201,7 @@ func (r *Ruff) FormatFix(
 	// file pattern to exclude from ruff format
 	// +optional
 	exclude []string) *dagger.Changeset {
-	ruffVersion := r.RuffVersion(ctx)
+	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
