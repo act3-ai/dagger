@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-02-01
+
+### 🚀 Features
+
+- Add FormatRepor()  and LintReport(), add autodetect ruff version and use Base for faster scans [4f50bc5](https://github.com/act3-ai/dagger/commit/4f50bc5821f412e0a71a6f7be6eb2fe688bb60b1) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Make version checking private [7299bd3](https://github.com/act3-ai/dagger/commit/7299bd328a2b8c7b2cd74197c6e8628765a792c8) by @pspurlock
+
+
 ## [0.6.0] - 2026-01-28
 
 ### 🚀 Features
