@@ -63,7 +63,7 @@ func (m *Coverage) UnitTests(
 
 	text := m.Base.
 		WithDirectory("coverage", dag.Directory()).
-		WithExec([]string{"go", "test", "./...", "-coverprofile", "/raw.txt", "-coverpkg", pkg + "/..."}).
+		WithExec([]string{"go", "test", "-trimpath", "./...", "-coverprofile", "/raw.txt", "-coverpkg", pkg + "/..."}).
 		File("/raw.txt")
 
 	return &CoverageResults{
@@ -80,7 +80,7 @@ func (m *Coverage) Exec(ctx context.Context,
 	const covDir = "/coverage"
 	raw := m.Base.
 		WithDirectory(covDir, dag.Directory()).
-		WithExec([]string{"go", "build", "-cover", "-o", "/app", pkg}).
+		WithExec([]string{"go", "build", "-trimpath", "-cover", "-o", "/app", pkg}).
 		WithEnvVariable("GOCOVERDIR", covDir).
 		WithExec(append([]string{"/app"}, args...)).
 		Directory(covDir)
