@@ -15,10 +15,10 @@ func (p *Python) Pytest() *Pytest {
 }
 
 type PytestResults struct {
-	// returns results of unit-test as xml in a file.
-	Xml *dagger.File
-	// returns results of unit-test as json in a file.
-	Json *dagger.File
+	// returns results of unit-tests and coverage as xml in a directory.
+	Xml *dagger.Directory
+	// returns results of unit-tests and coverage as json in a directory.
+	Json *dagger.Directory
 	// returns results of unit-test as html in a directory
 	Html *dagger.Directory
 	// A directory with all results merged in
@@ -47,9 +47,10 @@ func (pt *Pytest) pytestArgs(
 	args = append(args,
 		"--cov=.",
 		"--cov-report", "term",
-		"--cov-report", "xml:/results.xml",
+		"--cov-report", "xml:/xml/coverage.xml",
 		"--cov-report", "html:/html/",
-		"--cov-report", "json:/results.json",
+		"--cov-report", "json:/json/coverage.json",
+		"--junit-xml", "/xml/junit.xml",
 	)
 
 	if len(extraArgs) > 0 {
@@ -96,15 +97,15 @@ func (pt *Pytest) Report(
 			dagger.ContainerWithExecOpts{
 				Expect: dagger.ReturnTypeAny})
 
-	xml := ctr.File("/results.xml")
+	xml := ctr.Directory("/xml")
 
-	json := ctr.File("/results.json")
+	json := ctr.Directory("/json")
 
 	html := ctr.Directory("/html")
 
 	//merge all result files into a single directory
-	merged := dag.Directory().WithFile("results.xml", xml).
-		WithFile("results.json", json).
+	merged := dag.Directory().WithDirectory("xml", xml).
+		WithDirectory("json", json).
 		WithDirectory("html", html)
 
 	return &PytestResults{
