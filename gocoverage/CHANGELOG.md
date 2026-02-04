@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4] - 2026-02-04
+
+### 🐛 Bug Fixes
+
+- Add -trimpath flag to go test commands [3732851](https://github.com/act3-ai/dagger/commit/37328517a85462d1b563933ad49a03fb106c5cf6) by @justenstall, Signed-off-by:Justen Stall <39888103+justenstall@users.noreply.github.com>
+
+
 ## [0.1.3] - 2026-01-15
 
 ### 🐛 Bug Fixes
