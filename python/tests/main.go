@@ -157,3 +157,32 @@ func (t *Tests) RuffFormatFix(ctx context.Context) error {
 func (t *Tests) Pytest() *dagger.Container {
 	return dag.Python(t.srcDir()).Pytest().Test()
 }
+
+// +check
+// Run unit-test, expect valid/no errors
+func (t *Tests) PytestReport(ctx context.Context) error {
+	ptResults := dag.Python(t.srcDir()).Pytest().Report()
+
+	checks := []struct {
+		name string
+		dir  *dagger.Directory
+		file string
+	}{
+		{"xml coverage", ptResults.XML(), "coverage.xml"},
+		{"xml junit", ptResults.XML(), "junit.xml"},
+		{"json coverage", ptResults.JSON(), "coverage.json"},
+		{"html index", ptResults.HTML(), "index.html"},
+	}
+
+	for _, c := range checks {
+		exists, err := c.dir.Exists(ctx, c.file)
+		if err != nil {
+			return fmt.Errorf("checking %s: %w", c.name, err)
+		}
+		if !exists {
+			return fmt.Errorf("%s not found (%s)", c.name, c.file)
+		}
+	}
+
+	return nil
+}
