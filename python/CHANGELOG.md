@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-02-04
+
+### 🚀 Features
+
+- Allow for unit test results in addition to coverage reports [add9728](https://github.com/act3-ai/dagger/commit/add9728e931613e1c5a0b56d236750a289f457ff) by @gresavage, Signed-off-by:Tom Gresavage <tomgresavage@gmail.com>
+
+
+### 🐛 Bug Fixes
+
+- Add tests for pytest Report() [fc6b33f](https://github.com/act3-ai/dagger/commit/fc6b33ff231c0161d3ec1161577a6c66d06ac0ee) by @pspurlock
+
+
 ## [0.7.0] - 2026-02-01
 
 ### 🚀 Features
