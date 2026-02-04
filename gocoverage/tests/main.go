@@ -33,31 +33,31 @@ func (t *Tests) base() *dagger.Container {
 		Container()
 }
 
-var opts = dagger.CoverageOpts{Excludes: []string{`.gen.go`}}
+var opts = dagger.GoCoverageOpts{Excludes: []string{`.gen.go`}}
 
 func (t *Tests) Debug(ctx context.Context) (string, error) {
-	results := dag.Coverage(t.base(), opts).UnitTests()
+	results := dag.GoCoverage(t.base(), opts).UnitTests()
 	return results.Summary().Contents(ctx)
 }
 
 // +check
 // Test unit test coverage check
 func (t *Tests) Check(ctx context.Context) error {
-	results := dag.Coverage(t.base()).UnitTests()
+	results := dag.GoCoverage(t.base()).UnitTests()
 	return results.Check(ctx, 71)
 }
 
 // +check
 // Test unit test coverage check
 func (t *Tests) CheckExcludes(ctx context.Context) error {
-	results := dag.Coverage(t.base(), opts).UnitTests()
+	results := dag.GoCoverage(t.base(), opts).UnitTests()
 	return results.Check(ctx, 80)
 }
 
 // +check
 // Test HTML generation
 func (t *Tests) HTML(ctx context.Context) error {
-	results := dag.Coverage(t.base()).UnitTests()
+	results := dag.GoCoverage(t.base()).UnitTests()
 	html := results.HTML()
 	i, err := html.Size(ctx)
 	if err != nil {
@@ -72,7 +72,7 @@ func (t *Tests) HTML(ctx context.Context) error {
 // +check
 // Test SVG generation
 func (t *Tests) SVG(ctx context.Context) error {
-	results := dag.Coverage(t.base()).UnitTests()
+	results := dag.GoCoverage(t.base()).UnitTests()
 	svg := results.Svg()
 	i, err := svg.Size(ctx)
 	if err != nil {
@@ -87,7 +87,7 @@ func (t *Tests) SVG(ctx context.Context) error {
 // +check
 // Test Summary generation
 func (t *Tests) Summary(ctx context.Context) error {
-	results := dag.Coverage(t.base()).UnitTests()
+	results := dag.GoCoverage(t.base()).UnitTests()
 	summary := results.Summary()
 	i, err := summary.Size(ctx)
 	if err != nil {
@@ -102,7 +102,7 @@ func (t *Tests) Summary(ctx context.Context) error {
 // +check
 // Test exec
 func (t *Tests) Exec(ctx context.Context) error {
-	results := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
+	results := dag.GoCoverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
 
 	return results.Check(ctx, 19)
 }
@@ -131,7 +131,7 @@ func (t *Tests) Merge(ctx context.Context) error {
 func (t *Tests) Directory(ctx context.Context) error {
 	return parallel.New().
 		WithJob("with excludes", func(ctx context.Context) error {
-			results := dag.Coverage(t.base(), opts).Exec("./cmd/myapp", []string{"argument"})
+			results := dag.GoCoverage(t.base(), opts).Exec("./cmd/myapp", []string{"argument"})
 			dir := results.Directory()
 
 			matches, err := dir.File("summary.txt").Search(ctx, "gen")
@@ -144,7 +144,7 @@ func (t *Tests) Directory(ctx context.Context) error {
 			return nil
 		}).
 		WithJob("without excludes", func(ctx context.Context) error {
-			results := dag.Coverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
+			results := dag.GoCoverage(t.base()).Exec("./cmd/myapp", []string{"argument"})
 			dir := results.Directory()
 
 			matches, err := dir.File("summary.txt").Search(ctx, "gen")
