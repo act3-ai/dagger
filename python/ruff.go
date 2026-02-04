@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"dagger/python/internal/dagger"
+	"slices"
 	"strings"
 )
 
@@ -31,9 +32,9 @@ func (r *Ruff) version(ctx context.Context) string {
 // Runs ruff check and returns a container that will fail on any errors.
 func (r *Ruff) Lint(
 	ctx context.Context,
+	// extra arguments to pass to the ruff lint check
 	// +optional
-	// +default="full"
-	outputFormat string,
+	extraArgs []string,
 ) *dagger.Container {
 	ruffVersion := r.version(ctx)
 
@@ -41,18 +42,18 @@ func (r *Ruff) Lint(
 	if ruffVersion != "" {
 		withArg += "==" + ruffVersion // e.g., "ruff==0.1.1"
 	}
+	args := []string{
+		"uv",
+		"run",
+		"--with=" + withArg,
+		"--no-project",
+		"ruff",
+		"check"}
+	args = append(args, extraArgs...)
 	// Use the base image to avoid installing packages
 	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
-		WithExec(
-			[]string{
-				"uv",
-				"run",
-				"--with=" + withArg,
-				"--no-project",
-				"ruff",
-				"check", ".",
-				"--output-format", outputFormat})
+		WithExec(args)
 
 }
 
@@ -61,9 +62,9 @@ func (r *Ruff) Lint(
 // to the host. Will return an error if any errors found are not considered fixable by ruff.
 func (r *Ruff) LintFix(
 	ctx context.Context,
+	// extra arguments to pass to the ruff lint check
 	// +optional
-	// +default="full"
-	outputFormat string,
+	extraArgs []string,
 ) *dagger.Changeset {
 	ruffVersion := r.version(ctx)
 
@@ -71,20 +72,20 @@ func (r *Ruff) LintFix(
 	if ruffVersion != "" {
 		withArg += "==" + ruffVersion // e.g., "ruff==0.1.1"
 	}
-
+	args := []string{
+		"uv",
+		"run",
+		"--with=" + withArg,
+		"--no-project",
+		"ruff",
+		"check",
+		"--fix",
+	}
+	args = append(args, extraArgs...)
 	// Use the base image to avoid installing packages
 	ctr := r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
-		WithExec(
-			[]string{
-				"uv",
-				"run",
-				"--with=" + withArg,
-				"--no-project",
-				"ruff",
-				"check", ".",
-				"--output-format", outputFormat,
-				"--fix"})
+		WithExec(args)
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
@@ -92,40 +93,50 @@ func (r *Ruff) LintFix(
 
 }
 
-// Runs ruff check and returns the results in a json file.
-func (r *Ruff) LintReport(ctx context.Context) *dagger.File {
+// Runs ruff check and returns the results in a file.
+func (r *Ruff) LintReport(
+	ctx context.Context,
+	// extra arguments to pass to the ruff lint check
+	// +optional
+	extraArgs []string,
+) *dagger.File {
 	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
 	if ruffVersion != "" {
 		withArg += "==" + ruffVersion // e.g., "ruff==0.1.1"
 	}
+	args := []string{
+		"uv",
+		"run",
+		"--with=" + withArg,
+		"--no-project",
+		"ruff",
+		"check"}
+
+	outputFileName := "ruff-lint-results.json"
+
+	if !slices.Contains(extraArgs, "--output-file") {
+		args = append(args, "--output-file", outputFileName)
+	} else {
+		outputFileName = extraArgs[slices.Index(extraArgs, "--output-file")+1]
+	}
+	args = append(args, extraArgs...)
+
 	// Use the base image to avoid installing packages
 	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
-		WithExec(
-			[]string{
-				"uv",
-				"run",
-				"--with=" + withArg,
-				"--no-project",
-				"ruff",
-				"check", ".",
-				"--output-format",
-				"json",
-				"--output-file",
-				"ruff-lint-results.json"},
-			dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
-		File("ruff-lint-results.json")
+		WithExec(args, dagger.ContainerWithExecOpts{Expect: dagger.ReturnTypeAny}).
+		File(outputFileName)
 
 }
 
 // Runs ruff format and returns a container that will fail on any errors.
 func (r *Ruff) Format(
 	ctx context.Context,
-	// file pattern to exclude from ruff format
+	// extra arguments to pass to the ruff format check
 	// +optional
-	exclude []string) *dagger.Container {
+	extraArgs []string) *dagger.Container {
 	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
@@ -140,15 +151,12 @@ func (r *Ruff) Format(
 		"--no-project",
 		"ruff",
 		"format",
-		".",
-		"--diff",
-		"--exclude=.venv/", //hack needed to get around ruff bug overriding default excludes
 	}
-
-	// exclude any given file patterns
-	for _, exclude := range exclude {
-		args = append(args, "--exclude", exclude)
+	// if the user already specifies diff/check don't specify it again
+	if !slices.Contains(extraArgs, "--diff") && !slices.Contains(extraArgs, "--check") {
+		args = append(args, "--diff")
 	}
+	args = append(args, extraArgs...)
 
 	// Use the base image to avoid installing packages
 	return r.Python.Base.
@@ -157,11 +165,14 @@ func (r *Ruff) Format(
 
 }
 
-// Runs ruff format check and returns the results in a file.
-func (r *Ruff) FormatReport(ctx context.Context,
-	// file pattern to exclude from ruff format
+// Runs ruff format check and returns the results in a file. The results file
+// is named 'ruff-format-results.json' regardless of any output format specified through
+// extraArgs.
+func (r *Ruff) FormatReport(
+	ctx context.Context,
+	// extra arguments to pass to the ruff format check
 	// +optional
-	exclude []string) *dagger.File {
+	extraArgs []string) *dagger.File {
 	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
@@ -176,15 +187,13 @@ func (r *Ruff) FormatReport(ctx context.Context,
 		"--no-project",
 		"ruff",
 		"format",
-		".",
-		"--diff",
-		"--exclude=.venv/", //hack needed to get around ruff bug overriding default excludes
 	}
+	// if the user already specifies diff/check don't specify it again
+	if !slices.Contains(extraArgs, "--diff") && !slices.Contains(extraArgs, "--check") {
+		args = append(args, "--diff")
+	}
+	args = append(args, extraArgs...)
 
-	// exclude any given file patterns
-	for _, exclude := range exclude {
-		args = append(args, "--exclude", exclude)
-	}
 	// Use the base image to avoid installing packages
 	return r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).
@@ -198,9 +207,9 @@ func (r *Ruff) FormatReport(ctx context.Context,
 // to the host.
 func (r *Ruff) FormatFix(
 	ctx context.Context,
-	// file pattern to exclude from ruff format
+	// extra arguments to pass to the ruff format check
 	// +optional
-	exclude []string) *dagger.Changeset {
+	extraArgs []string) *dagger.Changeset {
 	ruffVersion := r.version(ctx)
 
 	withArg := "ruff"
@@ -215,14 +224,8 @@ func (r *Ruff) FormatFix(
 		"--no-project",
 		"ruff",
 		"format",
-		".",
-		"--exclude=.venv/", //hack needed to get around ruff bug overriding default excludes
 	}
-
-	// exclude any given file patterns
-	for _, exclude := range exclude {
-		args = append(args, "--exclude", exclude)
-	}
+	args = append(args, extraArgs...)
 	// Use the base image to avoid installing packages
 	ctr := r.Python.Base.
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache")).

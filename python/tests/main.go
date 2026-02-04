@@ -100,6 +100,23 @@ func (t *Tests) RuffLintReport(ctx context.Context) error {
 		return err
 	}
 
+	if results != "All checks passed!\n" {
+		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	return nil
+}
+
+// +check
+// Run ruff lint-report with extra arguments, expect valid/no errors
+func (t *Tests) RuffLintReportWithExtraArgs(ctx context.Context) error {
+	report := dag.Python(t.srcDir()).Ruff().LintReport(dagger.PythonRuffLintReportOpts{ExtraArgs: []string{"--output-format", "json"}})
+	results, err := report.Contents(ctx)
+
+	if err != nil {
+		return err
+	}
+
 	if results != "[]" {
 		return fmt.Errorf("Report found changes: %s", results)
 	}
@@ -128,6 +145,23 @@ func (t *Tests) RuffFormat() *dagger.Container {
 // Run ruff format-report, expect valid/no errors
 func (t *Tests) RuffFormatReport(ctx context.Context) error {
 	report := dag.Python(t.srcDir()).Ruff().FormatReport()
+	results, err := report.Contents(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if results != "" {
+		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	return nil
+}
+
+// +check
+// Run ruff format-report with arguments, expect valid/no errors
+func (t *Tests) RuffFormatReportWithExtraArgs(ctx context.Context) error {
+	report := dag.Python(t.srcDir()).Ruff().FormatReport(dagger.PythonRuffFormatReportOpts{ExtraArgs: []string{"--output-format", "full"}})
 	results, err := report.Contents(ctx)
 
 	if err != nil {
