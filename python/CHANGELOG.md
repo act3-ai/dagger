@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.0] - 2026-02-05
+
+### 🚀 Features
+
+- Allow specifying ruff report output formats [3443959](https://github.com/act3-ai/dagger/commit/3443959c45233258804fb56e50df85c1d94079c7) by @gresavage, Signed-off-by:Tom Gresavage <tomgresavage@gmail.com>
+
+
+### 🐛 Bug Fixes
+
+- Make ruff more DRY,  add format output options to reports [d473dc6](https://github.com/act3-ai/dagger/commit/d473dc6002a63e1904172b03a401d23e87a16574) by @pspurlock
+
+- Update description [cb7adb3](https://github.com/act3-ai/dagger/commit/cb7adb36d6c6aca1c737e3af661e2ad52bd3f260) by @pspurlock
+
+
 ## [0.8.0] - 2026-02-04
 
 ### 🚀 Features
