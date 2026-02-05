@@ -100,7 +100,7 @@ func (t *Tests) RuffLintReport(ctx context.Context) error {
 		return err
 	}
 
-	if results != "All checks passed!\n" {
+	if results != "[]" {
 		return fmt.Errorf("Report found changes: %s", results)
 	}
 
@@ -110,7 +110,8 @@ func (t *Tests) RuffLintReport(ctx context.Context) error {
 // +check
 // Run ruff lint-report with extra arguments, expect valid/no errors
 func (t *Tests) RuffLintReportWithExtraArgs(ctx context.Context) error {
-	report := dag.Python(t.srcDir()).Ruff().LintReport(dagger.PythonRuffLintReportOpts{ExtraArgs: []string{"--output-format", "json"}})
+	expectedName := "ruff-lint.json"
+	report := dag.Python(t.srcDir()).Ruff().LintReport(dagger.PythonRuffLintReportOpts{OutputFormat: "json", OutputFile: expectedName})
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -119,6 +120,16 @@ func (t *Tests) RuffLintReportWithExtraArgs(ctx context.Context) error {
 
 	if results != "[]" {
 		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	name, err := report.Name(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if name != expectedName {
+		return fmt.Errorf("Report file incorrectly named. Expected '%s' got '%s'", expectedName, name)
 	}
 
 	return nil
@@ -161,7 +172,8 @@ func (t *Tests) RuffFormatReport(ctx context.Context) error {
 // +check
 // Run ruff format-report with arguments, expect valid/no errors
 func (t *Tests) RuffFormatReportWithExtraArgs(ctx context.Context) error {
-	report := dag.Python(t.srcDir()).Ruff().FormatReport(dagger.PythonRuffFormatReportOpts{ExtraArgs: []string{"--output-format", "full"}})
+	expectedName := "ruff-format.json"
+	report := dag.Python(t.srcDir()).Ruff().FormatReport(dagger.PythonRuffFormatReportOpts{OutputFormat: "full", OutputFile: expectedName})
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -170,6 +182,16 @@ func (t *Tests) RuffFormatReportWithExtraArgs(ctx context.Context) error {
 
 	if results != "" {
 		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	name, err := report.Name(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if name != expectedName {
+		return fmt.Errorf("Report file incorrectly named. Expected '%s' got '%s'", expectedName, name)
 	}
 
 	return nil
