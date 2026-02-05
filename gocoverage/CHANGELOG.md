@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-02-05
+
+### 🚀 Features
+
+- Rename coverage module to gocoverage [084dff2](https://github.com/act3-ai/dagger/commit/084dff28b9b1c45e5df23b725ed7a33bb2f035e7) by @pspurlock
+
+
 ## [0.1.4] - 2026-02-04
 
 ### 🐛 Bug Fixes
