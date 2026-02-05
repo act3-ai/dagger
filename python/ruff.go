@@ -124,9 +124,7 @@ func (r *Ruff) Format(
 
 }
 
-// Runs ruff format check and returns the results in a file. The results file
-// is named 'ruff-format-results.json' regardless of any output format specified through
-// extraArgs.
+// Runs ruff format check and returns the results in a file.
 func (r *Ruff) FormatReport(
 	ctx context.Context,
 	// output format of the lint report
