@@ -13,7 +13,7 @@ import (
 )
 
 // Code coverage generator
-type Coverage struct {
+type GoCoverage struct {
 	// +private
 	Base *dagger.Container
 
@@ -30,15 +30,15 @@ func New(
 	// Exclude files from coverage
 	// +optional
 	excludes []string,
-) *Coverage {
-	return &Coverage{
+) *GoCoverage {
+	return &GoCoverage{
 		Base:     base,
 		Excludes: excludes,
 	}
 }
 
 // Code coverage from unit tests
-func (m *Coverage) UnitTests(
+func (m *GoCoverage) UnitTests(
 	ctx context.Context,
 ) (*CoverageResults, error) {
 	// produce binary coverage results instead of the traditional textual format
@@ -73,7 +73,7 @@ func (m *Coverage) UnitTests(
 }
 
 // Run a go package with coverage
-func (m *Coverage) Exec(ctx context.Context,
+func (m *GoCoverage) Exec(ctx context.Context,
 	pkg string,
 	args []string,
 ) (*CoverageResults, error) {
@@ -94,7 +94,7 @@ func (m *Coverage) Exec(ctx context.Context,
 // Code coverage results
 type CoverageResults struct {
 	// +private
-	Coverage *Coverage
+	Coverage *GoCoverage
 
 	// Raw coverage results directory (binary format)
 	// +private
