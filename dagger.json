@@ -1,17 +1,65 @@
 {
   "name": "ci",
-  "engineVersion": "v0.19.10",
+  "engineVersion": "v0.19.11",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
     {
+      "name": "data-tool-tests",
+      "source": "data-tool/tests"
+    },
+    {
+      "name": "docker-tests",
+      "source": "docker/tests"
+    },
+    {
       "name": "git-cliff",
       "source": "git-cliff"
     },
     {
+      "name": "git-cliff-tests",
+      "source": "git-cliff/tests"
+    },
+    {
+      "name": "gocoverage-tests",
+      "source": "gocoverage/tests"
+    },
+    {
+      "name": "goreleaser-tests",
+      "source": "goreleaser/tests"
+    },
+    {
+      "name": "govulncheck",
+      "source": "govulncheck"
+    },
+    {
+      "name": "markdownlint-tests",
+      "source": "markdownlint/tests"
+    },
+    {
+      "name": "python-tests",
+      "source": "python/tests"
+    },
+    {
       "name": "release",
       "source": "release"
+    },
+    {
+      "name": "release-tests",
+      "source": "release/tests"
+    },
+    {
+      "name": "renovate",
+      "source": "renovate"
+    },
+    {
+      "name": "shields-tests",
+      "source": "shields/tests"
+    },
+    {
+      "name": "yamllint-tests",
+      "source": "yamllint/tests"
     }
   ],
   "source": ".dagger"

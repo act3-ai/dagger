@@ -7,7 +7,6 @@ import (
 	"context"
 	"dagger/ci/internal/dagger"
 	"fmt"
-	"path/filepath"
 )
 
 type Ci struct {
@@ -72,14 +71,14 @@ func (m *Ci) Release(ctx context.Context,
 	return release, nil
 }
 
-func (m *Ci) UpgradeDagger() *dagger.Changeset {
-	src := m.GitRef.Tree()
-	after := dag.Container().From("registry.dagger.io/engine:latest").
-		WithDirectory("/src", src).
-		WithWorkdir(filepath.Join("/src", m.Module)).
-		WithExec([]string{"dagger", "develop"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
-		WithExec([]string{"dagger", "develop", "-m=tests"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
-		Directory("/src").Filter(dagger.DirectoryFilterOpts{Gitignore: true})
+// func (m *Ci) UpgradeDagger() *dagger.Changeset {
+// 	src := m.GitRef.Tree()
+// 	after := dag.Container().From("registry.dagger.io/engine:latest").
+// 		WithDirectory("/src", src).
+// 		WithWorkdir(filepath.Join("/src", m.Module)).
+// 		WithExec([]string{"dagger", "develop"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
+// 		WithExec([]string{"dagger", "develop", "-m=tests"}, dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
+// 		Directory("/src").Filter(dagger.DirectoryFilterOpts{Gitignore: true})
 
-	return after.Changes(src)
-}
+// 	return after.Changes(src)
+// }

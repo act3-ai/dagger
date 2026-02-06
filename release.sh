@@ -49,11 +49,6 @@ case "$cmd" in
 prepare)
     git fetch --tags
 
-    #upgrade dagger engine
-    echo "Upgrading dagger engine if needed.."
-    upgrade_dagger_engine_and_commit "$module"
-
-
     #run module tests
     dagger -m "$module/tests" checks
 
