@@ -78,19 +78,27 @@ function upgrade_dagger_engine_all() {
   #upgrade dagger engine locally first
   brew upgrade dagger
 
+  #upgrade dagger engine in all modules
+  dagger develop -r
   #create branch for updates
   LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
   git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 
-  #upgrade dagger engine in modules
-  for module in $(list_modules); do
-    upgrade_dagger_engine_and_commit "$module"
-  done
+  changed_files=$(git diff --name-only -- "**/dagger.json" "**/go.mod" "**/go.sum")
 
-  #upgrade dagger engine in test modules
-  for module in $(list_modules_with_tests); do
-    upgrade_dagger_engine_and_commit "$module"
-  done
+  if [[ -n "$changed_files" ]]; then
+    echo "📦 Module '$module' has changes:"
+    echo "$changed_files"
+
+    # Stage all changed files under the module
+    echo "$changed_files" | xargs git add
+
+    # Commit
+    echo "Creating commit: fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
+    git commit -S -m "fix($module): updating dagger engine to $LATEST_DAGGER_VERSION"
+  else
+    echo "No changes in $module"
+  fi
 
 }
 
