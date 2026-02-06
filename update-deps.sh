@@ -47,8 +47,8 @@ function upgrade_dagger_engine_all() {
     echo "$changed_files" | xargs git add
 
     # Commit
-    echo "Creating commit: fix($module): update dagger engine to $LATEST_DAGGER_VERSION"
-    git commit -S -m "fix($module): update dagger engine to $LATEST_DAGGER_VERSION"
+    echo "Creating commit: fix: update dagger engine to $LATEST_DAGGER_VERSION"
+    git commit -S -m "fix: update dagger engine to $LATEST_DAGGER_VERSION"
   else
     echo "No changes in $module"
   fi
