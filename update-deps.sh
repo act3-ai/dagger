@@ -84,7 +84,7 @@ function upgrade_dagger_engine_all() {
   LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
   git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 
-  changed_files=$(git diff --name-only -- "**/dagger.json" "**/go.mod" "**/go.sum")
+  changed_files=$(git diff --name-only -- "dagger.json" "**/dagger.json" "**/go.mod" "**/go.sum")
 
   if [[ -n "$changed_files" ]]; then
     echo "📦 Module '$module' has changes:"
