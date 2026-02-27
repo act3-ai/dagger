@@ -242,3 +242,9 @@ func (t *Tests) PytestReport(ctx context.Context) error {
 
 	return nil
 }
+
+// +check
+// Run flake8 lint, expect valid/no errors
+func (t *Tests) Flake8() *dagger.Container {
+	return dag.Python(t.srcDir()).Flake8().Lint()
+}
