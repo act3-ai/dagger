@@ -8,7 +8,7 @@ type CognitiveComplexity struct {
 	Python *Python
 }
 
-// contains commands for running flake8 on a Python project.
+// contains commands for running cognitive complexity linting on a Python project.
 func (p *Python) CognitiveComplexity() *CognitiveComplexity {
 	return &CognitiveComplexity{Python: p}
 }
