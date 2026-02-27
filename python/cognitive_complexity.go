@@ -2,7 +2,7 @@ package main
 
 import "dagger/python/internal/dagger"
 
-// run commands with flake8
+// run commands for cognitive complexity linting
 type CognitiveComplexity struct {
 	// +private
 	Python *Python
