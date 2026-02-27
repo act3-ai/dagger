@@ -242,3 +242,9 @@ func (t *Tests) PytestReport(ctx context.Context) error {
 
 	return nil
 }
+
+// +check
+// Run cognitive complexity lint, expect valid/no errors
+func (t *Tests) CognitiveComplexity() *dagger.Container {
+	return dag.Python(t.srcDir()).CognitiveComplexity().Lint()
+}

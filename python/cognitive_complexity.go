@@ -1,0 +1,51 @@
+package main
+
+import (
+	"dagger/python/internal/dagger"
+	"fmt"
+)
+
+// run commands for cognitive complexity linting
+type CognitiveComplexity struct {
+	// +private
+	Python *Python
+}
+
+// contains commands for running cognitive complexity linting on a Python project.
+func (p *Python) CognitiveComplexity() *CognitiveComplexity {
+	return &CognitiveComplexity{Python: p}
+}
+
+// Runs a cognitive complexity lint using flake8
+func (f *CognitiveComplexity) Lint(
+	// file paths in source directory to scan
+	// +optional
+	// +default="."
+	path string,
+	// file paths to exclude
+	// +optional
+	exclude string,
+	// max cognitive complexity score allowed before an error
+	// +optional
+	// +default=15
+	maxComplexity int,
+) *dagger.Container {
+
+	args := []string{
+		"uvx",
+		"--with=flake8",
+		"--with=flake8-cognitive-complexity",
+		"flake8",
+		"--max-cognitive-complexity=" + fmt.Sprint(maxComplexity),
+		"--select=CCR001",
+	}
+
+	if exclude != "" {
+		args = append(args, "--exclude="+exclude)
+	}
+
+	args = append(args, path)
+
+	return f.Python.Base.WithExec(args)
+
+}
