@@ -1,6 +1,9 @@
 package main
 
-import "dagger/python/internal/dagger"
+import (
+	"dagger/python/internal/dagger"
+	"fmt"
+)
 
 // run commands for cognitive complexity linting
 type CognitiveComplexity struct {
@@ -22,6 +25,10 @@ func (f *CognitiveComplexity) Lint(
 	// file paths to exclude
 	// +optional
 	exclude string,
+	// max cognitive complexity score allowed before an error
+	// +optional
+	// +default=15
+	maxComplexity int,
 ) *dagger.Container {
 
 	args := []string{
@@ -29,7 +36,7 @@ func (f *CognitiveComplexity) Lint(
 		"--with=flake8",
 		"--with=flake8-cognitive-complexity",
 		"flake8",
-		"--max-cognitive-complexity=15",
+		"--max-cognitive-complexity=" + fmt.Sprint(maxComplexity),
 		"--select=CCR001",
 	}
 
