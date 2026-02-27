@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.9.2] - 2026-02-27
+
+### 🐛 Bug Fixes
+
+- Add flake8-cognitive-complexity scan [6bb994b](https://github.com/act3-ai/dagger/commit/6bb994b7815be012b3facb0882a25744d2ac2d20) by @pspurlock
+
+- Add cognitive_complexity func, replace flake8 [f5bd984](https://github.com/act3-ai/dagger/commit/f5bd98482d2e02d1a12dfc4dcb8fa6c5fe883aef) by @pspurlock
+
+- Add maxComplexity arg [d0f5c64](https://github.com/act3-ai/dagger/commit/d0f5c64736534df63dc0764a68314433ffff654a) by @pspurlock
+
+
 ## [0.9.1] - 2026-02-06
 
 ### 🐛 Bug Fixes
