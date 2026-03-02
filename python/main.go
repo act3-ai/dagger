@@ -113,7 +113,13 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 }
 
 // add credentials for private python packages from git
-func (python *Python) WithGitAuth(host, username string, password *dagger.Secret) *Python {
+func (python *Python) WithGitAuth(
+	// host to authenticate with e.g gitlab.com
+	host string,
+	// username to authenticate with
+	username string,
+	// password to authenticate with
+	password *dagger.Secret) *Python {
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
 	host = strings.ReplaceAll(host, ".", "_")
