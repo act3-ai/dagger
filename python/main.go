@@ -8,7 +8,6 @@ import (
 	"context"
 	"dagger/python/internal/dagger"
 	"fmt"
-	"net/url"
 	"strings"
 )
 
@@ -120,63 +119,18 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 }
 
 // add credentials for private python packages from git
-func (python *Python) WithGitAuth(url, username string, secret *dagger.Secret) *Python {
-	python.gitCreds = append(python.gitCreds, GitCred{
-		URL:      url,
-		Username: username,
-		Secret:   secret,
-	})
-
-	gitCredScript := python.buildGitCredentialHelper()
-
+func (python *Python) WithGitAuth(host, username string, password *dagger.Secret) *Python {
+	gitUserSecret := dag.SetSecret("GIT_SECRET_USERNAME", username)
 	//add git credentials script to the Base container
-	python.Base = python.Base.WithNewFile("/usr/local/bin/git-credential-env", gitCredScript,
-		dagger.ContainerWithNewFileOpts{Permissions: 0755})
+	python.Base = python.Base.WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh"),
+		dagger.ContainerWithFileOpts{Permissions: 0755})
 
-	// add secret variables for provided gitCreds
-	for i, cred := range python.gitCreds {
-		python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_%d", i), cred.Secret)
-	}
+	// add secret variables for provided creds
+	python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
 
 	// configure git to use credential helper script
 	python.Base = python.Base.WithExec([]string{"git", "config", "--global", "credential.helper", "env"})
 
 	return python
-}
-
-// build git-credential-env script with provided git credentials for git to use
-func (python *Python) buildGitCredentialHelper() string {
-	// reads Git stdin and extracts host
-	baseScript := `#!/usr/bin/env sh
-action="$1"
-[ "$action" = "get" ] || exit 0
-unset host
-
-# Read Git input
-while IFS='=' read -r key value || [ -n "$key" ]; do
-	case "$key" in
-		host) host="$value" ;;
-	esac
-done
-
-`
-
-	// generate cred block for each given host
-	var credBlocks strings.Builder
-	for i, cred := range python.gitCreds {
-		u, _ := url.Parse(cred.URL)
-		host := u.Host
-		credBlocks.WriteString(fmt.Sprintf(`if [ "$host" = "%s" ]; then
-	echo "protocol=https"
-	echo "username=%s"
-	echo "password=$GIT_SECRET_%d"
-	exit 0
-fi
-
-`, host, cred.Username, i))
-	}
-
-	fullGitCredScript := baseScript + credBlocks.String() + "echo\n"
-
-	return fullGitCredScript
 }
