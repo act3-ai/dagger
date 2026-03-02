@@ -8,6 +8,7 @@ import (
 	"context"
 	"dagger/python/internal/dagger"
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -22,6 +23,12 @@ type Python struct {
 
 	// +private
 	SyncArgs []string
+	// +private
+	gitCreds []struct {
+		URL      string
+		Username string
+		Secret   *dagger.Secret
+	}
 }
 
 func New(
@@ -108,4 +115,73 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 	return python.Base.
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
+}
+
+// add credentials for private python packages from git
+func (python *Python) WithGitAuth(url, username string, secret *dagger.Secret) *Python {
+	python.gitCreds = append(python.gitCreds, struct {
+		URL      string
+		Username string
+		Secret   *dagger.Secret
+	}{
+		URL:      url,
+		Username: username,
+		Secret:   secret,
+	})
+
+	// add git credentials to the Base container
+	python.Base = python.buildGitCredentialHelper(python.Base)
+
+	return python
+}
+
+// build git-credential-env script with provided git credentials for git to use
+func (python *Python) buildGitCredentialHelper(base *dagger.Container) *dagger.Container {
+	if len(python.gitCreds) == 0 {
+		return base
+	}
+
+	// base script
+	baseScript := `#!/usr/bin/env sh
+action="$1"
+[ "$action" = "get" ] || exit 0
+unset host path
+while IFS='=' read -r key value; do
+  case "$key" in
+    host) host="$value" ;;
+    path) path="$value" ;;
+  esac
+done
+
+`
+
+	var credBlocks strings.Builder
+	for i, cred := range python.gitCreds {
+		u, _ := url.Parse(cred.URL)
+		host := u.Host
+		path := strings.TrimPrefix(u.Path, "/")
+		credBlocks.WriteString(fmt.Sprintf(`if [ "$host" = "%s" ] && [[ "$path" == %q* ]]; then
+  echo "username=%s"
+  echo "password=$GIT_SECRET_%d"
+  exit 0
+fi
+
+`, host, path, cred.Username, i))
+	}
+
+	fullScript := baseScript + credBlocks.String() + "echo\n"
+
+	// add credential script to container
+	base = base.WithNewFile("/usr/local/bin/git-credential-env", fullScript,
+		dagger.ContainerWithNewFileOpts{Permissions: 0755})
+
+	// add secret variables for provided gitCreds
+	for i, cred := range python.gitCreds {
+		base = base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_%d", i), cred.Secret)
+	}
+
+	// configure git to use credential helper script
+	base = base.WithExec([]string{"git", "config", "--global", "credential.helper", "env"})
+
+	return base
 }
