@@ -12,6 +12,7 @@ while IFS='=' read -r key value || [ -n "$key" ]; do
 	esac
 done
 
+#exit normally if host not provided, otherwise use creds
 [ -z "${host:-}" ] && exit 0
 
 username_env="GIT_SECRET_USERNAME_${host}"

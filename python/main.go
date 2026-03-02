@@ -121,6 +121,10 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 // add credentials for private python packages from git
 func (python *Python) WithGitAuth(host, username string, password *dagger.Secret) *Python {
 	gitUserSecret := dag.SetSecret("GIT_SECRET_USERNAME", username)
+
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
 	//add git credentials script to the Base container
 	python.Base = python.Base.WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh"),
 		dagger.ContainerWithFileOpts{Permissions: 0755})
