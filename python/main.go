@@ -119,10 +119,6 @@ func (python *Python) WithGitAuth(host, username string, password *dagger.Secret
 	host = strings.ReplaceAll(host, ".", "_")
 	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
-	// convert host to be in proper env var format.
-	host = strings.ToUpper(host)
-	host = strings.ReplaceAll(host, ".", "_")
-
 	// add secret variables for provided creds
 	python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
 		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
