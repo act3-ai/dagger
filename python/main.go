@@ -22,14 +22,6 @@ type Python struct {
 
 	// +private
 	SyncArgs []string
-	// +private
-	gitCreds []GitCred
-}
-
-type GitCred struct {
-	URL      string
-	Username string
-	Secret   *dagger.Secret
 }
 
 func New(
