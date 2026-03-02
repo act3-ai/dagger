@@ -24,11 +24,13 @@ type Python struct {
 	// +private
 	SyncArgs []string
 	// +private
-	gitCreds []struct {
-		URL      string
-		Username string
-		Secret   *dagger.Secret
-	}
+	gitCreds []GitCred
+}
+
+type GitCred struct {
+	URL      string
+	Username string
+	Secret   *dagger.Secret
 }
 
 func New(
@@ -119,16 +121,11 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 
 // add credentials for private python packages from git
 func (python *Python) WithGitAuth(url, username string, secret *dagger.Secret) *Python {
-	python.gitCreds = append(python.gitCreds, struct {
-		URL      string
-		Username string
-		Secret   *dagger.Secret
-	}{
+	python.gitCreds = append(python.gitCreds, GitCred{
 		URL:      url,
 		Username: username,
 		Secret:   secret,
 	})
-
 	// add git credentials to the Base container
 	python.Base = python.buildGitCredentialHelper(python.Base)
 
