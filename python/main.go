@@ -140,37 +140,34 @@ func (python *Python) buildGitCredentialHelper(base *dagger.Container) *dagger.C
 	if len(python.gitCreds) == 0 {
 		return base
 	}
-	// base script: reads Git stdin and extracts host/path
+	// reads Git stdin and extracts host
 	baseScript := `#!/usr/bin/env sh
 action="$1"
 [ "$action" = "get" ] || exit 0
-unset host path
-while IFS='=' read -r key value; do
-  case "$key" in
-    host) host="$value" ;;
-    path) path="$value" ;;
-  esac
+unset host
+
+# Read Git input
+while IFS='=' read -r key value || [ -n "$key" ]; do
+	case "$key" in
+		host) host="$value" ;;
+	esac
 done
 
 `
 
+	// generate cred block for each given host
 	var credBlocks strings.Builder
 	for i, cred := range python.gitCreds {
 		u, _ := url.Parse(cred.URL)
 		host := u.Host
-		path := strings.TrimPrefix(u.Path, "/") // remove leading slash
-
 		credBlocks.WriteString(fmt.Sprintf(`if [ "$host" = "%s" ]; then
-  case "$path" in
-    %s*)
-      echo "username=%s"
-      echo "password=$GIT_SECRET_%d"
-      exit 0
-      ;;
-  esac
+	echo "protocol=https"
+	echo "username=%s"
+	echo "password=$GIT_SECRET_%d"
+	exit 0
 fi
 
-`, host, path, cred.Username, i))
+`, host, cred.Username, i))
 	}
 
 	fullScript := baseScript + credBlocks.String() + "echo\n"
