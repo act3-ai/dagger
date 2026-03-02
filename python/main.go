@@ -126,17 +126,26 @@ func (python *Python) WithGitAuth(url, username string, secret *dagger.Secret) *
 		Username: username,
 		Secret:   secret,
 	})
-	// add git credentials to the Base container
-	python.Base = python.buildGitCredentialHelper(python.Base)
+
+	gitCredScript := python.buildGitCredentialHelper()
+
+	//add git credentials script to the Base container
+	python.Base = python.Base.WithNewFile("/usr/local/bin/git-credential-env", gitCredScript,
+		dagger.ContainerWithNewFileOpts{Permissions: 0755})
+
+	// add secret variables for provided gitCreds
+	for i, cred := range python.gitCreds {
+		python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_%d", i), cred.Secret)
+	}
+
+	// configure git to use credential helper script
+	python.Base = python.Base.WithExec([]string{"git", "config", "--global", "credential.helper", "env"})
 
 	return python
 }
 
 // build git-credential-env script with provided git credentials for git to use
-func (python *Python) buildGitCredentialHelper(base *dagger.Container) *dagger.Container {
-	if len(python.gitCreds) == 0 {
-		return base
-	}
+func (python *Python) buildGitCredentialHelper() string {
 	// reads Git stdin and extracts host
 	baseScript := `#!/usr/bin/env sh
 action="$1"
@@ -167,19 +176,7 @@ fi
 `, host, cred.Username, i))
 	}
 
-	fullScript := baseScript + credBlocks.String() + "echo\n"
+	fullGitCredScript := baseScript + credBlocks.String() + "echo\n"
 
-	// add credential script to container
-	base = base.WithNewFile("/usr/local/bin/git-credential-env", fullScript,
-		dagger.ContainerWithNewFileOpts{Permissions: 0755})
-
-	// add secret variables for provided gitCreds
-	for i, cred := range python.gitCreds {
-		base = base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_%d", i), cred.Secret)
-	}
-
-	// configure git to use credential helper script
-	base = base.WithExec([]string{"git", "config", "--global", "credential.helper", "env"})
-
-	return base
+	return fullGitCredScript
 }
