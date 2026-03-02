@@ -12,11 +12,12 @@ while IFS='=' read -r key value || [ -n "$key" ]; do
 	esac
 done
 
-#exit normally if host not provided, otherwise use creds
+# exit normally if host not provided, otherwise use creds
 [ -z "${host:-}" ] && exit 0
-
-username_env="GIT_SECRET_USERNAME_${host}"
-password_env="GIT_SECRET_PASSWORD_${host}"
+# convert host to all uppercase, replacing dots with slashes so var expansion works
+converted_host=$(echo "$host" | tr '[:lower:]' '[:upper:]' | tr '.' '_')
+username_env="GIT_SECRET_USERNAME_${converted_host}"
+password_env="GIT_SECRET_PASSWORD_${converted_host}"
 
 username="${!username_env:-}"
 password="${!password_env:-}"
