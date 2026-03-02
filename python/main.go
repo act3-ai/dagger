@@ -114,7 +114,10 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 
 // add credentials for private python packages from git
 func (python *Python) WithGitAuth(host, username string, password *dagger.Secret) *Python {
-	gitUserSecret := dag.SetSecret("GIT_SECRET_USERNAME", username)
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
+	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
