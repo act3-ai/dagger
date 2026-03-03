@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.14] - 2026-03-03
+
+### 🐛 Bug Fixes
+
+- Set default platform to dagger engine [8489100](https://github.com/act3-ai/dagger/commit/8489100d910bf5ccceb2b5d22843f7538d448ee2) by @pspurlock
+
+
 ## [0.1.13] - 2026-02-06
 
 ### 🐛 Bug Fixes
