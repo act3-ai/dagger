@@ -181,10 +181,18 @@ func (d *Docker) Build(
 	// +default=""
 	target string,
 	// platform to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
-	// +default="linux/amd64"
+	// defaults to the platform of the dagger engine
+	// +optional
 	platform dagger.Platform,
 ) (*dagger.Container, error) {
-
+	// check if platform given, and set to default of the engine if not
+	var err error
+	if platform == "" {
+		platform, err = dag.DefaultPlatform(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
 	//get secrets
 	secrets, err := d.getSecrets(ctx)
 	if err != nil {
@@ -226,13 +234,22 @@ func (d *Docker) Publish(ctx context.Context,
 	// +default=""
 	target string,
 	// platforms to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
-	// +default=["linux/amd64"]
+	// defaults to the platform of the dagger engine
+	// +optional
 	platforms []dagger.Platform,
 ) ([]string, error) {
 	if len(tags) < 1 {
 		return nil, fmt.Errorf("no tags provided, please specify a registry address and a set of tags")
 	}
+	// check if platform given, and set to default of the engine if not
+	if len(platforms) == 0 {
+		defaultPlatform, err := dag.DefaultPlatform(ctx)
+		if err != nil {
+			return nil, err
+		}
 
+		platforms = []dagger.Platform{defaultPlatform}
+	}
 	//check for platforms and build each one
 	platformVariants := make([]*dagger.Container, 0, len(platforms))
 	for _, platform := range platforms {

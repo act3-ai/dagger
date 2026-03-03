@@ -45,7 +45,9 @@ func New(
 		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
 		WithEnvVariable("UV_NATIVE_TLS", "true").
 		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-		WithEnvVariable("UV_LINK_MODE", "copy")
+		WithEnvVariable("UV_LINK_MODE", "copy").
+		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
 
 	if syncArgs == nil {
 		syncArgs = []string{
@@ -108,4 +110,24 @@ func (python *Python) CheckLock(ctx context.Context) (string, error) {
 	return python.Base.
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
+}
+
+// add credentials for private python packages from git
+func (python *Python) WithGitAuth(
+	// host to authenticate with e.g gitlab.com
+	host string,
+	// username to authenticate with
+	username string,
+	// password to authenticate with
+	password *dagger.Secret) *Python {
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
+	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+
+	// add secret variables for provided creds
+	python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
+
+	return python
 }
