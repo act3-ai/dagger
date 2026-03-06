@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 )
 
 // environment variable names
@@ -95,7 +96,9 @@ func New(ctx context.Context,
 			return c
 		}).
 		WithWorkdir(srcDir).
-		WithMountedDirectory(srcDir, src)
+		WithMountedDirectory(srcDir, src).
+		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
 
 	gr := &Goreleaser{
 		Container:      container,
@@ -142,18 +145,23 @@ func (gr *Goreleaser) WithSecretVariable(
 	return gr
 }
 
+// Add credentials for use with Git
 func (gr *Goreleaser) WithGitAuth(
-	// registry's hostname
-	address string,
-	// username in registry
+	// host to authenticate with e.g gitlab.com
+	host string,
+	// username to authenticate with
 	username string,
-	// password or token for registry
-	secret *dagger.Secret,
-) *Goreleaser {
-	user := dag.SetSecret("username", username)
-	netrc := dag.Netrc().WithLogin(address, user, secret)
-	gr.Container = gr.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret()).
-		WithEnvVariable("GOPRIVATE", address)
+	// password to authenticate with
+	password *dagger.Secret) *Goreleaser {
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
+	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+
+	// add secret variables for provided creds
+	gr.Container = gr.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
+
 	return gr
 }
 

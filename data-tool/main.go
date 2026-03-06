@@ -41,7 +41,9 @@ func New(
 		WithFile("/usr/local/bin/ace-dt", acedt).
 		WithUser("0").
 		WithMountedCache(cachePath, dag.CacheVolume("oci-cache")).
-		WithEnvVariable("ACE_DT_CACHE_PATH", cachePath)
+		WithEnvVariable("ACE_DT_CACHE_PATH", cachePath).
+		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
 	return &DataTool{
 		Container: c,
 	}
@@ -63,16 +65,21 @@ func (m *DataTool) WithRegistryAuth(
 
 // Add credentials for use with Git via "ace-dt git"
 func (m *DataTool) WithGitAuth(
-	// registry's hostname
-	address string,
-	// username in registry
+	// host to authenticate with e.g gitlab.com
+	host string,
+	// username to authenticate with
 	username string,
-	// password or token for registry
-	secret *dagger.Secret,
-) *DataTool {
-	user := dag.SetSecret("username", username)
-	netrc := dag.Netrc().WithLogin(address, user, secret)
-	m.Container = m.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret())
+	// password to authenticate with
+	password *dagger.Secret) *DataTool {
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
+	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+
+	// add secret variables for provided creds
+	m.Container = m.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
+
 	return m
 }
 
