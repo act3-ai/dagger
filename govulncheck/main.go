@@ -143,7 +143,8 @@ func (gv *Govulncheck) WithGitAuth(
 
 	// add secret variables for provided creds
 	gv.Container = gv.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
-		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password)
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password).
+		WithEnvVariable("GOPRIVATE", host)
 
 	return gv
 }
