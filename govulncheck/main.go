@@ -42,6 +42,9 @@ func New(
 	} else {
 		container = container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, version)})
 	}
+	container = container.WithFile("/usr/local/bin/git-credential-env",
+		dag.CurrentModule().Source().File("bin/git-credential-env.sh")).            // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"}) // needed for WithGitAuth()
 
 	return &Govulncheck{
 		Container: container,
@@ -125,18 +128,24 @@ func (gv *Govulncheck) ScanBinary(ctx context.Context,
 	}
 }
 
+// Add credentials for private packages in git
 func (gv *Govulncheck) WithGitAuth(
-	// registry's hostname
-	address string,
-	// username in registry
+	// host to authenticate with e.g gitlab.com
+	host string,
+	// username to authenticate with
 	username string,
-	// password or token for registry
-	secret *dagger.Secret,
-) *Govulncheck {
-	user := dag.SetSecret("username", username)
-	netrc := dag.Netrc().WithLogin(address, user, secret)
-	gv.Container = gv.Container.WithMountedSecret("/root/.netrc", netrc.AsSecret()).
-		WithEnvVariable("GOPRIVATE", address)
+	// password to authenticate with
+	password *dagger.Secret) *Govulncheck {
+	// convert host to be in proper env var format.
+	host = strings.ToUpper(host)
+	host = strings.ReplaceAll(host, ".", "_")
+	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+
+	// add secret variables for provided creds
+	gv.Container = gv.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
+		WithSecretVariable(fmt.Sprintf("GIT_SECRET_PASSWORD_%s", host), password).
+		WithEnvVariable("GOPRIVATE", host)
+
 	return gv
 }
 
