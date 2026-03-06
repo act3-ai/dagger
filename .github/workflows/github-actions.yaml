@@ -19,11 +19,11 @@ jobs:
 
       - name: test-docker
         working-directory: ./docker/tests
-        run: dagger checks
+        run: dagger checks --progress=plain
 
       - name: test-git-cliff
         working-directory: ./git-cliff/tests
-        run: dagger checks
+        run: dagger checks --progress=tty
 
       - name: test-goreleaser
         working-directory: ./goreleaser/tests
