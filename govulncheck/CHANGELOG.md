@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.4] - 2026-03-09
+
+### 🐛 Bug Fixes
+
+- Remove netrc module and switch to git-credential-env for git auth [6a8a0da](https://github.com/act3-ai/dagger/commit/6a8a0da7b485354661dfd13f3a8b989d4ce2cfba) by @pspurlock
+
+- Add GOPRIVATE var [ec942cc](https://github.com/act3-ai/dagger/commit/ec942cc2c3d87bd1864133152369bd2028289fa0) by @pspurlock
+
+- Update dagger engine to v0.20.1 [0c35251](https://github.com/act3-ai/dagger/commit/0c3525176cc6855e753a65d5c6dc4499b7fd4e1a) by @pspurlock
+
+
 ## [0.2.3] - 2026-02-06
 
 ### 🐛 Bug Fixes
