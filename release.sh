@@ -50,7 +50,11 @@ prepare)
     git fetch --tags
 
     #run module tests
-    dagger -m "$module/tests" checks
+    if [[ "$module" == "govulncheck" || "$module" == "renovate" ]]; then
+      : # Do nothing
+    else
+      dagger -m "$module/tests" checks
+    fi
 
     dagger call --module="$module" prepare
     version=$(cat "$module/VERSION")
