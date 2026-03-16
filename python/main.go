@@ -30,25 +30,12 @@ func New(
 	src *dagger.Directory,
 	// base development container
 	// +optional
+	// +defaultAddress="ghcr.io/astral-sh/uv:debian"
 	base *dagger.Container,
 	// extra arguments for uv sync command
 	// +optional
 	syncArgs []string,
 ) *Python {
-	if base == nil {
-		base = dag.Container().From(uvImageDefault)
-	}
-	// base UV container with source and cache volumes
-	base = base.
-		WithDirectory("/app", src).
-		WithWorkdir("/app").
-		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
-		WithEnvVariable("UV_NATIVE_TLS", "true").
-		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
-		WithEnvVariable("UV_LINK_MODE", "copy").
-		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
-		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
-
 	if syncArgs == nil {
 		syncArgs = []string{
 			"--frozen",
@@ -63,15 +50,49 @@ func New(
 	}
 }
 
-// returns a base UV container and builds dev dependencies using `uv sync`
-func (python *Python) Container() *dagger.Container {
+// base UV container with cache mounts and git-credential-helper config set
+func (python *Python) base() *dagger.Container {
 	return python.Base.
-		WithExec(
-			append(
-				[]string{"uv", "sync"},
-				python.SyncArgs...,
-			),
-		)
+		WithWorkdir("/app").
+		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
+		WithMountedCache("/root/.local/share/uv", dag.CacheVolume("uv-home-cache")).
+		WithEnvVariable("UV_NATIVE_TLS", "true").
+		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
+		WithEnvVariable("UV_LINK_MODE", "copy").
+		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
+}
+
+// adds project source to base container
+func (python *Python) project() *dagger.Container {
+	return python.base().WithDirectory("/app", python.Source)
+}
+
+// builds uv dependencies only from pyproject.toml and uv.lock files
+func (python *Python) deps(ctx context.Context) (*dagger.Container, error) {
+	if exists, err := python.Source.Exists(ctx, "pyproject.toml"); err != nil || !exists {
+		return nil, fmt.Errorf("pyproject.toml not found")
+	}
+	if exists, err := python.Source.Exists(ctx, "uv.lock"); err != nil || !exists {
+		return nil, fmt.Errorf("uv.lock not found")
+	}
+
+	return python.base().
+		WithFile("/app/pyproject.toml", python.Source.File("pyproject.toml")).
+		WithFile("/app/uv.lock", python.Source.File("uv.lock")).
+		// WithMountedCache("/app/.venv", dag.CacheVolume("python-venv")).
+		WithExec(append([]string{"uv", "sync", "--no-install-project"}, python.SyncArgs...)), nil
+}
+
+// returns a base UV container with given source and builds dev dependencies using `uv sync`
+func (python *Python) Runtime(ctx context.Context) (*dagger.Container, error) {
+	uvDeps, err := python.deps(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return uvDeps.
+		WithDirectory("/app", python.Source).
+		WithExec([]string{"uv", "sync"}), nil
 }
 
 // Add creds for private python package index

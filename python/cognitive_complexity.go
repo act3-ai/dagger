@@ -32,7 +32,8 @@ func (f *CognitiveComplexity) Lint(
 ) *dagger.Container {
 
 	args := []string{
-		"uvx",
+		"uv",
+		"run",
 		"--with=flake8",
 		"--with=flake8-cognitive-complexity",
 		"flake8",
@@ -46,6 +47,6 @@ func (f *CognitiveComplexity) Lint(
 
 	args = append(args, path)
 
-	return f.Python.Base.WithExec(args)
+	return f.Python.project().WithExec(args)
 
 }

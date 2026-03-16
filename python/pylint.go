@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"dagger/python/internal/dagger"
 )
 
@@ -16,12 +17,17 @@ func (p *Python) Pylint() *Pylint {
 
 // Runs pylint on a given source directory. Returns a container that will fail on any errors.
 func (pl *Pylint) Lint(
+	ctx context.Context,
 	// +optional
 	// +default="text"
 	outputFormat string,
-) *dagger.Container {
+) (*dagger.Container, error) {
+	ctr, err := pl.Python.Runtime(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	ctr := pl.Python.Container().
+	return ctr.
 		WithExec(
 			[]string{
 				"uv",
@@ -34,15 +40,18 @@ func (pl *Pylint) Lint(
 				"--output-format",
 				outputFormat,
 				"."},
-		)
-	return ctr
+		), nil
 
 }
 
 // Runs pylint and returns results in a json file
-func (pl *Pylint) Report() *dagger.File {
+func (pl *Pylint) Report(ctx context.Context) (*dagger.File, error) {
+	ctr, err := pl.Python.Runtime(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return pl.Python.Container().
+	return ctr.
 		WithExec(
 			[]string{
 				"uv",
@@ -59,6 +68,6 @@ func (pl *Pylint) Report() *dagger.File {
 				"."},
 			dagger.ContainerWithExecOpts{
 				Expect: dagger.ReturnTypeAny}).
-		File("pylint-results.json")
+		File("pylint-results.json"), nil
 
 }

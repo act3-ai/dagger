@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"dagger/python/internal/dagger"
 )
 
@@ -62,6 +63,7 @@ func (pt *Pytest) pytestArgs(
 
 // Runs pytest and returns a container that will fail on any errors.
 func (pt *Pytest) Test(
+	ctx context.Context,
 	// provide optional test paths for pytest to use,
 	// otherwise pytest will autodiscover from the given source dir
 	// +optional
@@ -69,17 +71,21 @@ func (pt *Pytest) Test(
 	// extra arguments to pytest, e.g., add "--cov-fail-under=80" to fail if coverage is below 80%
 	// +optional
 	extraArgs []string,
-) *dagger.Container {
-
+) (*dagger.Container, error) {
+	ctr, err := pt.Python.Runtime(ctx)
+	if err != nil {
+		return nil, err
+	}
 	args := pt.pytestArgs(testPaths, extraArgs)
 
-	return pt.Python.Container().
-		WithExec(args)
+	return ctr.
+		WithExec(args), nil
 
 }
 
 // Runs pytest and returns results in multiple file formats. Current formats: json, xml, and html.
 func (pt *Pytest) Report(
+	ctx context.Context,
 	// provide optional test paths for pytest to use,
 	// otherwise pytest will autodiscover from the given source dir
 	// +optional
@@ -88,10 +94,13 @@ func (pt *Pytest) Report(
 	// +optional
 	extraArgs []string,
 ) (*PytestResults, error) {
-
+	ctr, err := pt.Python.Runtime(ctx)
+	if err != nil {
+		return nil, err
+	}
 	args := pt.pytestArgs(testPaths, extraArgs)
 
-	ctr := pt.Python.Container().
+	ctr = ctr.
 		WithExec(
 			args,
 			dagger.ContainerWithExecOpts{
