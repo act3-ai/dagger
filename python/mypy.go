@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"dagger/python/internal/dagger"
 )
 
@@ -18,9 +17,8 @@ func (p *Python) Mypy() *Mypy {
 
 // Runs mypy on a given source directory. Returns a container that will fail on any errors.
 func (m *Mypy) Lint(
-	ctx context.Context,
 	// +optional
-	outputFormat string) (*dagger.Container, error) {
+	outputFormat string) *dagger.Container {
 	args := []string{
 		"uv",
 		"run",
@@ -35,24 +33,16 @@ func (m *Mypy) Lint(
 
 	// Add path
 	args = append(args, ".")
-	ctr, err := m.Python.Runtime(ctx)
-	if err != nil {
-		return nil, err
-	}
 
-	return ctr.
-		WithExec(args), nil
+	return m.Python.DevContainer().
+		WithExec(args)
 
 }
 
 // Runs mypy and returns results in a json file.
-func (m *Mypy) Report(ctx context.Context) (*dagger.File, error) {
-	ctr, err := m.Python.Runtime(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (m *Mypy) Report() *dagger.File {
 
-	return ctr.
+	return m.Python.DevContainer().
 		WithExec([]string{
 			"uv",
 			"run",
@@ -64,6 +54,6 @@ func (m *Mypy) Report(ctx context.Context) (*dagger.File, error) {
 			dagger.ContainerWithExecOpts{
 				Expect:         dagger.ReturnTypeAny,
 				RedirectStdout: "mypy-results.json"}).
-		File("mypy-results.json"), nil
+		File("mypy-results.json")
 
 }

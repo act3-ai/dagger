@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"dagger/python/internal/dagger"
 )
 
@@ -16,12 +15,9 @@ func (p *Python) Pyright() *Pyright {
 }
 
 // Runs pyright on a given source directory. Returns a container that will fail on any errors.
-func (pr *Pyright) Lint(ctx context.Context) (*dagger.Container, error) {
-	ctr, err := pr.Python.Runtime(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return ctr.
+func (pr *Pyright) Lint() *dagger.Container {
+
+	return pr.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",
@@ -29,18 +25,14 @@ func (pr *Pyright) Lint(ctx context.Context) (*dagger.Container, error) {
 				"--with=pyright",
 				"pyright",
 				".",
-			}), nil
+			})
 
 }
 
 // Runs pyright and returns results in a json file.
-func (pr *Pyright) Report(ctx context.Context) (*dagger.File, error) {
-	ctr, err := pr.Python.Runtime(ctx)
-	if err != nil {
-		return nil, err
-	}
+func (pr *Pyright) Report() *dagger.File {
 
-	return ctr.
+	return pr.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",
@@ -53,6 +45,6 @@ func (pr *Pyright) Report(ctx context.Context) (*dagger.File, error) {
 			dagger.ContainerWithExecOpts{
 				Expect:         dagger.ReturnTypeAny,
 				RedirectStdout: "pyright-results.json"}).
-		File("pyright-results.json"), nil
+		File("pyright-results.json")
 
 }

@@ -8,6 +8,7 @@ import (
 )
 
 type Ruff struct {
+
 	// +private
 	Python *Python
 }
@@ -48,7 +49,7 @@ func (r *Ruff) baseArgs(ctx context.Context, subcommand string) []string {
 }
 
 func (r *Ruff) baseContainer() *dagger.Container {
-	return r.Python.project().
+	return r.Python.Project().
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache"))
 }
 
@@ -82,7 +83,7 @@ func (r *Ruff) LintFix(
 	ctr := r.baseContainer().WithExec(args)
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
-	return afterChanges.Changes(r.Python.project().Directory("/app"))
+	return afterChanges.Changes(r.Python.Project().Directory("/app"))
 
 }
 
@@ -161,6 +162,6 @@ func (r *Ruff) FormatFix(
 	ctr := r.baseContainer().WithExec(args)
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv/", ".ruff_cache/"}})
-	return afterChanges.Changes(r.Python.project().Directory("/app"))
+	return afterChanges.Changes(r.Python.Project().Directory("/app"))
 
 }

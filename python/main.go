@@ -64,35 +64,26 @@ func (python *Python) base() *dagger.Container {
 }
 
 // adds project source to base container
-func (python *Python) project() *dagger.Container {
+func (python *Python) Project() *dagger.Container {
 	return python.base().WithDirectory("/app", python.Source)
 }
 
 // builds uv dependencies only from pyproject.toml and uv.lock files
-func (python *Python) deps(ctx context.Context) (*dagger.Container, error) {
-	if exists, err := python.Source.Exists(ctx, "pyproject.toml"); err != nil || !exists {
-		return nil, fmt.Errorf("pyproject.toml not found")
-	}
-	if exists, err := python.Source.Exists(ctx, "uv.lock"); err != nil || !exists {
-		return nil, fmt.Errorf("uv.lock not found")
-	}
+func (python *Python) deps() *dagger.Container {
 
 	return python.base().
 		WithFile("/app/pyproject.toml", python.Source.File("pyproject.toml")).
 		WithFile("/app/uv.lock", python.Source.File("uv.lock")).
 		// WithMountedCache("/app/.venv", dag.CacheVolume("python-venv")).
-		WithExec(append([]string{"uv", "sync", "--no-install-project"}, python.SyncArgs...)), nil
+		WithExec(append([]string{"uv", "sync", "--no-install-project"}, python.SyncArgs...))
 }
 
 // returns a base UV container with given source and builds dev dependencies using `uv sync`
-func (python *Python) Runtime(ctx context.Context) (*dagger.Container, error) {
-	uvDeps, err := python.deps(ctx)
-	if err != nil {
-		return nil, err
-	}
-	return uvDeps.
+func (python *Python) DevContainer() *dagger.Container {
+
+	return python.deps().
 		WithDirectory("/app", python.Source).
-		WithExec([]string{"uv", "sync"}), nil
+		WithExec([]string{"uv", "sync"})
 }
 
 // Add creds for private python package index
@@ -128,7 +119,7 @@ func (python *Python) WithNetrc(
 
 // check that the lockfile is in sync with pyproject.toml
 func (python *Python) CheckLock(ctx context.Context) (string, error) {
-	return python.Base.
+	return python.Project().
 		WithExec([]string{"uv", "lock", "--check"}).
 		Stdout(ctx)
 }
