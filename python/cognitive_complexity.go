@@ -24,6 +24,7 @@ func (f *CognitiveComplexity) Lint(
 	path string,
 	// file paths to exclude
 	// +optional
+	// +default=".venv"
 	exclude string,
 	// max cognitive complexity score allowed before an error
 	// +optional
@@ -47,6 +48,6 @@ func (f *CognitiveComplexity) Lint(
 
 	args = append(args, path)
 
-	return f.Python.project().WithExec(args)
+	return f.Python.Project().WithExec(args)
 
 }
