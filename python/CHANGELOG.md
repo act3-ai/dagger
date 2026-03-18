@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-03-18
+
+### 🚀 Features
+
+- Separate uv sync installs to improve caching, move base out of constructor [de1a47b](https://github.com/act3-ai/dagger/commit/de1a47b605f58bddf8e8d9b32a1e1c542050ded1) by @pspurlock
+
+
+### 🐛 Bug Fixes
+
+- Add default exclude for .venv in cog complexity [508858c](https://github.com/act3-ai/dagger/commit/508858c512aa6a6f601f95058dbd6e12f277c1b0) by @pspurlock
+
+- Rename Runtime to DevContainer, make Project() public [fd3c0d4](https://github.com/act3-ai/dagger/commit/fd3c0d4061a43ac1a2bc352f37ce5676bb43d6ea) by @pspurlock
+
+
 ## [0.10.1] - 2026-03-09
 
 ### 🐛 Bug Fixes
