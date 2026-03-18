@@ -70,10 +70,9 @@ func (pt *Pytest) Test(
 	// +optional
 	extraArgs []string,
 ) *dagger.Container {
-
 	args := pt.pytestArgs(testPaths, extraArgs)
 
-	return pt.Python.Container().
+	return pt.Python.DevContainer().
 		WithExec(args)
 
 }
@@ -87,11 +86,10 @@ func (pt *Pytest) Report(
 	// extra arguments to pytest, e.g., add "--cov-fail-under=80" to fail if coverage is below 80%
 	// +optional
 	extraArgs []string,
-) (*PytestResults, error) {
-
+) *PytestResults {
 	args := pt.pytestArgs(testPaths, extraArgs)
 
-	ctr := pt.Python.Container().
+	ctr := pt.Python.DevContainer().
 		WithExec(
 			args,
 			dagger.ContainerWithExecOpts{
@@ -113,5 +111,5 @@ func (pt *Pytest) Report(
 		Json:   json,
 		Html:   html,
 		Merged: merged,
-	}, nil
+	}
 }

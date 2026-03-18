@@ -17,7 +17,7 @@ func (p *Python) Pyright() *Pyright {
 // Runs pyright on a given source directory. Returns a container that will fail on any errors.
 func (pr *Pyright) Lint() *dagger.Container {
 
-	return pr.Python.Container().
+	return pr.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",
@@ -32,7 +32,7 @@ func (pr *Pyright) Lint() *dagger.Container {
 // Runs pyright and returns results in a json file.
 func (pr *Pyright) Report() *dagger.File {
 
-	return pr.Python.Container().
+	return pr.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",

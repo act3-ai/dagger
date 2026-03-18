@@ -34,7 +34,7 @@ func (m *Mypy) Lint(
 	// Add path
 	args = append(args, ".")
 
-	return m.Python.Container().
+	return m.Python.DevContainer().
 		WithExec(args)
 
 }
@@ -42,7 +42,7 @@ func (m *Mypy) Lint(
 // Runs mypy and returns results in a json file.
 func (m *Mypy) Report() *dagger.File {
 
-	return m.Python.Container().
+	return m.Python.DevContainer().
 		WithExec([]string{
 			"uv",
 			"run",

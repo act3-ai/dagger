@@ -33,10 +33,11 @@ print("it worked")
 // Run mypy, expect valid/no errors
 func (t *Tests) Base(ctx context.Context) error {
 	const scriptPath = "script.py"
-	d := dag.Directory().WithNewFile(scriptPath, script)
+	// d := dag.Directory().WithNewFile(scriptPath, script)
 	out, err := dag.
-		Python(d).
-		Base().
+		Python(t.srcDir()).
+		Project().
+		WithNewFile(scriptPath, script).
 		WithExec([]string{"uv", "run", scriptPath}).
 		Stdout(ctx)
 	if err != nil {
@@ -73,7 +74,7 @@ func (t *Tests) Pyright() *dagger.Container {
 func (t *Tests) RuffVersion(ctx context.Context) error {
 
 	//add ruff to pyproject.toml first, then use that version to run lint
-	pinnedVerDir := dag.Python(t.srcDir()).Base().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
+	pinnedVerDir := dag.Python(t.srcDir()).DevContainer().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
 
 	pinnedVer, _ := dag.Python(pinnedVerDir).Ruff().Lint().WithExec([]string{"uv", "tree", "--package", "ruff"}).Stdout(ctx)
 

@@ -22,7 +22,7 @@ func (python *Python) Publish(ctx context.Context,
 	buildCmd = append(buildCmd, buildArgs...)
 
 	// Use the base image to avoid installing packages
-	c := python.Base.
+	c := python.Project().
 		WithEnvVariable("UV_PUBLISH_CHECK_URL", publishUrl+"/simple").
 		WithEnvVariable("UV_PUBLISH_URL", publishUrl).
 		WithEnvVariable("UV_PUBLISH_USERNAME", username).

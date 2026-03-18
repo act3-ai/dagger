@@ -20,8 +20,7 @@ func (pl *Pylint) Lint(
 	// +default="text"
 	outputFormat string,
 ) *dagger.Container {
-
-	ctr := pl.Python.Container().
+	return pl.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",
@@ -35,14 +34,12 @@ func (pl *Pylint) Lint(
 				outputFormat,
 				"."},
 		)
-	return ctr
 
 }
 
 // Runs pylint and returns results in a json file
 func (pl *Pylint) Report() *dagger.File {
-
-	return pl.Python.Container().
+	return pl.Python.DevContainer().
 		WithExec(
 			[]string{
 				"uv",

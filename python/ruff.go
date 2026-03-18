@@ -8,6 +8,7 @@ import (
 )
 
 type Ruff struct {
+
 	// +private
 	Python *Python
 }
@@ -21,7 +22,7 @@ func (p *Python) Ruff() *Ruff {
 // Gets the ruff version from the dependency tree if it exists
 func (r *Ruff) version(ctx context.Context) string {
 	// Use uv to get the version string for ruff and parse.
-	ruffVersion, _ := r.Python.Base.WithExec([]string{"uv", "tree", "--frozen", "--package", "ruff"}).Stdout(ctx)
+	ruffVersion, _ := r.baseContainer().WithExec([]string{"uv", "tree", "--frozen", "--package", "ruff"}).Stdout(ctx)
 
 	if ruffVersion != "" {
 		ruffVersion = strings.ReplaceAll(strings.Split(ruffVersion, "v")[1], "\n", "")
@@ -48,7 +49,7 @@ func (r *Ruff) baseArgs(ctx context.Context, subcommand string) []string {
 }
 
 func (r *Ruff) baseContainer() *dagger.Container {
-	return r.Python.Base.
+	return r.Python.Project().
 		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache"))
 }
 
@@ -82,7 +83,7 @@ func (r *Ruff) LintFix(
 	ctr := r.baseContainer().WithExec(args)
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv", ".ruff_cache"}})
 
-	return afterChanges.Changes(r.Python.Base.Directory("/app"))
+	return afterChanges.Changes(r.Python.Project().Directory("/app"))
 
 }
 
@@ -161,6 +162,6 @@ func (r *Ruff) FormatFix(
 	ctr := r.baseContainer().WithExec(args)
 
 	afterChanges := ctr.Directory("/app").Filter(dagger.DirectoryFilterOpts{Exclude: []string{".venv/", ".ruff_cache/"}})
-	return afterChanges.Changes(r.Python.Base.Directory("/app"))
+	return afterChanges.Changes(r.Python.Project().Directory("/app"))
 
 }
