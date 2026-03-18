@@ -6,11 +6,11 @@ import (
 )
 
 // create function test service
-func (python *Python) Service(ctx context.Context) (*dagger.Service, error) {
+func (python *Python) Service() *dagger.Service {
 	// Run app as a service for function test
 	return python.DevContainer().
 		WithExposedPort(9333).
-		AsService(dagger.ContainerAsServiceOpts{Args: []string{"uv", "run", "start"}}), nil
+		AsService(dagger.ContainerAsServiceOpts{Args: []string{"uv", "run", "start"}})
 }
 
 // Return the result of running function test
@@ -20,12 +20,8 @@ func (python *Python) FunctionTest(ctx context.Context,
 	// +default="ftest"
 	dir string,
 ) (string, error) {
-	svc, err := python.Service(ctx)
-	if err != nil {
-		return "", err
-	}
 	functionTest := python.DevContainer().
-		WithServiceBinding("localhost", svc).
+		WithServiceBinding("localhost", python.Service()).
 		WithExec([]string{"uv", "run", "pytest", dir})
 
 	// Return the formatted output of the function test as a string
