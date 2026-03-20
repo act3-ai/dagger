@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.4] - 2026-03-20
+
+### 🐛 Bug Fixes
+
+- Update dagger engine to v0.20.3 [c6247c6](https://github.com/act3-ai/dagger/commit/c6247c60d752157a56265fcd54b61ee97537ca19) by @pspurlock
+
+- Yamllint check [14fe409](https://github.com/act3-ai/dagger/commit/14fe409c4796fb6dd81b72eb2e17096f38d23eec) by @pspurlock
+
+
 ## [0.3.3] - 2026-03-09
 
 ### 🐛 Bug Fixes
