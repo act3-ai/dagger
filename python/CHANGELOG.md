@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.1] - 2026-03-20
+
+### 🐛 Bug Fixes
+
+- Update dagger engine to v0.20.3 [c6247c6](https://github.com/act3-ai/dagger/commit/c6247c60d752157a56265fcd54b61ee97537ca19) by @pspurlock
+
+- Add ignore for .venv in src [bc61156](https://github.com/act3-ai/dagger/commit/bc611567ed447e96905865381864a2c2665d020c) by @pspurlock
+
+
 ## [0.11.0] - 2026-03-18
 
 ### 🚀 Features
