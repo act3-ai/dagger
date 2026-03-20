@@ -26,7 +26,7 @@ type Python struct {
 
 func New(
 	// top-level source code directory
-	// +ignore=["dist/"]
+	// +ignore=["dist/", ".venv"]
 	src *dagger.Directory,
 	// base development container
 	// +optional
