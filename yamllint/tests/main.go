@@ -48,7 +48,7 @@ func (t *Tests) Config(ctx context.Context) *dagger.Container {
 // +check
 // Version tests the 'Version' option for 'New'.
 func (t *Tests) Version(ctx context.Context) error {
-	version := "1.37.0"
+	version := "1.37.1"
 	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Version: version}).
 		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
 		Stdout(ctx)
@@ -65,7 +65,7 @@ func (t *Tests) Version(ctx context.Context) error {
 // +check
 // Base tests the 'Base' option for 'New'.
 func (t *Tests) Base(ctx context.Context) error {
-	version := "1.37.0"
+	version := "1.37.1"
 	base := dag.Wolfi().
 		Container(dagger.WolfiContainerOpts{Packages: []string{fmt.Sprintf("yamllint=%s", version)}})
 
