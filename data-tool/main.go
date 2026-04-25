@@ -13,6 +13,10 @@ const baseImage = "ghcr.io/act3-ai/data-tool:v1.16.1"
 
 // ASCE Data Tool Module
 type DataTool struct {
+	// +private
+	RegistryConfig *dagger.RegistryConfig
+
+	// Underlying container with all the auth added
 	Container *dagger.Container
 }
 
@@ -45,7 +49,8 @@ func New(
 		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
 		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
 	return &DataTool{
-		Container: c,
+		RegistryConfig: dag.RegistryConfig(),
+		Container:      c,
 	}
 }
 
@@ -58,8 +63,8 @@ func (m *DataTool) WithRegistryAuth(
 	// password or token for registry
 	secret *dagger.Secret,
 ) *DataTool {
-	regConfig := dag.RegistryConfig().WithRegistryAuth(address, username, secret)
-	m.Container = m.Container.WithMountedSecret("/root/.docker/config.json", regConfig.Secret())
+	m.RegistryConfig = m.RegistryConfig.WithRegistryAuth(address, username, secret)
+	m.Container = m.Container.WithMountedSecret("/root/.docker/config.json", m.RegistryConfig.Secret())
 	return m
 }
 
