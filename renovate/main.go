@@ -15,7 +15,7 @@ import (
 // Renovate tasks
 type Renovate struct {
 	// +private
-	Project string
+	Repositories []string
 
 	// +private
 	EndpointURL string
@@ -74,8 +74,8 @@ var customManagers string
 
 // +cache="never"
 func New(
-	// repo project slug
-	project string,
+	// project slug of repositories for renovate to scan.
+	repositories []string,
 
 	// Gitlab API token to the repo being renovated
 	token *dagger.Secret,
@@ -111,7 +111,7 @@ func New(
 		base = dag.Container().From("renovate/renovate:full")
 	}
 	return &Renovate{
-		Project:       project,
+		Repositories:  repositories,
 		Base:          base,
 		Token:         token,
 		EndpointURL:   endpointURL,
@@ -222,6 +222,8 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 // Run renovate to update dependencies on the remote repository
 func (m *Renovate) Update(ctx context.Context) (string, error) {
 
+	cmd := append([]string{"renovate"}, m.Repositories...)
+
 	hostRules, err := m.getHostRules(ctx)
 	if err != nil {
 		return "", err
@@ -259,10 +261,9 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("LOG_LEVEL", "debug").
 		// HACK: OTEL_EXPORTER_OTLP_ENDPOINT is set by dagger and causes renovate to error, so we unset it
 		// We could use --platform=local to use the local source repo.
-		WithExec([]string{
-			"sh",
-			"-c",
-			"OTEL_EXPORTER_OTLP_ENDPOINT= renovate " + m.Project,
-		}).
+		WithExec(append([]string{
+			"env",
+			"OTEL_EXPORTER_OTLP_ENDPOINT=",
+		}, cmd...)).
 		Stdout(ctx)
 }
