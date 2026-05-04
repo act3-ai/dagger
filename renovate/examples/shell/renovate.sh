@@ -5,7 +5,7 @@
 dagger -m github.com/act3-ai/dagger/renovate call \
 --platform=github \
 --endpoint-url=https://api.github.com \
---project=act3-ai/dagger \
+--repositories=act3-ai/dagger \
 --token=env:GITHUB_TOKEN \
   update
 
@@ -14,7 +14,7 @@ dagger -m github.com/act3-ai/dagger/renovate call \
 dagger -m github.com/act3-ai/dagger/renovate call \
 --platform=github \
 --endpoint-url=https://api.github.com \
---project=act3-ai/dagger \
+--repositories=act3-ai/dagger \
 --author="$GITHUB_USER" \
 --email="$GITHUB_EMAIL" \
 --token=env:GITHUB_TOKEN \
