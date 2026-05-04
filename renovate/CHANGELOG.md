@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-05-04
+
+### 🚀 Features
+
+- Add support for scanning multiple repositories [2cd8a2f](https://github.com/act3-ai/dagger/commit/2cd8a2fa39d2dc4c501f8d7a6bded0a8c5271ec7) by @pspurlock
+
+
 ## [0.1.22] - 2026-04-13
 
 ### 🐛 Bug Fixes
