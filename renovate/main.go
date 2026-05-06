@@ -43,6 +43,9 @@ type Renovate struct {
 
 	// +private
 	Email string
+
+	// +private
+	LogLevel string
 }
 
 type Auth struct {
@@ -106,6 +109,10 @@ func New(
 	// +optional
 	// +default="bot@example.com"
 	email string,
+	// renovate log level. refer to https://docs.renovatebot.com/troubleshooting/#log-debug-levels
+	// +optional
+	// +default="debug"
+	logLevel string,
 ) *Renovate {
 	if base == nil {
 		base = dag.Container().From("renovate/renovate:full")
@@ -119,6 +126,7 @@ func New(
 		GitPrivateKey: gitPrivateKey,
 		Author:        author,
 		Email:         email,
+		LogLevel:      logLevel,
 	}
 }
 
@@ -258,7 +266,7 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("RENOVATE_CUSTOM_MANAGERS", customManagers).
 		WithSecretVariable("RENOVATE_SECRETS", secrets).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		WithEnvVariable("LOG_LEVEL", "debug").
+		WithEnvVariable("LOG_LEVEL", m.LogLevel).
 		// HACK: OTEL_EXPORTER_OTLP_ENDPOINT is set by dagger and causes renovate to error, so we unset it
 		// We could use --platform=local to use the local source repo.
 		WithExec(append([]string{
