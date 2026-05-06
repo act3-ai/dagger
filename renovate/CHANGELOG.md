@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-05-06
+
+### 🐛 Bug Fixes
+
+- Allow log level to be specified [50aab23](https://github.com/act3-ai/dagger/commit/50aab23d7e09a96a623dd7089a1e4d29ff6ce31b) by @pspurlock
+
+
 ## [0.2.0] - 2026-05-04
 
 ### 🚀 Features
