@@ -50,6 +50,7 @@ type Renovate struct {
 
 type Auth struct {
 	Hostname string
+	HostType string
 	Username string
 	Password *dagger.Secret
 }
@@ -145,6 +146,10 @@ func (m *Renovate) WithSecretVariable(
 func (m *Renovate) WithRegistryAuth(
 	// registry's hostname
 	hostname string,
+	// host type, in ex. "gitlab"
+	// +optional
+	// +default="docker"
+	hostType string,
 	// username in registry
 	username string,
 	// password or token for registry
@@ -152,6 +157,7 @@ func (m *Renovate) WithRegistryAuth(
 ) *Renovate {
 	m.Auths = append(m.Auths, Auth{
 		Hostname: hostname,
+		HostType: hostType,
 		Username: username,
 		Password: password,
 	})
@@ -190,7 +196,7 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 
 		hostRules[i] = hostRule{
 			MatchHost: auth.Hostname,
-			HostType:  "docker",
+			HostType:  auth.HostType,
 			Username:  auth.Username,
 			Password:  registryPasswordText,
 		}
