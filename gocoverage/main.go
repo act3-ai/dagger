@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+
+	"al.essio.dev/pkg/shellescape"
 )
 
 // Code coverage generator
@@ -156,15 +158,13 @@ func (cr *CoverageResults) TextFormat() *dagger.File {
 	if len(cr.Coverage.Excludes) != 0 {
 		args := []string{"grep", "-v"}
 		for _, exclude := range cr.Coverage.Excludes {
-			args = append(args, "-e", exclude)
+			args = append(args, "-e", shellescape.Quote(exclude))
 		}
+		args = append(args, "/coverage.txt", ">", "/filtered.txt")
+
 		cov = cr.Coverage.Base.
 			WithFile("/coverage.txt", cov).
-			WithExec(args,
-				dagger.ContainerWithExecOpts{
-					RedirectStdin:  "/coverage.txt",
-					RedirectStdout: "/filtered.txt",
-				}).
+			WithExec([]string{"sh", "-ec", strings.Join(args, " ")}).
 			File("/filtered.txt")
 	}
 
