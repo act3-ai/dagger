@@ -1,14 +1,14 @@
 {
   "name": "release",
-  "engineVersion": "v0.20.5",
+  "engineVersion": "v0.20.8",
   "sdk": {
     "source": "go"
   },
   "dependencies": [
     {
       "name": "gh",
-      "source": "github.com/sagikazarmark/daggerverse/gh@main",
-      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
+      "source": "github.com/sagikazarmark/daggerverse/gh@5dcc7e4c4cd5ed230046955f42e27f2166545155",
+      "pin": "5dcc7e4c4cd5ed230046955f42e27f2166545155"
     },
     {
       "name": "git-cliff",
@@ -17,12 +17,12 @@
     {
       "name": "registry-config",
       "source": "github.com/sagikazarmark/daggerverse/registry-config@main",
-      "pin": "6133ad18e131b891d4723b8e25d69f5de077b472"
+      "pin": "5dcc7e4c4cd5ed230046955f42e27f2166545155"
     },
     {
       "name": "wolfi",
-      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.19",
-      "pin": "4c0989b202a02fcee68c9f983f7f1671c6c397b8"
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.20.5",
+      "pin": "02ffd2b3288fc17fccf35dec7fd18d1a4281fbfa"
     }
   ]
 }
