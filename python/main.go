@@ -56,7 +56,7 @@ func (python *Python) base() *dagger.Container {
 		WithWorkdir("/app").
 		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
 		WithMountedCache("/root/.local/share/uv", dag.CacheVolume("uv-home-cache")).
-		WithEnvVariable("UV_NATIVE_TLS", "true").
+		WithEnvVariable("UV_SYSTEM_CERTS", "true").
 		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
 		WithEnvVariable("UV_LINK_MODE", "copy").
 		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
