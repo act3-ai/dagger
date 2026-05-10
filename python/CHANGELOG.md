@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.4] - 2026-05-10
+
+### 🐛 Bug Fixes
+
+- Update dagger engine to v0.20.8 [f7e7e80](https://github.com/act3-ai/dagger/commit/f7e7e801ce90744ed84f26e334dbee5f82d7967e) by @pspurlock
+
+- Use UV_SYSTEM_CERTS, UV_NATIVE_TLS is deprecated [50617ca](https://github.com/act3-ai/dagger/commit/50617ca4e254a808de1d3719ef6de36719a6b321) by @pspurlock
+
+
 ## [0.11.3] - 2026-04-13
 
 ### 🐛 Bug Fixes
