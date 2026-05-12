@@ -249,3 +249,26 @@ func (t *Tests) PytestReport(ctx context.Context) error {
 func (t *Tests) CognitiveComplexity() *dagger.Container {
 	return dag.Python(t.srcDir()).CognitiveComplexity().Lint()
 }
+
+// +check
+// Run ty, expect valid/no errors
+func (t *Tests) Ty() *dagger.Container {
+	return dag.Python(t.srcDir()).Ty().Lint()
+}
+
+// +check
+// Run ty, expect valid/no errors
+func (t *Tests) TyReport(ctx context.Context) error {
+	report := dag.Python(t.srcDir()).Ty().Report()
+	results, err := report.Contents(ctx)
+
+	if err != nil {
+		return err
+	}
+
+	if results != "[]" {
+		return fmt.Errorf("Report found changes: %s", results)
+	}
+
+	return nil
+}
