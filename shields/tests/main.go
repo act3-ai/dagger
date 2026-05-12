@@ -18,12 +18,12 @@ func (t *Tests) Coverage(ctx context.Context) error {
 		value float64
 		color string
 	}{
-		// from inspecting svgs: https://github.com/badges/shields/tree/master/badge-maker#colors
-		{90.86, "#4c1"},     // brightgreen
-		{82.0, "#97ca00"},   // green
-		{75.025, "#dfb317"}, // yellow
-		{55.45, "#fe7d37"},  // orange
-		{10.091, "#e05d44"}, // red
+		// from inspecting svgs: https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
+		{90.86, "#4b0"},     // brightgreen
+		{82.0, "#67ac09"},   // green
+		{75.025, "#d8b800"}, // yellow
+		{55.45, "#ea7233"},  // orange
+		{10.091, "#dd4343"}, // red
 	}
 
 	for _, t := range tests {
@@ -58,12 +58,12 @@ func (t *Tests) Pylint(ctx context.Context) error {
 		value float64
 		color string
 	}{
-		// from inspecting svgs: https://github.com/badges/shields/tree/master/badge-maker#colors
-		{9.94, "#4c1"},     // brightgreen
-		{8.77, "#97ca00"},  // green
-		{7.145, "#dfb317"}, // yellow
-		{5.99, "#fe7d37"},  // orange
-		{3.2, "#e05d44"},   // red
+		// from inspecting svgs: https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
+		{9.94, "#4b0"},     // brightgreen
+		{8.77, "#67ac09"},  // green
+		{7.145, "#d8b800"}, // yellow
+		{5.99, "#ea7233"},  // orange
+		{3.2, "#dd4343"},   // red
 	}
 
 	for _, t := range tests {
@@ -98,9 +98,9 @@ func (t *Tests) PipelineStatus(ctx context.Context) error {
 		passing bool
 		color   string
 	}{
-		// from inspecting svgs: https://github.com/badges/shields/tree/master/badge-maker#colors
-		{true, "#4c1"},     // brightgreen
-		{false, "#e05d44"}, // red
+		// from inspecting svgs: https://github.com/badges/shields/blob/master/badge-maker/lib/color.js#L4
+		{true, "#4b0"},     // brightgreen
+		{false, "#dd4343"}, // red
 	}
 
 	for _, t := range tests {
@@ -146,8 +146,8 @@ func (t *Tests) Version(ctx context.Context) error {
 		// from inspecting svgs: https://github.com/badges/shields/tree/master/badge-maker#colors
 		{"", "v1.2.3", ""},        // default label ("version"), default color (blue)
 		{"foo", "v1.2.3", ""},     // custom label, default color (blue)
-		{"", "v1.2.3", "#4c1"},    // default label ("version"), custom color (brightgreen)
-		{"bar", "v1.2.3", "#4c1"}, // custom label, custom color (brightgreen)
+		{"", "v1.2.3", "#4b0"},    // default label ("version"), custom color (brightgreen)
+		{"bar", "v1.2.3", "#4b0"}, // custom label, custom color (brightgreen)
 	}
 
 	for _, t := range tests {
@@ -198,7 +198,7 @@ func (t *Tests) License(ctx context.Context) error {
 	}{
 		// from inspecting svgs: https://github.com/badges/shields/tree/master/badge-maker#colors
 		{"MIT", ""},     // default color (dark gold)
-		{"foo", "#4c1"}, // custom color
+		{"foo", "#4b0"}, // custom color
 	}
 
 	for _, t := range tests {
