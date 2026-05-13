@@ -30,6 +30,9 @@ type Renovate struct {
 	Token *dagger.Secret
 
 	// +private
+	Netrc *dagger.Secret
+
+	// +private
 	Auths []Auth
 
 	// +private
@@ -84,6 +87,10 @@ func New(
 	// Gitlab API token to the repo being renovated
 	token *dagger.Secret,
 
+	// provide a netrc file
+	// +optional
+	netrc *dagger.Secret,
+
 	// Endpoint URL for example https://hostname/api/v4
 	endpointURL string,
 
@@ -122,6 +129,7 @@ func New(
 		Repositories:  repositories,
 		Base:          base,
 		Token:         token,
+		Netrc:         netrc,
 		EndpointURL:   endpointURL,
 		Platform:      platform,
 		GitPrivateKey: gitPrivateKey,
@@ -273,6 +281,10 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		With(func(c *dagger.Container) *dagger.Container {
 			if m.GitPrivateKey != nil {
 				return c.WithSecretVariable("RENOVATE_GIT_PRIVATE_KEY", m.GitPrivateKey)
+			}
+
+			if m.Netrc != nil {
+				return c.WithMountedSecret("/home/ubuntu/.netrc", m.Netrc, dagger.ContainerWithMountedSecretOpts{Owner: "ubuntu", Mode: 0600})
 			}
 
 			return c
