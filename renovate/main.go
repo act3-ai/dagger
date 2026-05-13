@@ -153,8 +153,9 @@ func (m *Renovate) WithSecretVariable(
 	return m
 }
 
-// Add authentication to a OCI registry
-func (m *Renovate) WithRegistryAuth(
+// Add a host rule to renovate for private package authentication.
+// See: https://docs.renovatebot.com/configuration-options/#hostrules
+func (m *Renovate) WithHostRule(
 	// registry's hostname
 	hostname string,
 	// host type, in ex. "gitlab"
