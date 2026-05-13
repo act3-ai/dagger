@@ -131,6 +131,17 @@ func New(
 	}
 }
 
+// Add an env variable to the renovate container
+func (m *Renovate) WithEnvVariable(
+	// name of the secret variable
+	name string,
+	// value of the secret
+	value string,
+) *Renovate {
+	m.Base = m.Base.WithEnvVariable(name, value)
+	return m
+}
+
 // Add a secret env variable to the renovate container
 func (m *Renovate) WithSecretVariable(
 	// name of the secret variable
