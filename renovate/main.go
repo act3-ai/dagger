@@ -52,7 +52,7 @@ type Auth struct {
 	Hostname string
 	HostType string
 	Username string
-	Token    *dagger.Secret
+	Password *dagger.Secret
 }
 
 type Secret struct {
@@ -163,16 +163,15 @@ func (m *Renovate) WithHostRule(
 	// +default="docker"
 	hostType string,
 	// username in registry
-	// +optional
 	username string,
 	// password or token for registry
-	token *dagger.Secret,
+	password *dagger.Secret,
 ) *Renovate {
 	m.Auths = append(m.Auths, Auth{
 		Hostname: hostname,
 		HostType: hostType,
 		Username: username,
-		Token:    token,
+		Password: password,
 	})
 	return m
 }
@@ -196,34 +195,23 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 	type hostRule struct {
 		MatchHost string `json:"matchHost"`
 		HostType  string `json:"hostType"`
-		Token     string `json:"token,omitempty"`
-		Username  string `json:"username,omitempty"`
-		Password  string `json:"password,omitempty"`
+		Username  string `json:"username"`
+		Password  string `json:"password"`
 	}
 
 	hostRules := make([]hostRule, len(m.Auths))
-
 	for i, auth := range m.Auths {
-		tokenText, err := auth.Token.Plaintext(ctx)
+		registryPasswordText, err := auth.Password.Plaintext(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get auth secret plaintext: %w", err)
+			return nil, fmt.Errorf("failed to get registry password's plaintext: %w", err)
 		}
 
-		rule := hostRule{
+		hostRules[i] = hostRule{
 			MatchHost: auth.Hostname,
 			HostType:  auth.HostType,
+			Username:  auth.Username,
+			Password:  registryPasswordText,
 		}
-
-		// username/password auth
-		if auth.Username != "" {
-			rule.Username = auth.Username
-			rule.Password = tokenText
-		} else {
-			// token auth
-			rule.Token = tokenText
-		}
-
-		hostRules[i] = rule
 	}
 
 	hostRulesJson, err := json.Marshal(hostRules)
