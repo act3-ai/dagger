@@ -97,8 +97,6 @@ func (python *Python) deps() *dagger.Container {
 		// FIXME this code make a few bad assumptions.
 		// 1. UV_PROJECT is not set (and --project is not added to python.SyncArgs)
 		// 2. The pyproject.toml file does not reference any other dynamic file such as VERSION, LICENSE, README
-		// WithFile("/app/pyproject.toml", python.Source.File("pyproject.toml")).
-		// WithFile("/app/uv.lock", python.Source.File("uv.lock")).
 
 		// WithMountedCache("/app/.venv", dag.CacheVolume("python-venv")).
 		WithExec(append([]string{"uv", "sync", "--no-install-project"}, python.SyncArgs...))
