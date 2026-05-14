@@ -37,10 +37,10 @@ func New(
 	// +defaultAddress="ghcr.io/astral-sh/uv:debian"
 	base *dagger.Container,
 	// extra arguments for uv sync command.
-	// default valuer is --frozen --all-extras
+	// default value is --frozen --all-extras
 	// +optional
 	syncArgs []string,
-	// extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other file used due to UV_PRROJECT).
+	// extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other files used due to UV_PROJECT).
 	// default value is pyproject.toml and uv.lock
 	// +optional
 	syncPaths []string,
