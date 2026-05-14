@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-05-14
+
+### 🐛 Bug Fixes
+
+- Add option to set hosttype for hostrules [35a4898](https://github.com/act3-ai/dagger/commit/35a4898e9ee6d01c5aaa99f8fdf698ee3822caa5) by @pspurlock
+
+- Add WithEnvVariable() for adding env vars [09d1a7d](https://github.com/act3-ai/dagger/commit/09d1a7dba92e9163df28ea1aa22c34f29e9dadbf) by @pspurlock
+
+- Hostrule set username/pass if username provided, otherwise use token [1eae473](https://github.com/act3-ai/dagger/commit/1eae47348d845b2727656096f157b6c07e5acfa8) by @pspurlock
+
+- Revert hostrule changes [e03676c](https://github.com/act3-ai/dagger/commit/e03676ce53abcc2928b9886432f7f90a9ca449ef) by @pspurlock
+
+
+### 🚜 Refactor
+
+- Rename WithRegistryAuth to WithHostRule for better clarity [f86fea5](https://github.com/act3-ai/dagger/commit/f86fea51daead5053548ec06e07befddc208f96a) by @pspurlock
+
+
 ## [0.2.2] - 2026-05-10
 
 ### 🐛 Bug Fixes
