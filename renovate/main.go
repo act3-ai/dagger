@@ -50,6 +50,7 @@ type Renovate struct {
 
 type Auth struct {
 	Hostname string
+	HostType string
 	Username string
 	Password *dagger.Secret
 }
@@ -130,6 +131,17 @@ func New(
 	}
 }
 
+// Add an env variable to the renovate container
+func (m *Renovate) WithEnvVariable(
+	// name of the secret variable
+	name string,
+	// value of the secret
+	value string,
+) *Renovate {
+	m.Base = m.Base.WithEnvVariable(name, value)
+	return m
+}
+
 // Add a secret env variable to the renovate container
 func (m *Renovate) WithSecretVariable(
 	// name of the secret variable
@@ -141,10 +153,15 @@ func (m *Renovate) WithSecretVariable(
 	return m
 }
 
-// Add authentication to a OCI registry
-func (m *Renovate) WithRegistryAuth(
+// Add a host rule to renovate for private package authentication.
+// See: https://docs.renovatebot.com/configuration-options/#hostrules
+func (m *Renovate) WithHostRule(
 	// registry's hostname
 	hostname string,
+	// host type, in ex. "gitlab"
+	// +optional
+	// +default="docker"
+	hostType string,
 	// username in registry
 	username string,
 	// password or token for registry
@@ -152,6 +169,7 @@ func (m *Renovate) WithRegistryAuth(
 ) *Renovate {
 	m.Auths = append(m.Auths, Auth{
 		Hostname: hostname,
+		HostType: hostType,
 		Username: username,
 		Password: password,
 	})
@@ -190,7 +208,7 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 
 		hostRules[i] = hostRule{
 			MatchHost: auth.Hostname,
-			HostType:  "docker",
+			HostType:  auth.HostType,
 			Username:  auth.Username,
 			Password:  registryPasswordText,
 		}
