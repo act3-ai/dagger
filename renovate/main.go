@@ -209,8 +209,8 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 
 		hostRules[i] = hostRule{
 			MatchHost: auth.Hostname,
-			// HostType:  auth.HostType,
-			Token: registryPasswordText,
+			HostType:  auth.HostType,
+			Token:     registryPasswordText,
 			// Username:  auth.Username,
 			// Password:  registryPasswordText,
 		}
