@@ -195,8 +195,9 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 	type hostRule struct {
 		MatchHost string `json:"matchHost"`
 		HostType  string `json:"hostType"`
-		Username  string `json:"username"`
-		Password  string `json:"password"`
+		Token     string `json:"token"`
+		// Username  string `json:"username"`
+		// Password  string `json:"password"`
 	}
 
 	hostRules := make([]hostRule, len(m.Auths))
@@ -209,8 +210,9 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 		hostRules[i] = hostRule{
 			MatchHost: auth.Hostname,
 			HostType:  auth.HostType,
-			Username:  auth.Username,
-			Password:  registryPasswordText,
+			Token:     registryPasswordText,
+			// Username:  auth.Username,
+			// Password:  registryPasswordText,
 		}
 	}
 
