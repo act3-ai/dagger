@@ -272,3 +272,16 @@ func (t *Tests) TyReport(ctx context.Context) error {
 
 	return nil
 }
+
+// +check
+// Run unit-test, expect valid/no errors
+func (t *Tests) UvProject() *dagger.Container {
+	src := dag.Directory().
+		WithDirectory("sub", t.srcDir())
+
+	return dag.Python(src, dagger.PythonOpts{
+		SyncArgs:  []string{"--project", "/app/sub"},
+		SyncPaths: []string{"sub/pyproject.toml", "sub/uv.lock"},
+	}).
+		DevContainer()
+}

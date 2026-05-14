@@ -8,6 +8,7 @@ import (
 	"context"
 	"dagger/python/internal/dagger"
 	"fmt"
+	"path"
 	"strings"
 )
 
@@ -22,6 +23,9 @@ type Python struct {
 
 	// +private
 	SyncArgs []string
+
+	// +private
+	SyncPaths []string
 }
 
 func New(
@@ -32,9 +36,14 @@ func New(
 	// +optional
 	// +defaultAddress="ghcr.io/astral-sh/uv:debian"
 	base *dagger.Container,
-	// extra arguments for uv sync command
+	// extra arguments for uv sync command.
+	// default value is --frozen --all-extras
 	// +optional
 	syncArgs []string,
+	// extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other files used due to UV_PROJECT).
+	// default value is pyproject.toml and uv.lock
+	// +optional
+	syncPaths []string,
 ) *Python {
 	if syncArgs == nil {
 		syncArgs = []string{
@@ -43,10 +52,18 @@ func New(
 		}
 	}
 
+	if syncPaths == nil {
+		syncPaths = []string{
+			"pyproject.toml",
+			"uv.lock",
+		}
+	}
+
 	return &Python{
-		Base:     base,
-		Source:   src,
-		SyncArgs: syncArgs,
+		Base:      base,
+		Source:    src,
+		SyncArgs:  syncArgs,
+		SyncPaths: syncPaths,
 	}
 }
 
@@ -70,20 +87,26 @@ func (python *Python) Project() *dagger.Container {
 
 // builds uv dependencies only from pyproject.toml and uv.lock files
 func (python *Python) deps() *dagger.Container {
-
 	return python.base().
-		WithFile("/app/pyproject.toml", python.Source.File("pyproject.toml")).
-		WithFile("/app/uv.lock", python.Source.File("uv.lock")).
+		With(func(r *dagger.Container) *dagger.Container {
+			for _, p := range python.SyncPaths {
+				r = r.WithFile(path.Join("/app", p), python.Source.File(p))
+			}
+			return r
+		}).
+		// FIXME this code make a few bad assumptions.
+		// 1. UV_PROJECT is not set (and --project is not added to python.SyncArgs)
+		// 2. The pyproject.toml file does not reference any other dynamic file such as VERSION, LICENSE, README
+
 		// WithMountedCache("/app/.venv", dag.CacheVolume("python-venv")).
 		WithExec(append([]string{"uv", "sync", "--no-install-project"}, python.SyncArgs...))
 }
 
 // returns a base UV container with given source and builds dev dependencies using `uv sync`
 func (python *Python) DevContainer() *dagger.Container {
-
 	return python.deps().
 		WithDirectory("/app", python.Source).
-		WithExec([]string{"uv", "sync"})
+		WithExec(append([]string{"uv", "sync"}, python.SyncArgs...))
 }
 
 // Add creds for private python package index
