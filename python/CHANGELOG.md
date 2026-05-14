@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2026-05-14
+
+### 🚀 Features
+
+- Add SyncPaths to support UV_PROJECT usage [309e1a5](https://github.com/act3-ai/dagger/commit/309e1a51307324a1a9479d606918c0e3efa68672) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kyle.tarplee@udri.udayton.edu>
+
+
+### 🐛 Bug Fixes
+
+- Add ty linter [ce0a687](https://github.com/act3-ai/dagger/commit/ce0a68773450e2fee477eac1ca84a61c34e7f6c7) by @pspurlock
+
+
 ## [0.11.4] - 2026-05-10
 
 ### 🐛 Bug Fixes
