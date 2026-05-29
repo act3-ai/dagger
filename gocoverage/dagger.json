@@ -1,6 +1,6 @@
 {
   "name": "go-coverage",
-  "engineVersion": "v0.20.8",
+  "engineVersion": "v0.21.0",
   "sdk": {
     "source": "go"
   }
