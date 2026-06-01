@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.10] - 2026-06-01
+
+### 🐛 Bug Fixes
+
+- Upgrade wolfi to 0.21.3 [cda734f](https://github.com/act3-ai/dagger/commit/cda734fee720d370673944a75991da7562af082c) by @pspurlock
+
+
 ## [0.3.9] - 2026-06-01
 
 ### 🐛 Bug Fixes
