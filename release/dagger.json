@@ -21,8 +21,8 @@
     },
     {
       "name": "wolfi",
-      "source": "github.com/dagger/dagger/modules/wolfi@v0.20.5",
-      "pin": "02ffd2b3288fc17fccf35dec7fd18d1a4281fbfa"
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.21.3",
+      "pin": "0ec84486003f052214339a2f8bdcd5761f23cead"
     }
   ]
 }
