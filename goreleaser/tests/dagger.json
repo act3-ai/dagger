@@ -11,8 +11,8 @@
     },
     {
       "name": "wolfi",
-      "source": "github.com/dagger/dagger/modules/wolfi@v0.18.5",
-      "pin": "7d2000eef21dcb3e42abe4e0c7bdf0633f297449"
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.21.3",
+      "pin": "0ec84486003f052214339a2f8bdcd5761f23cead"
     }
   ],
   "disableDefaultFunctionCaching": true
