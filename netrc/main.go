@@ -4,7 +4,9 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"dagger/netrc/internal/dagger"
+	"encoding/hex"
 	"fmt"
 	"strings"
 )
@@ -57,7 +59,11 @@ func (m *Netrc) AsSecret(ctx context.Context) (*dagger.Secret, error) {
 		sb.WriteString(fmt.Sprintf(netrcTmpl, login.Machine, login.Username, password))
 	}
 
-	netrcSecret := dag.SetSecret("netrc-file", sb.String())
+	hash := sha256.Sum256([]byte(sb.String()))
+	hashStr := hex.EncodeToString(hash[:])[:8]
+
+	secretName := fmt.Sprintf("NETRC_FILE_%s", hashStr)
+	netrcSecret := dag.SetSecret(secretName, sb.String())
 
 	return netrcSecret, nil
 }
