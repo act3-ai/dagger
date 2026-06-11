@@ -29,7 +29,7 @@ func (m *Sonarqube) Service() *dagger.Service {
 			dagger.ContainerWithDockerHealthcheckOpts{
 				Interval: "5s",
 				Timeout:  "3s",
-				Retries:  20,
+				Retries:  30,
 			},
 		).AsService()
 }
@@ -67,10 +67,6 @@ func (m *Sonarqube) Scan(ctx context.Context,
 			"sonar-scanner",
 			"-Dsonar.projectName=proj1",
 			"-Dsonar.projectKey=proj1",
-			"-Dsonar.sources=.",
-			"-Dsonar.tests=.",
-			"-Dsonar.test.inclusions=src/**/*.test.*,src/**/*.spec.*",
-			"-Dsonar.exclusions=node_modules/**,dist/**,build/**,coverage/**,public/**,src/api/**",
 		}).Sync(ctx)
 
 	if err != nil {
@@ -173,7 +169,7 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 
 	return m.curlCtr(svc).
 		WithSecretVariable("SONAR_TOKEN", token).
-		WithExec([]string{"sh", "-c", "sleep 20"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
+		WithExec([]string{"sh", "-c", "sleep 15"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
 		WithExec([]string{
 			"sh",
 			"-c",
