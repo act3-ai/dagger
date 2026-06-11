@@ -56,3 +56,7 @@ jobs:
       - name: test-shields
         working-directory: ./shields/tests
         run: dagger checks
+
+      - name: test-netrc
+        working-directory: ./netrc/tests
+        run: dagger checks
