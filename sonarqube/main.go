@@ -24,7 +24,7 @@ func (m *Sonarqube) Service() *dagger.Service {
 			[]string{
 				"sh",
 				"-c",
-				`curl -sf http://localhost:9000/api/system/status | grep -q '"status":"UP"'`,
+				`curl -sf --noproxy "*" http://localhost:9000/api/system/status | grep -q '"status":"UP"'`,
 			},
 			dagger.ContainerWithDockerHealthcheckOpts{
 				Interval: "5s",
@@ -139,7 +139,7 @@ func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service,
 
 	token, err := m.curlCtr(svc).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken).
 		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s -X POST -u admin:$SONAR_ADMIN_TOKEN \
+			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
                 -d "name=dagger-token" \
                 -d "type=PROJECT_ANALYSIS_TOKEN" \
                 -d "projectKey=proj1" \
@@ -173,7 +173,7 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 		WithExec([]string{
 			"sh",
 			"-c",
-			`curl --retry 5 -u "$SONAR_TOKEN:" \
+			`curl --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" \
       "http://sonar-server:9000/api/issues/search?componentKeys=proj1"`,
 		}, dagger.ContainerWithExecOpts{RedirectStdout: "sonar-report.json"}).File("sonar-report.json")
 
@@ -186,7 +186,7 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 	// change admin password on first run
 	adminPwOut, err := curlCtr.
 		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s -X POST -u admin:admin \
+			`http_code=$(curl -s --noproxy "*" -X POST -u admin:admin \
                 -d "login=admin" \
                 -d "previousPassword=admin" \
                 -d "password=$SONAR_ADMIN_TOKEN" \
@@ -208,7 +208,7 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 	// create project in sonarqube with project name
 	projectOut, err := curlCtr.
 		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s -X POST -u admin:$SONAR_ADMIN_TOKEN \
+			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
                 -d "project=proj1" \
                 -d "name=proj1" \
                 -o /tmp/proj_res \
