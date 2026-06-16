@@ -174,7 +174,7 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 			"sh",
 			"-c",
 			`curl --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" \
-      "http://sonar-server:9000/api/issues/search?componentKeys=proj1&impactSeverities=MEDIUM,HIGH"`,
+      "http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=MEDIUM,HIGH&ps=499"`,
 		}, dagger.ContainerWithExecOpts{RedirectStdout: "sonar-report.json"}).File("sonar-report.json")
 
 }
