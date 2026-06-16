@@ -130,14 +130,13 @@ func (m *Sonarqube) curlCtr(svc *dagger.Service) *dagger.Container {
 	return dag.Container().
 		From("alpine:latest").
 		WithExec([]string{"apk", "add", "curl", "jq"}).
-		WithServiceBinding("sonar-server", svc).
-		WithEnvVariable("CACHEBUSTER", time.Now().String())
+		WithServiceBinding("sonar-server", svc)
 }
 
 // create sonar project token to run a scan with
 func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service, adminToken *dagger.Secret) (*dagger.Secret, error) {
 
-	token, err := m.curlCtr(svc).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken).
+	token, err := m.curlCtr(svc).WithEnvVariable("CACHEBUSTER", time.Now().String()).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken).
 		WithExec([]string{"sh", "-c",
 			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
                 -d "name=dagger-token" \
@@ -169,6 +168,7 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 
 	return m.curlCtr(svc).
 		WithSecretVariable("SONAR_TOKEN", token).
+		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec([]string{"sh", "-c", "sleep 15"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
 		WithExec([]string{
 			"sh",
@@ -185,6 +185,7 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 	curlCtr := m.curlCtr(svc).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken)
 	// change admin password on first run
 	adminPwOut, err := curlCtr.
+		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec([]string{"sh", "-c",
 			`http_code=$(curl -s --noproxy "*" -X POST -u admin:admin \
                 -d "login=admin" \
@@ -207,6 +208,7 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 
 	// create project in sonarqube with project name
 	projectOut, err := curlCtr.
+		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec([]string{"sh", "-c",
 			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
                 -d "project=proj1" \
