@@ -169,12 +169,12 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 	return m.curlCtr(svc).
 		WithSecretVariable("SONAR_TOKEN", token).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		WithExec([]string{"sh", "-c", "sleep 15"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
+		WithExec([]string{"sh", "-c", "sleep 20"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
 		WithExec([]string{
 			"sh",
 			"-c",
 			`curl --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" \
-      "http://sonar-server:9000/api/issues/search?componentKeys=proj1"`,
+      "http://sonar-server:9000/api/issues/search?componentKeys=proj1&impactSeverities=MEDIUM,HIGH"`,
 		}, dagger.ContainerWithExecOpts{RedirectStdout: "sonar-report.json"}).File("sonar-report.json")
 
 }
