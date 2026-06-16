@@ -19,12 +19,14 @@ func (m *Sonarqube) Service() *dagger.Service {
 	return dag.Container().
 		From("sonarqube:community").
 		WithEnvVariable("SONAR_ES_BOOTSTRAP_CHECKS_DISABLE", "true").
+		// Define a system passcode that skips user authentication for health metrics
+		WithEnvVariable("SONAR_WEB_SYSTEMPASSCODE", "dagger-health-token").
 		WithExposedPort(9000).
 		WithDockerHealthcheck(
 			[]string{
 				"sh",
 				"-c",
-				`curl -sf --noproxy "*" http://localhost:9000/api/system/status | grep -q '"status":"UP"'`,
+				`curl -sf --noproxy "*" -H "X-Sonar-Passcode: dagger-health-token" http://localhost:9000/api/system/health | grep -q '"health":"GREEN"'`,
 			},
 			dagger.ContainerWithDockerHealthcheckOpts{
 				Interval: "5s",
