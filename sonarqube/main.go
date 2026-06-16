@@ -85,7 +85,7 @@ func (m *Sonarqube) generateRandomTokenAsSecret() *dagger.Secret {
 		lower   = "abcdefghijklmnopqrstuvwxyz"
 		upper   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		numbers = "0123456789"
-		special = "!@#$%&"
+		special = "!@#%"
 		all     = lower + upper + numbers + special
 	)
 
