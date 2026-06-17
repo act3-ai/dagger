@@ -1,5 +1,6 @@
 // Sonarqube module for local development use/scanning ONLY.
-// This module will start a sonar server as a service, run a scan with sonar-scanner against it,
+// This module will start a sonar server as a service,
+// run a scan with sonar-scanner CLI with a given source directory,
 // and return a json report of any issues found.
 
 package main
@@ -105,7 +106,11 @@ func (m *Sonarqube) Service() *dagger.Service {
 // scan a source directory with sonar-scanner and get a report from sonar-server
 func (m *Sonarqube) Scan(ctx context.Context,
 	// +defaultPath="/"
-	src *dagger.Directory) (*dagger.File, error) {
+	src *dagger.Directory,
+	// comma separated list of impact severities to use when generating report
+	// +optional
+	// +default="MEDIUM,HIGH"
+	impactSeverities string) (*dagger.File, error) {
 	//start sonar-server
 	sonarSvc, err := m.Service().Start(ctx)
 
@@ -146,7 +151,7 @@ func (m *Sonarqube) Scan(ctx context.Context,
 	}
 
 	// get json report of issues
-	report := m.getReport(sonarSvc, sonarToken)
+	report := m.getReport(sonarSvc, sonarToken, impactSeverities)
 
 	return report, nil
 }
@@ -222,11 +227,11 @@ func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service,
 }
 
 // get generated report in sonar
-func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger.File {
+func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret, impactSeverities string) *dagger.File {
 
 	fetchScript := `
 	PAGE_SIZE=100
-	BASE_URL="http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=LOW,MEDIUM,HIGH&ps=$PAGE_SIZE"
+	BASE_URL="http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=$IMPACT_SEVERITIES&ps=$PAGE_SIZE"
 	
 	echo "Fetching initial page..." >&2
 	first_page=$(curl -s --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" "${BASE_URL}&p=1")
@@ -253,6 +258,7 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 
 	return m.curlCtr(svc).
 		WithSecretVariable("SONAR_TOKEN", token).
+		WithEnvVariable("IMPACT_SEVERITIES", impactSeverities).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		// Wait for report generation to finish
 		WithExec([]string{"sh", "-c", pollScript}).
