@@ -10,7 +10,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.43.0
 )
 
-require dagger.io/dagger v0.21.5-0.20260609225534-e8dbe7265b83
+require dagger.io/dagger v0.21.5-0.20260611000309-336f7b79a6df
 
 require (
 	github.com/99designs/gqlgen v0.17.90 // indirect
