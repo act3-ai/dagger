@@ -1,4 +1,6 @@
 // Sonarqube module for local development use/scanning ONLY.
+// This module will start a sonar server as a service, run a scan with sonar-scanner against it,
+// and return a json report of any issues found.
 
 package main
 
@@ -12,6 +14,70 @@ import (
 )
 
 type Sonarqube struct{}
+
+const changePasswordScript = `
+http_code=$(curl -s --retry 5 --retry-delay 2 --noproxy "*" -X POST -u admin:admin \
+	--data-urlencode "login=admin" \
+	--data-urlencode "previousPassword=admin" \
+	--data-urlencode "password=$SONAR_ADMIN_TOKEN" \
+	-o /tmp/pw_res \
+	-w "%{http_code}" \
+	http://sonar-server:9000/api/users/change_password)
+
+if [ "$http_code" -ne 204 ]; then
+	echo "HTTP Error $http_code: $(cat /tmp/pw_res)"
+	exit 1
+fi
+`
+
+const createProjectScript = `
+http_code=$(curl -s --retry 5 --retry-delay 2 --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
+	-d "project=proj1" \
+	-d "name=proj1" \
+	-o /tmp/proj_res \
+	-w "%{http_code}" \
+	http://sonar-server:9000/api/projects/create)
+
+if [ "$http_code" -ne 200 ]; then
+	echo "HTTP Error $http_code: $(cat /tmp/proj_res)"
+	exit 1
+fi
+`
+
+const generateTokenScript = `
+http_code=$(curl -s --retry 5 --retry-delay 2 --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
+	-d "name=dagger-token" \
+	-d "type=USER_TOKEN" \
+	-d "projectKey=proj1" \
+	-o /tmp/token_res \
+	-w "%{http_code}" \
+http://sonar-server:9000/api/user_tokens/generate)
+
+if [ "$http_code" -ne 200 ]; then
+	echo "HTTP Error $http_code: $(cat /tmp/token_res)"
+	exit 1
+fi
+
+# extract token
+cat /tmp/token_res | jq -r '.token'
+`
+
+const pollScript = `
+	echo "Polling SonarQube until analysis processing completes..." >&2
+	while true; do
+		res=$(curl -s --noproxy "*" -u "$SONAR_TOKEN:" "http://sonar-server:9000/api/ce/component?component=proj1")
+		queue_length=$(echo "$res" | jq '.queue | length')
+		current_status=$(echo "$res" | jq -r '.current.status // "NONE"')
+		
+		echo "Current status: $current_status | Tasks in queue: $queue_length" >&2
+		if [ "$queue_length" -eq 0 ] && [ "$current_status" = "SUCCESS" ]; then
+			echo "Analysis complete and successful!" >&2
+			break
+		fi
+		sleep 2
+	done
+	sleep 2 # Cooldown for index stabilization
+	`
 
 // start up sonar-server as a service
 func (m *Sonarqube) Service() *dagger.Service {
@@ -38,6 +104,7 @@ func (m *Sonarqube) Service() *dagger.Service {
 
 // scan a source directory with sonar-scanner and get a report from sonar-server
 func (m *Sonarqube) Scan(ctx context.Context,
+	// +defaultPath="/"
 	src *dagger.Directory) (*dagger.File, error) {
 	//start sonar-server
 	sonarSvc, err := m.Service().Start(ctx)
@@ -46,6 +113,9 @@ func (m *Sonarqube) Scan(ctx context.Context,
 		return nil, fmt.Errorf("failed to start sonar service: %w", err)
 	}
 
+	// defer sonarSvc.Stop(ctx)
+
+	// change admin pw on first use
 	adminToken := m.generateRandomTokenAsSecret()
 
 	//setup admin pw and project in sonar
@@ -138,24 +208,10 @@ func (m *Sonarqube) curlCtr(svc *dagger.Service) *dagger.Container {
 // create sonar project token to run a scan with
 func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service, adminToken *dagger.Secret) (*dagger.Secret, error) {
 
-	token, err := m.curlCtr(svc).WithEnvVariable("CACHEBUSTER", time.Now().String()).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken).
-		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
-                -d "name=dagger-token" \
-                -d "type=PROJECT_ANALYSIS_TOKEN" \
-                -d "projectKey=proj1" \
-                -o /tmp/token_res \
-                -w "%{http_code}" \
-                http://sonar-server:9000/api/user_tokens/generate)
-
-            if [ "$http_code" -ne 200 ]; then
-                echo "HTTP Error $http_code: $(cat /tmp/token_res)"
-                exit 1
-            fi
-
-            # extract token
-            cat /tmp/token_res | jq -r '.token'
-            `}).Stdout(ctx)
+	token, err := m.curlCtr(svc).
+		WithEnvVariable("CACHEBUSTER", time.Now().String()).
+		WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken).
+		WithExec([]string{"sh", "-c", generateTokenScript}).Stdout(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to automatically create sonar token: %w", err)
@@ -168,16 +224,43 @@ func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service,
 // get generated report in sonar
 func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger.File {
 
+	fetchScript := `
+	PAGE_SIZE=100
+	BASE_URL="http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=LOW,MEDIUM,HIGH&ps=$PAGE_SIZE"
+	
+	echo "Fetching initial page..." >&2
+	first_page=$(curl -s --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" "${BASE_URL}&p=1")
+	total_issues=$(echo "$first_page" | jq '.paging.total // 0')
+	
+	# Write the first page as a compressed single line (-c flag minimizes it to 1 line)
+	echo "$first_page" | jq -c '.' > /tmp/report.jsonl
+
+	total_pages=$(( (total_issues + PAGE_SIZE - 1) / PAGE_SIZE ))
+
+	if [ "$total_pages" -gt 1 ]; then
+		for p in $(seq 2 $total_pages); do
+			echo "Fetching page $p of $total_pages..." >&2
+			next_page=$(curl -s --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" "${BASE_URL}&p=$p")
+			
+			# Append subsequent raw pages as single lines
+			echo "$next_page" | jq -c '.' >> /tmp/report.jsonl
+		done
+	fi
+
+	# Output the combined multi-document file
+	cat /tmp/report.jsonl
+	`
+
 	return m.curlCtr(svc).
 		WithSecretVariable("SONAR_TOKEN", token).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		WithExec([]string{"sh", "-c", "sleep 20"}). //HACK: Sonar takes time to build the report after scan, so we wait for it to finish
-		WithExec([]string{
-			"sh",
-			"-c",
-			`curl --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" \
-      "http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=MEDIUM,HIGH&ps=499"`,
-		}, dagger.ContainerWithExecOpts{RedirectStdout: "sonar-report.json"}).File("sonar-report.json")
+		// Wait for report generation to finish
+		WithExec([]string{"sh", "-c", pollScript}).
+		// Fetch report
+		WithExec([]string{"sh", "-c", fetchScript}, dagger.ContainerWithExecOpts{
+			RedirectStdout: "sonar-report.json",
+		}).
+		File("sonar-report.json")
 
 }
 
@@ -185,52 +268,16 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret) *dagger
 func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminToken *dagger.Secret) error {
 
 	curlCtr := m.curlCtr(svc).WithSecretVariable("SONAR_ADMIN_TOKEN", adminToken)
-	// change admin password on first run
-	adminPwOut, err := curlCtr.
+	// change admin PW and create project in sonar-server
+	Out, err := curlCtr.
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s --noproxy "*" -X POST -u admin:admin \
-                -d "login=admin" \
-                -d "previousPassword=admin" \
-                -d "password=$SONAR_ADMIN_TOKEN" \
-                -o /tmp/pw_res \
-                -w "%{http_code}" \
-                http://sonar-server:9000/api/users/change_password)
-
-            if [ "$http_code" -ne 204 ]; then
-                echo "HTTP Error $http_code: $(cat /tmp/pw_res)"
-                exit 1
-            fi
-            `}).
+		WithExec([]string{"sh", "-c", changePasswordScript}, dagger.ContainerWithExecOpts{}).
+		WithExec([]string{"sh", "-c", createProjectScript}).
 		Stdout(ctx)
 
 	if err != nil {
-		return fmt.Errorf("sonarqube password change failed: %w\nDetails: %s", err, adminPwOut)
-	}
-
-	// create project in sonarqube with project name
-	projectOut, err := curlCtr.
-		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		WithExec([]string{"sh", "-c",
-			`http_code=$(curl -s --noproxy "*" -X POST -u admin:$SONAR_ADMIN_TOKEN \
-                -d "project=proj1" \
-                -d "name=proj1" \
-                -o /tmp/proj_res \
-                -w "%{http_code}" \
-                http://sonar-server:9000/api/projects/create)
-
-            if [ "$http_code" -ne 200 ]; then
-                echo "HTTP Error $http_code: $(cat /tmp/proj_res)"
-                exit 1
-            fi
-            cat /tmp/proj_res
-            `}).
-		Stdout(ctx)
-
-	if err != nil {
-		return fmt.Errorf("sonarqube project creation failed: %w\nDetails: %s", err, projectOut)
+		return fmt.Errorf("sonarqube server setup failed: %w\nDetails: %s", err, Out)
 	}
 
 	return nil
-
 }
