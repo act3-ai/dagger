@@ -50,7 +50,7 @@ prepare)
     git fetch --tags
 
     #run module tests
-    if [[ "$module" == "govulncheck" || "$module" == "renovate" || "$module" == "soanrqube" ]]; then
+    if [[ "$module" == "govulncheck" || "$module" == "renovate" || "$module" == "sonarqube" ]]; then
       : # Do nothing
     else
       dagger -m "$module/tests" checks
