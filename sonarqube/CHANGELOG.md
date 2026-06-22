@@ -1,0 +1,33 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [0.0.1] - 2026-06-22
+
+### 🐛 Bug Fixes
+
+- Init sonarqube module [3d38057](https://github.com/act3-ai/dagger/commit/3d380578cdb695224e62f79a76242ff69d6b6c86) by @pspurlock
+
+- Update dagger to v0.21.4 [e2c09ba](https://github.com/act3-ai/dagger/commit/e2c09bab0f8a178ee99992dd4564df87488d18eb) by @pspurlock
+
+- Add --noproxy to curl commands [d66bca2](https://github.com/act3-ai/dagger/commit/d66bca20cbef586cb3f6bc215a674e24a27f5677) by @pspurlock
+
+- Upgrade dagger to v0.21.5 [d34103a](https://github.com/act3-ai/dagger/commit/d34103ab81ffa9ba28c1a2c15c070343154edad3) by @pspurlock
+
+- Pw gen error using shell expansion charts [3f727ad](https://github.com/act3-ai/dagger/commit/3f727ad7f1ce7ce4901adec87c0ebd89bbc259e0) by @pspurlock
+
+- Move cache busting to just before withexec to avoid caching errors. [96d8972](https://github.com/act3-ai/dagger/commit/96d8972c1dea8c66c0da76aa192ef41b110034e1) by @pspurlock
+
+- Increase pagesize to 499 [cff2fc4](https://github.com/act3-ai/dagger/commit/cff2fc4454f94fdface329153165f2325a71bc17) by @pspurlock
+
+- Use better health check for knowing when sonar is actually up [f737646](https://github.com/act3-ai/dagger/commit/f7376469665d9b844ca2b964afa849a4d3efed79) by @pspurlock
+
+- Upgrade dagger to v0.21.6 [6c59502](https://github.com/act3-ai/dagger/commit/6c59502f0ef261b3eec20a793b098b25b6bc8079) by @pspurlock
+
+- Refactor to fix errors, make more readable, and print multiple pages if necessary [a800668](https://github.com/act3-ai/dagger/commit/a8006683aad2630ec2885589d6f99575f90cf01e) by @pspurlock
+
+- Add optional arg for impact severities [dce4b30](https://github.com/act3-ai/dagger/commit/dce4b309be18ab9119cdde589f637ee432986719) by @pspurlock
+
+- Add cliff toml to sonarqube [187049f](https://github.com/act3-ai/dagger/commit/187049ffe53d6de2f621a1b5c2e258c0fbef0c5f) by @pspurlock
+
+
