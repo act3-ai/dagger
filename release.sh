@@ -10,6 +10,9 @@ shift
 
 module=""
 
+# Map were key=module name, value=version 
+declare -A PREPARED_VERSIONS=()
+
 confirm_continue() {
   local next_step="$1"
 
@@ -29,7 +32,7 @@ require_module() {
 }
 
 # Run all checks in sub modules
-run_dagger_checks_all() {
+check_all() {
   local any_failed=0
 
   while IFS= read -r -d '' test_dir; do
@@ -38,7 +41,7 @@ run_dagger_checks_all() {
       
       # If the subshell fails, set the failure flag to 1
       if ! (cd "$test_dir" && dagger check); then
-        echo "❌ Check failed in $test_dir"
+        echo "Check failed in $test_dir"
         any_failed=1
       fi
     fi
@@ -48,6 +51,89 @@ run_dagger_checks_all() {
   if [[ $any_failed -eq 1 ]]; then
     echo "One or more Dagger checks failed."
     exit 1
+  fi
+}
+
+# Run prepare on all sub modules
+prepare_all() {
+  echo "Searching for modules to prepare for release..."
+
+  # Find all directories containing a 'dagger.json'
+  while IFS= read -r -d '' module_dir; do
+  
+    local module_name
+    module_name=$(basename "$(dirname "$module_dir")")
+
+    # Skip hidden folders like .dagger or test submodules
+    if [[ "$module_name" == "tests" || "$module_name" == .* ]]; then
+      continue
+    fi
+
+    echo "Process module: $module_name"
+    git fetch --tags
+    
+    # Run module tests only if the tests subdirectory exists
+    if [[ -d "$module_name/tests" ]]; then
+      echo "[$module_name] Run checks for module: $module_name"
+      if ! dagger -m "$module_name/tests" checks; then
+        echo "[$module_name] Error: Tests failed for module '$module_name'!"
+        exit 1
+      fi
+    else
+      echo "[$module_name] No tests directory found for '$module_name', skipping tests."
+    fi
+
+    # Capture stdout and stderr into a variable to inspect it
+    echo "[$module_name] Run prepare for module: $module_name"
+    local output
+    if ! output=$(dagger call --module="$module_name" prepare 2>&1); then
+      
+      # Check if the failure was simply because there was nothing to bump
+      if echo "$output" | grep -q "there was nothing to bump"; then
+        echo "[$module_name] Skipping '$module_name': No changes detected to bump."
+      else
+        echo "[$module_name] Error: 'dagger prepare' failed for module '$module_name'!"
+        echo "----------------- DAGGER OUTPUT -----------------"
+        echo "$output"
+        echo "-------------------------------------------------"
+        exit 1
+      fi
+    else
+      echo "$output"
+      echo "[$module_name] Successfully prepared release for '$module_name'."
+
+      # -----------------------------------------------------------------
+      # NEW DICTIONARY LOGIC:
+      # Read the newly generated version from the file and save it
+      # -----------------------------------------------------------------
+      local version
+      version=$(cat "$module_name/VERSION")
+      PREPARED_VERSIONS["$module_name"]="$version"
+      
+      echo "Tracked version: $module_name -> $version"
+    fi
+
+  done < <(find . -type f -name "dagger.json" -exec dirname {} \; -print0)
+
+  # Summary of what was collected
+  echo "=================================================="
+  echo "Summary of Prepared Modules:"
+  echo "=================================================="
+  if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
+    echo "No modules were bumped."
+  else
+    # Loop through the dictionary keys to show what was stored
+    for mod in "${!PREPARED_VERSIONS[@]}"; do
+      echo "  • $mod: v${PREPARED_VERSIONS[$mod]}"
+    done
+    echo "=================================================="
+    
+    # Optional prompt to approve all collected changes
+    if confirm_continue "approve all changes"; then
+        for mod in "${!PREPARED_VERSIONS[@]}"; do
+          "$0" approve "$mod"
+        done
+    fi
   fi
 }
 
@@ -78,11 +164,11 @@ prepare)
 
     git fetch --tags
 
-    #run module tests
-    if [[ "$module" == "govulncheck" || "$module" == "renovate" || "$module" == "sonarqube" ]]; then
-      : # Do nothing
+    # Run module tests only if the tests subdirectory exists
+    if [[ -d "$module_name/tests" ]]; then
+      dagger -m "$module_name/tests" checks
     else
-      dagger -m "$module/tests" checks
+      echo "ℹNo tests directory found for '$module_name', skipping tests."
     fi
 
     dagger call --module="$module" prepare
@@ -129,7 +215,12 @@ publish)
 
 check-all)
     echo "Running all checks for all modules..."
-    run_dagger_checks_all
+    check_all
+    ;;
+
+prepare-all)
+    echo "Running prepare for all modules..."
+    prepare_all
     ;;
 
 *)
