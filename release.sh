@@ -20,6 +20,37 @@ confirm_continue() {
   esac
 }
 
+# Check if module arg is set 
+require_module() {
+  if [[ -z "$module" ]]; then
+    echo "Error: The '$cmd' command requires a module argument."
+    exit 1
+  fi
+}
+
+# Run all checks in sub modules
+run_dagger_checks_all() {
+  local any_failed=0
+
+  while IFS= read -r -d '' test_dir; do
+    if [[ -f "$test_dir/dagger.json" ]]; then
+      echo "Checking: $test_dir"
+      
+      # If the subshell fails, set the failure flag to 1
+      if ! (cd "$test_dir" && dagger check); then
+        echo "❌ Check failed in $test_dir"
+        any_failed=1
+      fi
+    fi
+  done < <(find . -type d -name "tests" -print0)
+
+  # If any check failed, exit the parent process with an error code now
+  if [[ $any_failed -eq 1 ]]; then
+    echo "One or more Dagger checks failed."
+    exit 1
+  fi
+}
+
 # Loop through remaining args
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -40,13 +71,11 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "$module" ]]; then
-  echo "Module argument is required"
-  exit 1
-fi
-
 case "$cmd" in
 prepare)
+    # Enforces that $module is present
+    require_module
+
     git fetch --tags
 
     #run module tests
@@ -67,6 +96,9 @@ prepare)
     ;;
 
 approve)
+    # Enforces that $module is present
+    require_module
+
     version=$(cat "$module/VERSION")
 
     notesPath="$module/releases/v$version.md"
@@ -83,6 +115,9 @@ approve)
 
     ;;
 publish)
+    # Enforces that $module is present
+    require_module
+
     # push this branch and the associated tags
     git push --follow-tags
 
@@ -90,6 +125,11 @@ publish)
 
     dagger call --module="$module" release --version="$version"
 
+    ;;
+
+check-all)
+    echo "Running all checks for all modules..."
+    run_dagger_checks_all
     ;;
 
 *)
