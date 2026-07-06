@@ -150,6 +150,7 @@ func (y *Yamllint) WithStrict() *Yamllint {
 // Output only error level problems.
 //
 // e.g. 'yamllint --no-warnings'.
+//
 func (y *Yamllint) WithNoWarnings() *Yamllint {
 	y.Command = append(y.Command, "--no-warnings")
 	return y
