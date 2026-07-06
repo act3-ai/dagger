@@ -37,7 +37,9 @@ check_all() {
 
   while IFS= read -r -d '' test_dir; do
     if [[ -f "$test_dir/dagger.json" ]]; then
+      echo "***********************************************************************************"
       echo "Checking: $test_dir"
+      echo "***********************************************************************************"
       
       # If the subshell fails, set the failure flag to 1
       if ! (cd "$test_dir" && dagger check); then
@@ -69,7 +71,9 @@ prepare_all() {
       continue
     fi
 
+    echo "***********************************************************************************"
     echo "Process module: $module_name"
+    echo "***********************************************************************************"
     git fetch --tags
     
     # Run module tests only if the tests subdirectory exists
@@ -124,7 +128,7 @@ prepare_all() {
   else
     # Loop through the dictionary keys to show what was stored
     for mod in "${!PREPARED_VERSIONS[@]}"; do
-      echo "  • $mod: v${PREPARED_VERSIONS[$mod]}"
+      echo "  - $mod: v${PREPARED_VERSIONS[$mod]}"
     done
     echo "=================================================="
     
