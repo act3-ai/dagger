@@ -90,7 +90,7 @@ prepare_all() {
     # Capture stdout and stderr into a variable to inspect it
     echo "[$module_name] Run prepare for module: $module_name"
     local output
-    if ! output=$(dagger call --module="$module_name" prepare 2>&1); then
+    if ! output=$(dagger call --auto-apply --module="$module_name" prepare 2>&1); then
       
       # Check if the failure was simply because there was nothing to bump
       if echo "$output" | grep -q "there was nothing to bump"; then
