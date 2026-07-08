@@ -66,15 +66,14 @@ prepare_all() {
     local module_name
     module_name=$(basename "$(dirname "$module_dir")")
 
-    echo "***********************************************************************************"
-    echo "Process module: $module_name"
-    echo "***********************************************************************************"
-
     # Skip hidden folders like .dagger or test submodules
     if [[ "$module_name" == "tests" || "$module_name" == .* ]]; then
       continue
     fi
 
+    echo "***********************************************************************************"
+    echo "Process module: $module_name"
+    echo "***********************************************************************************"
     git fetch --tags
     
     # Run module tests only if the tests subdirectory exists
@@ -108,6 +107,7 @@ prepare_all() {
       echo "[$module_name] Successfully prepared release for '$module_name'."
 
       # -----------------------------------------------------------------
+      # NEW DICTIONARY LOGIC:
       # Read the newly generated version from the file and save it
       # -----------------------------------------------------------------
       local version
