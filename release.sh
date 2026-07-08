@@ -4,7 +4,6 @@ source ./update-deps.sh
 # Required env vars:
 # GITHUB_TOKEN - github repo api access
 
-
 cmd=$1
 shift
 
@@ -58,66 +57,55 @@ check_all() {
 
 # Run prepare on all sub modules
 prepare_all() {
-  echo "Searching for modules to prepare for release..."
+  echo "Searching for modules to prepare..."
 
   # Find all directories containing a 'dagger.json'
   while IFS= read -r -d '' module_dir; do
   
     local module_name
-    module_name=$(basename "$(dirname "$module_dir")")
-
-    echo "***********************************************************************************"
-    echo "Process module: $module_name"
-    echo "***********************************************************************************"
+    module_name="${module_dir##*/}"
 
     # Skip hidden folders like .dagger or test submodules
     if [[ "$module_name" == "tests" || "$module_name" == .* ]]; then
       continue
     fi
 
-    git fetch --tags
+    echo "***********************************************************************************"
+    echo "Prepare module: $module_name"
+    echo "***********************************************************************************"
     
-    # Run module tests only if the tests subdirectory exists
-    if [[ -d "$module_name/tests" ]]; then
-      echo "[$module_name] Run checks for module: $module_name"
-      if ! dagger -m "$module_name/tests" checks; then
-        echo "[$module_name] Error: Tests failed for module '$module_name'!"
-        exit 1
-      fi
-    else
-      echo "[$module_name] No tests directory found for '$module_name', skipping tests."
-    fi
+    # Prepare
+    #   Run the command with plain logs, copying the output to the screen via tee
+    #   while capturing the raw text string into our cmd_out variable
+    set +e
+    local cmd_out
+    cmd_out=$("$0" prepare "$module_name" 2>&1 | tee /dev/stderr)
+    exit_code="$?"
+    set -e
 
-    # Capture stdout and stderr into a variable to inspect it
-    echo "[$module_name] Run prepare for module: $module_name"
-    local output
-    if ! output=$(dagger call --auto-apply --module="$module_name" prepare 2>&1); then
-      
-      # Check if the failure was simply because there was nothing to bump
-      if echo "$output" | grep -q "there was nothing to bump"; then
-        echo "[$module_name] Skipping '$module_name': No changes detected to bump."
-      else
-        echo "[$module_name] Error: 'dagger prepare' failed for module '$module_name'!"
-        echo "----------------- DAGGER OUTPUT -----------------"
-        echo "$output"
-        echo "-------------------------------------------------"
-        exit 1
-      fi
-    else
-      echo "$output"
-      echo "[$module_name] Successfully prepared release for '$module_name'."
-
-      # -----------------------------------------------------------------
+    if [[ "$exit_code" -eq 0 ]]; then
       # Read the newly generated version from the file and save it
-      # -----------------------------------------------------------------
       local version
       version=$(cat "$module_name/VERSION")
       PREPARED_VERSIONS["$module_name"]="$version"
-      
-      echo "Tracked version: $module_name -> $version"
+      echo "[$module_name] Tracked version: $module_name -> $version"        
+    else
+      # The command returned an error code. Check the captured text variable for the bypass phrase.
+      if [[ "$cmd_out" == *"there was nothing to bump"* ]]; then
+          echo "[$module_name] Skipping '$module_name': No changes detected, there was nothing to bump."
+      else
+          # It's a completely different real failure! Crash out manually to protect the pipeline.
+          echo "[$module_name] ERROR: '$0 prepare' failed with exit code $exit_code" >&2
+          echo "$cmd_out" >&2  # Dump the error variable to stderr so you can see why it failed
+          exit "$exit_code"
+      fi
     fi
 
-  done < <(find . -type f -name "dagger.json" -exec dirname {} \; -print0)
+  # debug- hardcode list for faster testing, will need to revert!
+  # done < <(find . -type f -name "dagger.json" -printf "%h\0")
+  done < <(printf "./sonarqube\0./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
+
+
 
   # Summary of what was collected
   echo "=================================================="
@@ -132,12 +120,12 @@ prepare_all() {
     done
     echo "=================================================="
     
-    # Optional prompt to approve all collected changes
-    if confirm_continue "approve all changes"; then
-        for mod in "${!PREPARED_VERSIONS[@]}"; do
-          "$0" approve "$mod"
-        done
-    fi
+    # # Optional prompt to approve all collected changes
+    # if confirm_continue "approve all changes"; then
+    #     for mod in "${!PREPARED_VERSIONS[@]}"; do
+    #       "$0" approve "$mod"
+    #     done
+    # fi
   fi
 }
 
@@ -169,20 +157,16 @@ prepare)
     git fetch --tags
 
     # Run module tests only if the tests subdirectory exists
-    if [[ -d "$module_name/tests" ]]; then
-      dagger -m "$module_name/tests" checks
+    if [[ -d "$module/tests" ]]; then
+      dagger -m "$module/tests" checks
     else
-      echo "ℹNo tests directory found for '$module_name', skipping tests."
+      echo "No tests directory found for '$module', skipping tests."
     fi
 
-    dagger call --module="$module" prepare
+    dagger call --auto-apply --progress=dots --module="$module" prepare
     version=$(cat "$module/VERSION")
-
     echo "Please review the local changes, especially $module/releases/$version.md"
-    if confirm_continue approve; then
-      "$0" approve "$module"
-    fi
-
+    echo "If all is good call: $0 approve $module"
     ;;
 
 approve)
@@ -199,9 +183,10 @@ approve)
     # annotated and signed tag
     git tag -s -a -m "Official release $module/v$version" "$module/v$version"
 
-    if confirm_continue publish; then
-      "$0" publish "$module"
-    fi
+    echo "Successfully ran 'git add/commit/tag', to release run: $0 publish $module"
+    # if confirm_continue publish; then
+    #   "$0" publish "$module"
+    # fi
 
     ;;
 publish)
