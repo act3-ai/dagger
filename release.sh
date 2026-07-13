@@ -58,7 +58,7 @@ check_all() {
 # Run prepare on all sub modules
 prepare_all() {
   echo "Searching for modules to prepare..."
-  rm .temp/PREPARED_VERSIONS.txt
+  rm .temp/PREPARED_VERSIONS.txt || true
   rm .temp/APPROVED_VERSIONS.txt || true
 
   # Find all directories containing a 'dagger.json'
