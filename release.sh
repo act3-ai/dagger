@@ -105,8 +105,8 @@ prepare_all() {
 
   # debug- hardcode list for faster testing, will need to revert!
   # done < <(find . -type f -name "dagger.json" -printf "%h\0")
-  # done < <(printf "./sonarqube\0./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
-  done < <(printf "./markdownlint\0./.dagger")
+  done < <(printf "./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
+  # done < <(printf "./markdownlint\0./.dagger")
 
 
   # Summary of what was collected
@@ -180,8 +180,8 @@ approve_all() {
     declare -p APPROVED_VERSIONS > .temp/APPROVED_VERSIONS.txt
 
     echo -e "\nTODO:"
-    echo -e "  - Review the local changes in each module listed above."
-    echo -e "  - If all is good run: '$0 prepare-all' to commit and tag each module\n"
+    echo -e "  - Review the local changes in each module listed above  CHANGE ME."
+    echo -e "  - If all is good run: '$0 publish-all' to commit and tag each module\n"
   fi
 
 }
@@ -315,10 +315,12 @@ prepare-all)
     echo "Running prepare for all modules..."
     prepare_all
     ;;
+
 approve-all)
     echo "Running approve for all prepared modules..."
     approve_all
     ;;
+
 publish-all)
     echo "Running publish for all approved modules..."
     publish_all
