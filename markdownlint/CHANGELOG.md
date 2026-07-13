@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.11] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- Changes to test prepare all [dcaeb1b](https://github.com/act3-ai/dagger/commit/dcaeb1b8ecf30ebced56abe7fe4dcb665b25cb40) by **Tony Gilkerson**
+
+
 ## [0.4.10] - 2026-06-17
 
 ### 🐛 Bug Fixes

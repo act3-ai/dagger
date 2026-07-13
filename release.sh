@@ -70,6 +70,7 @@ prepare_all() {
       continue
     fi
 
+    echo " "
     echo "***********************************************************************************"
     echo "Prepare module: $module_name"
     echo "***********************************************************************************"
@@ -88,7 +89,6 @@ prepare_all() {
       local version
       version=$(cat "$module_name/VERSION")
       PREPARED_VERSIONS["$module_name"]="$version"
-      echo "[$module_name] Tracked version: $module_name -> $version"        
     else
       # The command returned an error code. Check the captured text variable for the bypass phrase.
       if [[ "$cmd_out" == *"there was nothing to bump"* ]]; then
@@ -106,27 +106,52 @@ prepare_all() {
   done < <(printf "./sonarqube\0./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
 
 
-
   # Summary of what was collected
-  echo "=================================================="
-  echo "Summary of Prepared Modules:"
-  echo "=================================================="
+  echo -e "\nSummary of Prepared Modules:"
   if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
     echo "No modules were bumped."
   else
     # Loop through the dictionary keys to show what was stored
     for mod in "${!PREPARED_VERSIONS[@]}"; do
-      echo "  - $mod: v${PREPARED_VERSIONS[$mod]}"
+      echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
     done
-    echo "=================================================="
-    
-    # # Optional prompt to approve all collected changes
-    # if confirm_continue "approve all changes"; then
-    #     for mod in "${!PREPARED_VERSIONS[@]}"; do
-    #       "$0" approve "$mod"
-    #     done
-    # fi
+
+    echo -e "\nTODO:"
+    echo "  - Review the local changes in each module listed above."
+    echo "  - If all is good run: '$0 approve-all' to commit and tag each module"
+    # Save the prepared versions for each module so that it can be read in and used by the approve-all
+    mkdir -p .temp
+    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
   fi
+}
+
+# Run approve on all sub modules
+approve_all() {
+  echo "Searching for modules to approve..."
+
+  if [ ! -f ".temp/PREPARED_VERSIONS.txt" ]; then
+      echo "Did not find list of prepared module version.  File '.temp/PREPARED_VERSIONS.txt' does not exist. "
+      echo "Did you forget to run '$0 prepare-all' first?"
+      exit 1
+  fi
+
+  # read list of prepared version created by prepare-all
+  source .temp/PREPARED_VERSIONS.txt
+
+  # Loop the list of prepared modules 
+  for mod in "${!PREPARED_VERSIONS[@]}"; do
+
+    ver="${PREPARED_VERSIONS[$mod]}"
+    echo " "
+    echo "***********************************************************************************"
+    echo "Approve module: $mod  version: $ver"
+    echo "***********************************************************************************"
+
+    # Call approve for given module in a sub-shell
+    ("$0" prepare "$mod")
+
+  done
+
 }
 
 # Loop through remaining args
@@ -165,8 +190,9 @@ prepare)
 
     dagger call --auto-apply --progress=dots --module="$module" prepare
     version=$(cat "$module/VERSION")
-    echo "Please review the local changes, especially $module/releases/$version.md"
-    echo "If all is good call: $0 approve $module"
+    echo -e "\n NOTE:"
+    echo "  - Please review the local changes, especially $module/releases/$version.md"
+    echo "  - If all is good run: $0 approve $module"
     ;;
 
 approve)
@@ -210,6 +236,10 @@ check-all)
 prepare-all)
     echo "Running prepare for all modules..."
     prepare_all
+    ;;
+approve-all)
+    echo "Running approve for all modules..."
+    approve_all
     ;;
 
 *)
