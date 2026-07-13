@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.13] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- Test release all take 2 [5f939ee](https://github.com/act3-ai/dagger/commit/5f939ee5262f63452ce66bc2393e5823a03cca6f) by **Tony Gilkerson**
+
+
 ## [0.4.12] - 2026-07-13
 
 ### 🐛 Bug Fixes
