@@ -58,21 +58,23 @@ check_all() {
 # Run prepare on all sub modules
 prepare_all() {
   echo "Searching for modules to prepare..."
+  rm .temp/PREPARED_VERSIONS.txt
+  rm .temp/APPROVED_VERSIONS.txt || true
 
   # Find all directories containing a 'dagger.json'
   while IFS= read -r -d '' module_dir; do
   
-    local module_name
-    module_name="${module_dir##*/}"
+    local mod
+    mod="${module_dir##*/}"
 
     # Skip hidden folders like .dagger or test submodules
-    if [[ "$module_name" == "tests" || "$module_name" == .* ]]; then
+    if [[ "$mod" == "tests" || "$mod" == .* ]]; then
       continue
     fi
 
     echo " "
     echo "***********************************************************************************"
-    echo "Prepare module: $module_name"
+    echo "Prepare module: $mod"
     echo "***********************************************************************************"
     
     # Prepare
@@ -80,22 +82,22 @@ prepare_all() {
     #   while capturing the raw text string into our cmd_out variable
     set +e
     local cmd_out
-    cmd_out=$("$0" prepare "$module_name" 2>&1 | tee /dev/stderr)
+    cmd_out=$("$0" prepare "$mod" 2>&1 | tee /dev/stderr)
     exit_code="$?"
     set -e
 
     if [[ "$exit_code" -eq 0 ]]; then
       # Read the newly generated version from the file and save it
       local version
-      version=$(cat "$module_name/VERSION")
-      PREPARED_VERSIONS["$module_name"]="$version"
+      version=$(cat "$mod/VERSION")
+      PREPARED_VERSIONS["$mod"]="$version"
     else
       # The command returned an error code. Check the captured text variable for the bypass phrase.
       if [[ "$cmd_out" == *"there was nothing to bump"* ]]; then
-          echo "[$module_name] Skipping '$module_name': No changes detected, there was nothing to bump."
+          echo "[$mod] Skipping '$mod': No changes detected, there was nothing to bump."
       else
           # It's a completely different real failure! Crash out manually to protect the pipeline.
-          echo "[$module_name] ERROR: '$0 prepare' failed with exit code $exit_code" >&2
+          echo "[$mod] ERROR: '$0 prepare' failed with exit code $exit_code" >&2
           echo "$cmd_out" >&2  # Dump the error variable to stderr so you can see why it failed
           exit "$exit_code"
       fi
@@ -119,31 +121,33 @@ prepare_all() {
       echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
     done
 
+    # Save the prepared versions so they can be read in and used by the approve-all
+    mkdir -p .temp
+    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
+
     echo -e "\nTODO:"
     echo -e "  - Review the local changes in each module listed above."
     echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
-    # Save the prepared versions for each module so that it can be read in and used by the approve-all
-    mkdir -p .temp
-    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
   fi
 
 }
 
-# Run approve on all sub modules
+# Run approve on all prepared modules
 approve_all() {
   echo "Searching for modules to approve..."
 
   if [ ! -f ".temp/PREPARED_VERSIONS.txt" ]; then
-      echo "Did not find list of prepared module version.  File '.temp/PREPARED_VERSIONS.txt' does not exist. "
+      echo "Did not find list of prepared modules.  File '.temp/PREPARED_VERSIONS.txt' does not exist. "
       echo "Did you forget to run '$0 prepare-all' first?"
       exit 1
   fi
 
-  # read list of prepared version created by prepare-all
+  # restore array
   source .temp/PREPARED_VERSIONS.txt
-  rm .temp/PREPARED_VERSIONS.txt
+  rm .temp/PREPARED_VERSIONS.txt 
+  rm .temp/APPROVED_VERSIONS.txt || true
 
-  # Loop the list of prepared modules 
+  # for each module that was prepared
   for mod in "${!PREPARED_VERSIONS[@]}"; do
 
     ver="${PREPARED_VERSIONS[$mod]}"
@@ -157,7 +161,7 @@ approve_all() {
 
   done
 
-  # Summary approved
+  # Summary of approved
   echo " "
   echo "***********************************************************************************"
   echo -e "\nSummary of Approved Modules:"
@@ -165,16 +169,65 @@ approve_all() {
     echo "No modules were approved."
   else
     # Loop through the dictionary keys to show what was stored
+    declare -A APPROVED_VERSIONS
     for mod in "${!PREPARED_VERSIONS[@]}"; do
       echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
+      APPROVED_VERSIONS["$mod"]="${PREPARED_VERSIONS[$mod]}"
     done
+
+    # Save the approved versions so thay can be read in and used by the publish-all
+    mkdir -p .temp
+    declare -p APPROVED_VERSIONS > .temp/APPROVED_VERSIONS.txt
 
     echo -e "\nTODO:"
     echo -e "  - Review the local changes in each module listed above."
     echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
-    # Save the prepared versions for each module so that it can be read in and used by the approve-all
-    mkdir -p .temp
-    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
+  fi
+
+}
+
+
+# Run publish on all approved modules
+publish_all() {
+
+  echo "Searching for modules to publish..."
+
+  if [ ! -f ".temp/APPROVED_VERSIONS.txt" ]; then
+      echo "Did not find list of approved modules.  File '.temp/APPROVED_VERSIONS.txt' does not exist. "
+      echo "Did you forget to run '$0 approve-all' first?"
+      exit 1
+  fi
+
+  # restore array
+  source .temp/APPROVED_VERSIONS.txt
+  rm .temp/APPROVED_VERSIONS.txt
+
+  # for each module that was approved
+  for mod in "${!APPROVED_VERSIONS[@]}"; do
+
+    ver="${APPROVED_VERSIONS[$mod]}"
+    echo " "
+    echo "***********************************************************************************"
+    echo "Publish module: $mod  version: $ver"
+    echo "***********************************************************************************"
+
+    # Call publish for given module in a sub-shell
+    ("$0" publish "$mod")
+
+  done
+
+  # Summary of approved
+  echo " "
+  echo "***********************************************************************************"
+  echo -e "\nSummary of Published Modules:"
+  if [[ ${#APPROVED_VERSIONS[@]} -eq 0 ]]; then
+    echo "No modules were published."
+  else
+    # Loop through the dictionary keys to show what was stored
+    for mod in "${!APPROVED_VERSIONS[@]}"; do
+      echo "  - $mod: ${APPROVED_VERSIONS[$mod]}"
+    done
+    echo -e "\nDone."
   fi
 
 }
@@ -263,8 +316,12 @@ prepare-all)
     prepare_all
     ;;
 approve-all)
-    echo "Running approve for all modules..."
+    echo "Running approve for all prepared modules..."
     approve_all
+    ;;
+publish-all)
+    echo "Running publish for all approved modules..."
+    publish_all
     ;;
 
 *)
