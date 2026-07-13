@@ -103,10 +103,13 @@ prepare_all() {
 
   # debug- hardcode list for faster testing, will need to revert!
   # done < <(find . -type f -name "dagger.json" -printf "%h\0")
-  done < <(printf "./sonarqube\0./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
+  # done < <(printf "./sonarqube\0./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
+  done < <(printf "./markdownlint\0./.dagger")
 
 
   # Summary of what was collected
+  echo " "
+  echo "***********************************************************************************"
   echo -e "\nSummary of Prepared Modules:"
   if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
     echo "No modules were bumped."
@@ -117,12 +120,13 @@ prepare_all() {
     done
 
     echo -e "\nTODO:"
-    echo "  - Review the local changes in each module listed above."
-    echo "  - If all is good run: '$0 approve-all' to commit and tag each module"
+    echo -e "  - Review the local changes in each module listed above."
+    echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
     # Save the prepared versions for each module so that it can be read in and used by the approve-all
     mkdir -p .temp
     declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
   fi
+
 }
 
 # Run approve on all sub modules
@@ -137,6 +141,7 @@ approve_all() {
 
   # read list of prepared version created by prepare-all
   source .temp/PREPARED_VERSIONS.txt
+  rm .temp/PREPARED_VERSIONS.txt
 
   # Loop the list of prepared modules 
   for mod in "${!PREPARED_VERSIONS[@]}"; do
@@ -148,9 +153,29 @@ approve_all() {
     echo "***********************************************************************************"
 
     # Call approve for given module in a sub-shell
-    ("$0" prepare "$mod")
+    ("$0" approve "$mod")
 
   done
+
+  # Summary approved
+  echo " "
+  echo "***********************************************************************************"
+  echo -e "\nSummary of Approved Modules:"
+  if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
+    echo "No modules were approved."
+  else
+    # Loop through the dictionary keys to show what was stored
+    for mod in "${!PREPARED_VERSIONS[@]}"; do
+      echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
+    done
+
+    echo -e "\nTODO:"
+    echo -e "  - Review the local changes in each module listed above."
+    echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
+    # Save the prepared versions for each module so that it can be read in and used by the approve-all
+    mkdir -p .temp
+    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
+  fi
 
 }
 
