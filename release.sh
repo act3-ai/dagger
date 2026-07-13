@@ -112,7 +112,7 @@ prepare_all() {
   # Summary of what was collected
   echo " "
   echo "***********************************************************************************"
-  echo -e "\nSummary of Prepared Modules:"
+  echo "Summary of Prepared Modules:"
   if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
     echo "No modules were bumped."
   else
@@ -164,7 +164,7 @@ approve_all() {
   # Summary of approved
   echo " "
   echo "***********************************************************************************"
-  echo -e "\nSummary of Approved Modules:"
+  echo "Summary of Approved Modules:"
   if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
     echo "No modules were approved."
   else
@@ -181,7 +181,7 @@ approve_all() {
 
     echo -e "\nTODO:"
     echo -e "  - Review the local changes in each module listed above."
-    echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
+    echo -e "  - If all is good run: '$0 prepare-all' to commit and tag each module\n"
   fi
 
 }
@@ -219,7 +219,7 @@ publish_all() {
   # Summary of approved
   echo " "
   echo "***********************************************************************************"
-  echo -e "\nSummary of Published Modules:"
+  echo "Summary of Published Modules:"
   if [[ ${#APPROVED_VERSIONS[@]} -eq 0 ]]; then
     echo "No modules were published."
   else
