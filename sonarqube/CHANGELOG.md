@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.2] - 2026-07-16
+
+### 🐛 Bug Fixes
+
+- Add report summary and separate bootstrap function for using GUI [6428c36](https://github.com/act3-ai/dagger/commit/6428c366a3ae6b2638b74d7a1dbb5f6c52d20aec) by @pspurlock
+
+
 ## [0.0.1] - 2026-06-22
 
 ### 🐛 Bug Fixes
