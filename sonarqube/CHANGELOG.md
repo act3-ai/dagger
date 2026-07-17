@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.4] - 2026-07-17
+
+### 🐛 Bug Fixes
+
+- Bug with src directory default [006f73c](https://github.com/act3-ai/dagger/commit/006f73c33dc4fc65747759f745e433abf15a9aa5) by @pspurlock
+
+
 ## [0.0.3] - 2026-07-17
 
 ### 🐛 Bug Fixes
