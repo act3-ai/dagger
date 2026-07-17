@@ -4,14 +4,6 @@ source ./update-deps.sh
 # Required env vars:
 # GITHUB_TOKEN - github repo api access
 
-cmd=$1
-shift
-
-module=""
-
-# Map were key=module name, value=version 
-declare -A PREPARED_VERSIONS=()
-
 confirm_continue() {
   local next_step="$1"
 
@@ -22,12 +14,28 @@ confirm_continue() {
   esac
 }
 
-# Check if module arg is set 
-require_module() {
-  if [[ -z "$module" ]]; then
-    echo "Error: The '$cmd' command requires a module argument."
+require_one_module() {
+  # Check if exactly one module arg is set 
+  if [[ ${#modules[@]} -ne 1 ]]; then
+    echo "Error: The '$cmd' command requires exactly one module argument. (You provided ${#modules[@]})"
     exit 1
-  fi
+  fi  
+}
+
+require_some_module() {
+  # Check if at least one module (aka "some") arg is set 
+  if [[ ${#modules[@]} -lt 1 ]]; then
+    echo "Error: The '$cmd' command requires one or more module arguments. (You provided ${#modules[@]})"
+    exit 1
+  fi  
+}
+
+require_no_module() {
+  # Check to ensure NO module args are set 
+  if [[ ${#modules[@]} -ne 0 ]]; then
+    echo "Error: The '$cmd' should not have any module arguments. (You provided ${#modules[@]})"
+    exit 1
+  fi    
 }
 
 # Run all checks in sub modules
@@ -36,9 +44,7 @@ check_all() {
 
   while IFS= read -r -d '' test_dir; do
     if [[ -f "$test_dir/dagger.json" ]]; then
-      echo "***********************************************************************************"
       echo "Checking: $test_dir"
-      echo "***********************************************************************************"
       
       # If the subshell fails, set the failure flag to 1
       if ! (cd "$test_dir" && dagger check); then
@@ -57,40 +63,66 @@ check_all() {
 
 # Run prepare on all sub modules
 prepare_all() {
-  echo "Searching for modules to prepare..."
-  rm .temp/PREPARED_VERSIONS.txt || true
-  rm .temp/APPROVED_VERSIONS.txt || true
-
-  # Find all directories containing a 'dagger.json'
-  while IFS= read -r -d '' module_dir; do
+  require_no_module
   
-    local mod
-    mod="${module_dir##*/}"
+  git fetch --tags
 
-    # Skip hidden folders like .dagger or test submodules
-    if [[ "$mod" == "tests" || "$mod" == .* ]]; then
-      continue
+  # Declare an empty indexed array to hold prepared modules
+  local -a prepared_modules=()
+
+  echo "Searching for modules to prepare..."
+  # Loop through all immediate subdirectories
+  for dir in */; do
+  
+    # Remove trailing slash
+    mod="${dir%/}"
+    version_file="$mod/VERSION"
+
+    # Skip if the directory doesn't contain a VERSION file
+    if [ ! -f "$version_file" ]; then
+        continue
     fi
 
-    echo " "
-    echo "***********************************************************************************"
-    echo "Prepare module: $mod"
-    echo "***********************************************************************************"
-    
+    # Read version and construct the expected tag name
+    version=$(tr -d '[:space:]' < "$version_file")
+    current_tag="${mod}/v${version}"
+
+    echo -e "\nPrepare module: $mod"
+
+    # Verify if the computed tag actually exists in the local git database
+    if git rev-parse --verify --quiet "$current_tag" >/dev/null 2>&1; then
+        # Check if any tracked files in this directory changed since the tag
+        if ! git diff --quiet "$current_tag" HEAD -- "$mod"; then
+            echo "CHANGED: '$mod' has changes since tag '$current_tag'"
+        else
+            echo "Up-to-date: '$mod' has no changes since tag '$current_tag'"
+            continue
+        fi
+    else
+        echo "UNKNOWN: Tag '$current_tag' does not exist for '$mod' (first release?)"
+        continue
+    fi
+
     # Prepare
     #   Run the command with plain logs, copying the output to the screen via tee
     #   while capturing the raw text string into our cmd_out variable
-    set +e
-    local cmd_out
-    cmd_out=$("$0" prepare "$mod" 2>&1 | tee /dev/stderr)
-    exit_code="$?"
-    set -e
+    
+    exit_code="0" # assume all good
+
+    if [[ "$dry_run" == "true" ]]; then
+      echo "[DRY-RUN] Would have called:"
+      echo "$0 prepare $mod"
+    else
+      set +e
+      local cmd_out
+      cmd_out=$("$0" "prepare" "$mod" 2>&1 | tee /dev/stderr)
+      exit_code="$?"
+      set -e
+    fi
 
     if [[ "$exit_code" -eq 0 ]]; then
-      # Read the newly generated version from the file and save it
-      local version
-      version=$(cat "$mod/VERSION")
-      PREPARED_VERSIONS["$mod"]="$version"
+      # Only consider the module prepared if there is something to bump
+      prepared_modules+=("$mod")
     else
       # The command returned an error code. Check the captured text variable for the bypass phrase.
       if [[ "$cmd_out" == *"there was nothing to bump"* ]]; then
@@ -103,159 +135,93 @@ prepare_all() {
       fi
     fi
 
-  # debug- hardcode list for faster testing, will need to revert!
-  # done < <(find . -type f -name "dagger.json" -printf "%h\0")
-  done < <(printf "./shields/tests\0./shields\0./yamllint\0./markdownlint\0./.dagger")
-  # done < <(printf "./markdownlint\0./.dagger")
+  done
 
 
   # Summary of what was collected
-  echo " "
-  echo "***********************************************************************************"
-  echo "Summary of Prepared Modules:"
-  if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
+  echo -e "\nSummary of Prepared Modules:"
+  if [[ ${#prepared_modules[@]} -eq 0 ]]; then
     echo "No modules were bumped."
-  else
-    # Loop through the dictionary keys to show what was stored
-    for mod in "${!PREPARED_VERSIONS[@]}"; do
-      echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
-    done
-
-    # Save the prepared versions so they can be read in and used by the approve-all
-    mkdir -p .temp
-    declare -p PREPARED_VERSIONS > .temp/PREPARED_VERSIONS.txt
-
-    echo -e "\nTODO:"
-    echo -e "  - Review the local changes in each module listed above."
-    echo -e "  - If all is good run: '$0 approve-all' to commit and tag each module\n"
+    return 0
   fi
+
+  # Print list of prepared modules
+  for mod in "${prepared_modules[@]}"; do
+    echo "- $mod"
+  done
+
+  # Ask user to continue
+  if confirm_continue approve-all; then
+    "$0" "approve-all" "${prepared_modules[@]}" ${dry_run:+"--dry-run"}
+  fi 
 
 }
 
 # Run approve on all prepared modules
 approve_all() {
-  echo "Searching for modules to approve..."
-
-  if [ ! -f ".temp/PREPARED_VERSIONS.txt" ]; then
-      echo "Did not find list of prepared modules.  File '.temp/PREPARED_VERSIONS.txt' does not exist. "
-      echo "Did you forget to run '$0 prepare-all' first?"
-      exit 1
-  fi
-
-  # restore array
-  source .temp/PREPARED_VERSIONS.txt
-  rm .temp/PREPARED_VERSIONS.txt 
-  rm .temp/APPROVED_VERSIONS.txt || true
+  require_some_module
 
   # for each module that was prepared
-  for mod in "${!PREPARED_VERSIONS[@]}"; do
-
-    ver="${PREPARED_VERSIONS[$mod]}"
-    echo " "
-    echo "***********************************************************************************"
-    echo "Approve module: $mod  version: $ver"
-    echo "***********************************************************************************"
-
-    # Call approve for given module in a sub-shell
-    ("$0" approve "$mod")
-
+  for mod in "${modules[@]}"; do
+    echo -e "\nApprove module: $mod"
+    if [[ "$dry_run" == "true" ]]; then
+      echo "[DRY-RUN] Would have called:"
+      echo "$0 approve $mod"
+    else
+      # Call approve for given module in a sub-shell
+      ("$0" approve "$mod")
+    fi
   done
 
   # Summary of approved
-  echo " "
-  echo "***********************************************************************************"
-  echo "Summary of Approved Modules:"
-  if [[ ${#PREPARED_VERSIONS[@]} -eq 0 ]]; then
-    echo "No modules were approved."
-  else
-    # Loop through the dictionary keys to show what was stored
-    declare -A APPROVED_VERSIONS
-    for mod in "${!PREPARED_VERSIONS[@]}"; do
-      echo "  - $mod: ${PREPARED_VERSIONS[$mod]}"
-      APPROVED_VERSIONS["$mod"]="${PREPARED_VERSIONS[$mod]}"
-    done
+  echo -e "\nSummary of Approved Modules:"
+  for mod in "${modules[@]}"; do
+    echo "  - $mod: $(cat "$mod/VERSION")"
+  done
 
-    # Save the approved versions so thay can be read in and used by the publish-all
-    mkdir -p .temp
-    declare -p APPROVED_VERSIONS > .temp/APPROVED_VERSIONS.txt
-
-    echo -e "\nTODO:"
-    echo -e "  - Review the local changes in each module listed above  CHANGE ME."
-    echo -e "  - If all is good run: '$0 publish-all' to commit and tag each module\n"
-  fi
+  # Ask user to continue
+  if confirm_continue publish-all; then
+    "$0" "publish-all" "${mod[@]}" ${dry_run:+"--dry-run"}
+  fi 
 
 }
 
 
 # Run publish on all approved modules
 publish_all() {
-
-  echo "Searching for modules to publish..."
-
-  if [ ! -f ".temp/APPROVED_VERSIONS.txt" ]; then
-      echo "Did not find list of approved modules.  File '.temp/APPROVED_VERSIONS.txt' does not exist. "
-      echo "Did you forget to run '$0 approve-all' first?"
-      exit 1
-  fi
-
-  # restore array
-  source .temp/APPROVED_VERSIONS.txt
-  rm .temp/APPROVED_VERSIONS.txt
+  require_some_module
 
   # for each module that was approved
-  for mod in "${!APPROVED_VERSIONS[@]}"; do
+  for mod in "${modules[@]}"; do
+    ver="$(cat "$mod/VERSION")"
+    echo -e "\nPublish module: $mod  version: $ver"
 
-    ver="${APPROVED_VERSIONS[$mod]}"
-    echo " "
-    echo "***********************************************************************************"
-    echo "Publish module: $mod  version: $ver"
-    echo "***********************************************************************************"
-
-    # Call publish for given module in a sub-shell
-    ("$0" publish "$mod")
-
+    if [[ "$dry_run" == "true" ]]; then
+      echo "[DRY-RUN] Would have called:"
+      echo "$0 publish $mod"
+    else
+      # Call publish for given module in a sub-shell
+      ("$0" publish "$mod")
+    fi
   done
 
   # Summary of approved
-  echo " "
-  echo "***********************************************************************************"
-  echo "Summary of Published Modules:"
-  if [[ ${#APPROVED_VERSIONS[@]} -eq 0 ]]; then
-    echo "No modules were published."
-  else
-    # Loop through the dictionary keys to show what was stored
-    for mod in "${!APPROVED_VERSIONS[@]}"; do
-      echo "  - $mod: ${APPROVED_VERSIONS[$mod]}"
-    done
-    echo -e "\nDone."
-  fi
+  echo -e "\nSummary of Published Modules:"
+  for mod in "${modules[@]}"; do
+    echo "  - $mod: $(cat "$mod/VERSION")"
+  done
+
+  echo -e "\nDone."
 
 }
 
-# Loop through remaining args
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    -*)
-      echo "Unknown option: $1"
-      exit 1
-      ;;
-    *)
-      # First non-flag argument is module
-      if [[ -z "$module" ]]; then
-        module=$1
-        shift
-      else
-        echo "Unexpected argument: $1"
-        exit 1
-      fi
-      ;;
-  esac
-done
-
-case "$cmd" in
-prepare)
+prepare() {
     # Enforces that $module is present
-    require_module
+    require_one_module
+
+    # Use first module in the array
+    local mod
+    module="${modules[0]}"
 
     git fetch --tags
 
@@ -271,11 +237,15 @@ prepare)
     echo -e "\n NOTE:"
     echo "  - Please review the local changes, especially $module/releases/$version.md"
     echo "  - If all is good run: $0 approve $module"
-    ;;
+}
 
-approve)
+approve() {
     # Enforces that $module is present
-    require_module
+    require_one_module
+
+    # Use first module in the array
+    local mod
+    module="${modules[0]}"
 
     version=$(cat "$module/VERSION")
 
@@ -288,14 +258,16 @@ approve)
     git tag -s -a -m "Official release $module/v$version" "$module/v$version"
 
     echo "Successfully ran 'git add/commit/tag', to release run: $0 publish $module"
-    # if confirm_continue publish; then
-    #   "$0" publish "$module"
-    # fi
 
-    ;;
-publish)
+}
+
+publish() {
     # Enforces that $module is present
-    require_module
+    require_one_module
+
+    # Use first module in the array
+    local mod
+    module="${modules[0]}"
 
     # push this branch and the associated tags
     git push --follow-tags
@@ -304,21 +276,70 @@ publish)
 
     dagger call --module="$module" release --version="$version"
 
+    echo "Successfully ran 'dagger release' on module $module"
+}
+
+################################################################################################
+#   Main
+################################################################################################
+
+# Initialize an empty array to store multiple modules
+modules=()
+
+# Initialize the dry-run flag tracking variable
+dry_run="false"
+
+cmd=$1
+shift
+
+# Loop through remaining args
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --dry-run)
+      dry_run="true"
+      shift
+      ;;  
+    -*)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+    *)
+      # Every non-flag argument is added to the modules array
+      modules+=("$1")
+      shift
+      ;;
+  esac
+done
+
+case "$cmd" in
+prepare)
+    echo "Running prepare..."
+    prepare
+    ;;
+
+approve)
+    echo "Running approve..."
+    approve
+    ;;
+
+publish)
+    echo "Running publish..."
+    publish
     ;;
 
 check-all)
     echo "Running all checks for all modules..."
-    check_all
+    check_all    
     ;;
 
 prepare-all)
     echo "Running prepare for all modules..."
-    prepare_all
+    prepare_all   
     ;;
 
 approve-all)
     echo "Running approve for all prepared modules..."
-    approve_all
+    approve_all 
     ;;
 
 publish-all)
