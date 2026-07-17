@@ -93,7 +93,6 @@ check_all() {
 # Run prepare on all sub modules
 prepare_all() {
   require_no_module
-  
   git fetch --tags
 
   # Declare an empty indexed array to hold prepared modules
@@ -131,7 +130,7 @@ prepare_all() {
       #   while capturing the raw text string into our cmd_out variable
       set +e
       local cmd_out
-      cmd_out=$("$0" "prepare" "$mod" 2>&1 | tee /dev/stderr)
+      cmd_out=$(BATCH_MODE=true "$0" "prepare" "$mod" 2>&1 | tee /dev/stderr)
       exit_code="$?"
       set -e
     fi
@@ -187,7 +186,7 @@ approve_all() {
       echo "$0 approve $mod"
     else
       # Call approve for given module in a sub-shell
-      ("$0" approve "$mod")
+      (BATCH_MODE=true "$0" approve "$mod")
     fi
   done
 
@@ -219,7 +218,7 @@ publish_all() {
       echo "$0 publish $mod"
     else
       # Call publish for given module in a sub-shell
-      ("$0" publish "$mod")
+      (BATCH_MODE=true "$0" publish "$mod")
     fi
   done
 
@@ -238,8 +237,7 @@ prepare() {
     require_one_module
 
     # Use first module in the array
-    local mod
-    module="${modules[0]}"
+    local module="${modules[0]}"
 
     git fetch --tags
 
@@ -251,10 +249,20 @@ prepare() {
     fi
 
     dagger call --auto-apply --progress=dots --module="$module" prepare
+
+    # Skip prompt if in batch mode
     version=$(cat "$module/VERSION")
-    printf "\n NOTE:"
-    echo "  - Please review the local changes, especially $module/releases/$version.md"
-    echo "  - If all is good run: $0 approve $module"
+    if [[ "$batch_mode" == "true" ]]; then
+        echo "Skip prompt, running in batch mode"
+        return 0
+    fi
+
+    # Prompt user to continue to next step
+    echo "Please review the local changes, especially $module/releases/$version.md"
+    if confirm_continue approve; then
+      "$0" approve "$module"
+    fi    
+    
 }
 
 approve() {
@@ -262,8 +270,7 @@ approve() {
     require_one_module
 
     # Use first module in the array
-    local mod
-    module="${modules[0]}"
+    local module="${modules[0]}"
 
     version=$(cat "$module/VERSION")
 
@@ -275,7 +282,17 @@ approve() {
     # annotated and signed tag
     git tag -s -a -m "Official release $module/v$version" "$module/v$version"
 
-    echo "Successfully ran 'git add/commit/tag', to release run: $0 publish $module"
+    # Skip prompt if in batch mode
+    if [[ "$batch_mode" == "true" ]]; then
+        echo "Skip prompt, running in batch mode"
+        return 0
+    fi
+
+    # Prompt user to continue to next step
+    echo "Please review the local changes, especially $module/releases/$version.md"
+    if confirm_continue publish; then
+      "$0" approve "$module"
+    fi    
 
 }
 
@@ -284,8 +301,7 @@ publish() {
     require_one_module
 
     # Use first module in the array
-    local mod
-    module="${modules[0]}"
+    local module="${modules[0]}"
 
     # push this branch and the associated tags
     git push --follow-tags
@@ -306,6 +322,10 @@ modules=()
 
 # Initialize the dry-run flag tracking variable
 dry_run="false"
+
+# The _all functions will set this to true to control the lower lever prompting
+# an external env var BATCH_MODE is use to span process boundaries
+batch_mode="${BATCH_MODE:-}"
 
 cmd=$1
 shift
