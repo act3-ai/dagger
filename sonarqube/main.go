@@ -161,7 +161,7 @@ func (m *Sonarqube) Bootstrap(ctx context.Context) (*SonarServer, error) {
 
 // scan a source directory with sonar-scanner and returns a report summary
 func (m *Sonarqube) Scan(ctx context.Context,
-	// +defaultPath="/"
+	// src directory to scan
 	src *dagger.Directory,
 	// comma separated list of impact severities to use when generating report
 	// +optional
