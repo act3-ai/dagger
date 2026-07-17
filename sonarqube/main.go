@@ -15,7 +15,42 @@ import (
 	"time"
 )
 
-type Sonarqube struct{}
+type Sonarqube struct {
+	Base string
+}
+
+func New(
+	// Base sonar-service image override
+	// +optional
+	// +default="sonarqube:community"
+	base string,
+) *Sonarqube {
+	return &Sonarqube{
+		Base: base,
+	}
+}
+
+type SonarIssue struct {
+	Key       string `json:"key"`
+	Rule      string `json:"rule"`
+	Severity  string `json:"severity"`
+	Message   string `json:"message"`
+	Component string `json:"component"`
+	Line      int    `json:"line"`
+}
+
+type SonarPage struct {
+	Issues []SonarIssue `json:"issues"`
+}
+
+type SonarServer struct {
+	// The live running service
+	Service *dagger.Service
+	// The generated user token used for running scans
+	SonarToken *dagger.Secret
+	// The plaintext admin password (for logging into the UI)
+	AdminToken *dagger.Secret
+}
 
 const changePasswordScript = `
 http_code=$(curl -s --retry 5 --retry-delay 2 --noproxy "*" -X POST -u admin:admin \
@@ -64,50 +99,11 @@ fi
 cat /tmp/token_res | jq -r '.token'
 `
 
-const pollScript = `
-	echo "Polling SonarQube until analysis processing completes..." >&2
-	while true; do
-		res=$(curl -s --noproxy "*" -u "$SONAR_TOKEN:" "http://sonar-server:9000/api/ce/component?component=proj1")
-		queue_length=$(echo "$res" | jq '.queue | length')
-		current_status=$(echo "$res" | jq -r '.current.status // "NONE"')
-		
-		echo "Current status: $current_status | Tasks in queue: $queue_length" >&2
-		if [ "$queue_length" -eq 0 ] && [ "$current_status" = "SUCCESS" ]; then
-			echo "Analysis complete and successful!" >&2
-			break
-		fi
-		sleep 2
-	done
-	sleep 2 # Cooldown for index stabilization
-	`
-
-type SonarIssue struct {
-	Key       string `json:"key"`
-	Rule      string `json:"rule"`
-	Severity  string `json:"severity"`
-	Message   string `json:"message"`
-	Component string `json:"component"`
-	Line      int    `json:"line"`
-}
-
-type SonarPage struct {
-	Issues []SonarIssue `json:"issues"`
-}
-
-type SonarServer struct {
-	// The live running service
-	Service *dagger.Service
-	// The generated user token used for running scans
-	SonarToken *dagger.Secret
-	// The plaintext admin password (for logging into the UI)
-	AdminToken *dagger.Secret
-}
-
 // start up sonar-server as a service
 func (m *Sonarqube) Service() *dagger.Service {
 
 	return dag.Container().
-		From("sonarqube:community").
+		From(m.Base).
 		WithEnvVariable("SONAR_ES_BOOTSTRAP_CHECKS_DISABLE", "true").
 		// Define a system passcode that skips user authentication for health metrics
 		WithEnvVariable("SONAR_WEB_SYSTEMPASSCODE", "dagger-health-token").
@@ -137,7 +133,7 @@ func (m *Sonarqube) Bootstrap(ctx context.Context) (*SonarServer, error) {
 
 	// generate admin PW for first use
 	adminToken := m.generateRandomTokenAsSecret()
-	adminPlaintext, err := adminToken.Plaintext(ctx)
+	// adminPlaintext, err := adminToken.Plaintext(ctx)
 
 	// setup admin pw and project in sonar
 	if err := m.serverSetup(ctx, sonarSvc, adminToken); err != nil {
@@ -148,13 +144,13 @@ func (m *Sonarqube) Bootstrap(ctx context.Context) (*SonarServer, error) {
 	sonarToken, err := m.generateSonarToken(ctx, sonarSvc, adminToken)
 
 	// 5. Print out the login details for UI
-	fmt.Println("\n====================================================")
-	fmt.Println("🚀  SONARQUBE LOCAL ENGINE STARTED SUCCESSFULLY!  🚀")
-	fmt.Println("====================================================")
-	fmt.Println("  URL:      http://localhost:9000")
-	fmt.Println("  Username: admin")
-	fmt.Printf("  Password: %s\n", adminPlaintext)
-	fmt.Println("====================================================")
+	// fmt.Println("\n====================================================")
+	// fmt.Println("🚀  SONARQUBE LOCAL ENGINE STARTED SUCCESSFULLY!  🚀")
+	// fmt.Println("====================================================")
+	// fmt.Println("  URL:      http://localhost:9000")
+	// fmt.Println("  Username: admin")
+	// fmt.Printf("  Password: %s\n", adminPlaintext)
+	// fmt.Println("====================================================")
 
 	return &SonarServer{
 		Service:    sonarSvc,
@@ -163,33 +159,18 @@ func (m *Sonarqube) Bootstrap(ctx context.Context) (*SonarServer, error) {
 	}, nil
 }
 
-// scan a source directory with sonar-scanner and get a report from sonar-server
+// scan a source directory with sonar-scanner and returns a report summary
 func (m *Sonarqube) Scan(ctx context.Context,
 	// +defaultPath="/"
 	src *dagger.Directory,
 	// comma separated list of impact severities to use when generating report
 	// +optional
-	// +default="MEDIUM,HIGH"
-	impactSeverities string) (string, error) {
-	// // start sonar-server
-	// sonarSvc, err := m.Service().Start(ctx)
-
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to start sonar service: %w", err)
-	// }
-
-	// // defer sonarSvc.Stop(ctx)
-
-	// // change admin pw on first use
-	// adminToken := m.generateRandomTokenAsSecret()
-
-	// // setup admin pw and project in sonar
-	// if err := m.serverSetup(ctx, sonarSvc, adminToken); err != nil {
-	// 	return nil, err
-	// }
-
-	// // generate sonar token
-	// sonarToken, err := m.generateSonarToken(ctx, sonarSvc, adminToken)
+	// +default="MEDIUM,HIGH,BLOCKER"
+	impactSeverities string,
+	// Output the raw JSON report instead of the analyzed summary
+	// +optional
+	// +default=false
+	rawJson bool) (string, error) {
 
 	server, err := m.Bootstrap(ctx)
 	if err != nil {
@@ -218,6 +199,10 @@ func (m *Sonarqube) Scan(ctx context.Context,
 
 	// get json report of issues
 	report := m.getReport(server.Service, server.SonarToken, impactSeverities)
+
+	if rawJson {
+		return report.Contents(ctx)
+	}
 
 	return m.AnalyzeSonarReport(ctx, report)
 }
