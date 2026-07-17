@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.3] - 2026-07-17
+
+### 🐛 Bug Fixes
+
+- Add --raw-json flag to print json report instead of summary, and --base for image overrides [a68f171](https://github.com/act3-ai/dagger/commit/a68f17156eab84733195962b792036fe12e5bb78) by **Paul Spurlock**
+
+
 ## [0.0.2] - 2026-07-16
 
 ### 🐛 Bug Fixes
