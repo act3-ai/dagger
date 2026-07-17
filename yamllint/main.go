@@ -1,7 +1,7 @@
 // Yamllint is a utility that lints YAML files without needing to download locally with pip or homebrew.
 
 // It provides nearly all functionality given by yamllint by accepting a source directory or file.
-//  See https://github.com/adrienverge/yamllint for more information.
+//  See https://github.com/adrienverge/yamllint for more information..
 
 package main
 
