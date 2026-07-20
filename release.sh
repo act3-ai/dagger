@@ -42,7 +42,7 @@ require_no_module() {
 
 # Helper: Checks if a module has untagged git changes.
 # Returns 0 if changed/new, 1 if up-to-date.
-is_module_changed() {
+has_module_changed() {
   local mod="$1"
   local current_tag="$2"
 
@@ -114,7 +114,7 @@ prepare_all() {
     local current_tag="${mod}/v${version}"
 
     # filter out unchanged modules
-    is_module_changed "$mod" "$current_tag" || continue
+    has_module_changed "$mod" "$current_tag" || continue
 
     ####################################
     # Prepare (Only reached if changed)
@@ -123,8 +123,7 @@ prepare_all() {
     exit_code="0" # assume all good
 
     if [[ "$dry_run" == "true" ]]; then
-      echo "[DRY-RUN] Would have called:"
-      echo "$0 prepare $mod"
+      printf "[DRY-RUN] Would have called: %s prepare %s\n" "$0" "$mod"
     else
       #   Run the command with plain logs, copying the output to the screen via tee
       #   while capturing the raw text string into our cmd_out variable
@@ -182,8 +181,7 @@ approve_all() {
   for mod in "${modules[@]}"; do
     echo "Approve module: $mod"
     if [[ "$dry_run" == "true" ]]; then
-      echo "[DRY-RUN] Would have called:"
-      echo "$0 approve $mod"
+      printf "[DRY-RUN] Would have called: %s approve %s\n" "$0" "$mod"
     else
       # Call approve for given module in a sub-shell
       (BATCH_MODE=true "$0" approve "$mod")
@@ -214,8 +212,7 @@ publish_all() {
     echo "Publish module: $mod  version: $ver"
 
     if [[ "$dry_run" == "true" ]]; then
-      echo "[DRY-RUN] Would have called:"
-      echo "$0 publish $mod"
+      printf "[DRY-RUN] Would have called: %s publish %s\n" "$0" "$mod"
     else
       # Call publish for given module in a sub-shell
       (BATCH_MODE=true "$0" publish "$mod")
@@ -366,22 +363,22 @@ publish)
     ;;
 
 check-all)
-    printf "\nRunning all checks for all modules..."
+    printf "\nRunning all checks for all modules...\n"
     check_all    
     ;;
 
 prepare-all)
-    printf "\nRunning prepare for all modules..."
+    printf "\nRunning prepare for all modules...\n"
     prepare_all   
     ;;
 
 approve-all)
-    printf "\nRunning approve for all prepared modules..."
+    printf "\nRunning approve for all prepared modules...\n"
     approve_all 
     ;;
 
 publish-all)
-    printf "\nRunning publish for all approved modules..."
+    printf "\nRunning publish for all approved modules...\n"
     publish_all
     ;;
 
