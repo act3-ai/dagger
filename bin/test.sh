@@ -24,7 +24,6 @@ update_dag_deps() {
             exit 1
         fi
 
-        #dagger update wolfi@v0.21.6
         printf "\nDagger file: %s\n###########################\n\n" "$dagger_json_file"
 
         # Use jq to extract all dependencies <name>\t<source> 
@@ -37,6 +36,7 @@ update_dag_deps() {
         done < <(jq -r '.dependencies[]? | select(.source | startswith("github.com/dagger/dagger")) | "\(.name)\t\(.source)"' "$dagger_json_file")
 
         # Iterate over all loaded dependencies
+        # DEVTODO for each you need to update the dep ex: dagger update wolfi@v0.21.6
         for name in "${!dag_deps[@]}"; do
             echo "Name: $name | Source: ${dag_deps[$name]}"
         done        

@@ -30,13 +30,18 @@ function check_git_status() {
 #update dagger engine to latest version in all modules
 function upgrade_dagger_engine_all() {
 
+  local LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
+
   #upgrade dagger engine locally first
   brew upgrade dagger
 
   #upgrade dagger engine in all modules
   dagger develop -r
+
+  # DEVTODO call upgrade dagger modules here 
+  #         see WIP function in test.sh
+  
   #create branch for updates
-  LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
   git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 
   changed_files=$(git diff --name-only -- "dagger.json" "**/dagger.json" "**/go.mod" "**/go.sum")
