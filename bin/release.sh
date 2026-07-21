@@ -339,8 +339,8 @@ ensure_in_project_root
 # Initialize an empty array to store multiple modules
 modules=()
 
-# Initialize the dry-run flag tracking variable
-dry_run="false"
+# Initialize to "not a try run"
+dry_run=""
 
 # The _all functions will set this to true to control the lower lever prompting
 # an external env var BATCH_MODE is use to span process boundaries
