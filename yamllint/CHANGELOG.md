@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.13] - 2026-07-21
+
+### 🐛 Bug Fixes
+
+- Test prepare all [dba0758](https://github.com/act3-ai/dagger/commit/dba075800351ff88e70c270d70fe592f3cbf0822) by **Tony Gilkerson**
+
+
 ## [0.3.12] - 2026-07-13
 
 ### 🐛 Bug Fixes
