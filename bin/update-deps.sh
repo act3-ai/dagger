@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# DEVTODO upgrade wolfi
+
 function list_modules() {
   find . -maxdepth 2 -mindepth 2 -type f -name dagger.json -exec dirname {} \; | sed 's|^\./||'
 }

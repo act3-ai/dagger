@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# shellcheck source=./update-deps.sh
-source ./update-deps.sh
 # Required env vars:
 # GITHUB_TOKEN - github repo api access
+
+ensure_in_project_root() {
+  local script_dir
+  local project_root
+
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  project_root="$(cd "${script_dir}/.." && pwd)"
+
+  if [ "$(pwd)" != "${project_root}" ]; then
+    echo "Error: This script must be run from the project root (${project_root})." >&2
+    exit 1
+  fi
+}
 
 confirm_continue() {
   local next_step="$1"
@@ -40,7 +51,7 @@ require_no_module() {
   fi    
 }
 
-# Helper: Checks if a module has untagged git changes.
+# Checks if a module has untagged git changes.
 # Returns 0 if changed/new, 1 if up-to-date.
 has_module_changed() {
   local mod="$1"
@@ -104,9 +115,17 @@ prepare_all() {
     # Remove trailing slash
     mod="${dir%/}"
     version_file="$mod/VERSION"
+    
+    # folders that we want to skip
+    if [[ "$mod" =~ ^(bin|\.dagger)$ ]]; then
+      continue
+    fi    
 
-    # Skip module if version file not found
-    [[ -f "$version_file" ]] || continue
+    # version file is required
+    if [[ ! -f "$version_file" ]]; then
+      printf "ERROR, version file: %s for module: %s not found\n" "$version_file" "$mod"
+      exit 1
+    fi
 
     # Read version and construct the expected tag name
     local version
@@ -313,6 +332,9 @@ publish() {
 ################################################################################################
 #   Main
 ################################################################################################
+
+# Ensure user is in project root
+ensure_in_project_root
 
 # Initialize an empty array to store multiple modules
 modules=()
