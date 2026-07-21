@@ -267,7 +267,7 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("RENOVATE_USERNAME", "renovate-bot").
 		WithEnvVariable("RENOVATE_AUTODISCOVER", "false").
 		WithEnvVariable("RENOVATE_GLOBAL_EXTENDS", globalExtends).
-		WithEnvVariable("RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS", `["^.*$"]`).
+		WithEnvVariable("RENOVATE_ALLOWED_COMMANDS", `["^.*$"]`).
 		WithSecretVariable("RENOVATE_HOST_RULES", hostRules).
 		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
 		With(func(c *dagger.Container) *dagger.Container {
@@ -290,6 +290,6 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithExec(append([]string{
 			"env",
 			"OTEL_EXPORTER_OTLP_ENDPOINT=",
-		}, cmd...)).
+		}, cmd...), dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
 		Stdout(ctx)
 }
