@@ -123,7 +123,7 @@ prepare_all() {
 
     # version file is required
     if [[ ! -f "$version_file" ]]; then
-      printf "ERROR, version file: %s for module: %s not found\n" "$version_file" "$mod"
+      printf "ERROR: version file: %s for module: %s not found\n" "$version_file" "$mod"
       exit 1
     fi
 
