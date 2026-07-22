@@ -4,11 +4,8 @@
 update_dag_deps() {
     local dagger_version="$1"
 
-    # An associative array with, ie dag_deps[<name>]=<source>
-    local -A dag_deps
-
-    # Loop through all immediate subdirectories
-    for dir in */; do
+    # Loop through all immediate subdirs and any tests dir they may contain
+    for dir in */ */tests/; do    
         # Remove trailing slash
         mod="${dir%/}"
         dagger_json_file="$mod/dagger.json"
@@ -24,26 +21,22 @@ update_dag_deps() {
             exit 1
         fi
 
-        printf "\nDagger file: %s\n###########################\n\n" "$dagger_json_file"
-
         # Use jq to extract all dependencies <name>\t<source> 
-        # Note: only dependencies with source that starts with "github.com/dagger/dagger"
+        # Note: only update dependencies that starts with "github.com/dagger/dagger"
         # Read name and source line-by-line using tab as a delimiter
         while IFS=$'\t' read -r name source; do
             if [[ -n "$name" ]]; then
-                dag_deps["$name"]="$source"
+                printf "Updating dependency: %s in %s to %s\n" "$name" "$mod" "$dagger_version"
+                set -x
+                dagger update -m "$mod" "${name}@${dagger_version}"
+                set +x
             fi
-        done < <(jq -r '.dependencies[]? | select(.source | startswith("github.com/dagger/dagger")) | "\(.name)\t\(.source)"' "$dagger_json_file")
 
-        # Iterate over all loaded dependencies
-        # DEVTODO for each you need to update the dep ex: dagger update wolfi@v0.21.6
-        for name in "${!dag_deps[@]}"; do
-            echo "Name: $name | Source: ${dag_deps[$name]}"
-        done        
+        done < <(jq -r '.dependencies[]? | select(.source | startswith("github.com/dagger/dagger")) | "\(.name)\t\(.source)"' "$dagger_json_file")
     done
 }
 
 printf "Go\n-----------------------------------------------------------\n"
-update_dag_deps "v1.2.3"
+update_dag_deps "v0.21.6"
 printf "  \n-----------------------------------------------------------\nDone.\n"
 
