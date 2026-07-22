@@ -261,6 +261,10 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 	}
 
 	return m.Base.
+		WithExec([]string{
+			"sh", "-c",
+			"curl -fsSL https://dl.dagger.io/dagger/install.sh | BIN_DIR=/tmp DAGGER_VERSION=0.21.7 sh",
+		}).
 		WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
 		WithEnvVariable("RENOVATE_PLATFORM", m.Platform).
 		WithSecretVariable("RENOVATE_TOKEN", m.Token).
