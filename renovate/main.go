@@ -268,6 +268,7 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithEnvVariable("RENOVATE_AUTODISCOVER", "false").
 		WithEnvVariable("RENOVATE_GLOBAL_EXTENDS", globalExtends).
 		WithEnvVariable("RENOVATE_ALLOWED_COMMANDS", `["^.*$"]`).
+		WithEnvVariable("RENOVATE_ALLOW_SHELL_EXECUTOR_FOR_POST_UPGRADE_COMMANDS", "true").
 		WithSecretVariable("RENOVATE_HOST_RULES", hostRules).
 		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
 		With(func(c *dagger.Container) *dagger.Container {
