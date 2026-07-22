@@ -9,12 +9,48 @@ import (
 	"context"
 	"crypto/rand"
 	"dagger/sonarqube/internal/dagger"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 )
 
-type Sonarqube struct{}
+type Sonarqube struct {
+	Base string
+}
+
+func New(
+	// Base sonar-service image override
+	// +optional
+	// +default="sonarqube:community"
+	base string,
+) *Sonarqube {
+	return &Sonarqube{
+		Base: base,
+	}
+}
+
+type SonarIssue struct {
+	Key       string `json:"key"`
+	Rule      string `json:"rule"`
+	Severity  string `json:"severity"`
+	Message   string `json:"message"`
+	Component string `json:"component"`
+	Line      int    `json:"line"`
+}
+
+type SonarPage struct {
+	Issues []SonarIssue `json:"issues"`
+}
+
+type SonarServer struct {
+	// The live running service
+	Service *dagger.Service
+	// The generated user token used for running scans
+	SonarToken *dagger.Secret
+	// The plaintext admin password (for logging into the UI)
+	AdminToken *dagger.Secret
+}
 
 const changePasswordScript = `
 http_code=$(curl -s --retry 5 --retry-delay 2 --noproxy "*" -X POST -u admin:admin \
@@ -63,28 +99,11 @@ fi
 cat /tmp/token_res | jq -r '.token'
 `
 
-const pollScript = `
-	echo "Polling SonarQube until analysis processing completes..." >&2
-	while true; do
-		res=$(curl -s --noproxy "*" -u "$SONAR_TOKEN:" "http://sonar-server:9000/api/ce/component?component=proj1")
-		queue_length=$(echo "$res" | jq '.queue | length')
-		current_status=$(echo "$res" | jq -r '.current.status // "NONE"')
-		
-		echo "Current status: $current_status | Tasks in queue: $queue_length" >&2
-		if [ "$queue_length" -eq 0 ] && [ "$current_status" = "SUCCESS" ]; then
-			echo "Analysis complete and successful!" >&2
-			break
-		fi
-		sleep 2
-	done
-	sleep 2 # Cooldown for index stabilization
-	`
-
 // start up sonar-server as a service
 func (m *Sonarqube) Service() *dagger.Service {
 
 	return dag.Container().
-		From("sonarqube:community").
+		From(m.Base).
 		WithEnvVariable("SONAR_ES_BOOTSTRAP_CHECKS_DISABLE", "true").
 		// Define a system passcode that skips user authentication for health metrics
 		WithEnvVariable("SONAR_WEB_SYSTEMPASSCODE", "dagger-health-token").
@@ -103,103 +122,100 @@ func (m *Sonarqube) Service() *dagger.Service {
 		).AsService()
 }
 
-// scan a source directory with sonar-scanner and get a report from sonar-server
-func (m *Sonarqube) Scan(ctx context.Context,
-	// +defaultPath="/"
-	src *dagger.Directory,
-	// comma separated list of impact severities to use when generating report
-	// +optional
-	// +default="MEDIUM,HIGH"
-	impactSeverities string) (*dagger.File, error) {
-	//start sonar-server
+// starts sonar as a service and bootstraps it with an admin password, project, and sonar token for scanning
+func (m *Sonarqube) Bootstrap(ctx context.Context) (*SonarServer, error) {
+
 	sonarSvc, err := m.Service().Start(ctx)
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to start sonar service: %w", err)
 	}
 
-	// defer sonarSvc.Stop(ctx)
-
-	// change admin pw on first use
+	// generate admin PW for first use
 	adminToken := m.generateRandomTokenAsSecret()
+	// adminPlaintext, err := adminToken.Plaintext(ctx)
 
-	//setup admin pw and project in sonar
+	// setup admin pw and project in sonar
 	if err := m.serverSetup(ctx, sonarSvc, adminToken); err != nil {
 		return nil, err
 	}
 
-	//generate sonar token
+	// generate sonar token
 	sonarToken, err := m.generateSonarToken(ctx, sonarSvc, adminToken)
+
+	// 5. Print out the login details for UI
+	// fmt.Println("\n====================================================")
+	// fmt.Println("🚀  SONARQUBE LOCAL ENGINE STARTED SUCCESSFULLY!  🚀")
+	// fmt.Println("====================================================")
+	// fmt.Println("  URL:      http://localhost:9000")
+	// fmt.Println("  Username: admin")
+	// fmt.Printf("  Password: %s\n", adminPlaintext)
+	// fmt.Println("====================================================")
+
+	return &SonarServer{
+		Service:    sonarSvc,
+		SonarToken: sonarToken,
+		AdminToken: adminToken,
+	}, nil
+}
+
+// scan a source directory with sonar-scanner and returns a report summary
+func (m *Sonarqube) Scan(ctx context.Context,
+	// src directory to scan
+	src *dagger.Directory,
+	// comma separated list of impact severities to use when generating report
+	// +optional
+	// +default="MEDIUM,HIGH,BLOCKER"
+	impactSeverities string,
+	// Output the raw JSON report instead of the analyzed summary
+	// +optional
+	// +default=false
+	rawJson bool) (string, error) {
+
+	server, err := m.Bootstrap(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to initialize sonarqube: %w", err)
+	}
 
 	// run sonar scan
 	_, err = dag.Container().
 		From("sonarsource/sonar-scanner-cli:latest").
-		WithServiceBinding("sonar-server", sonarSvc).
+		WithServiceBinding("sonar-server", server.Service).
 		WithDirectory("/src", src, dagger.ContainerWithDirectoryOpts{Owner: "scanner-cli"}).
 		WithWorkdir("/src").
-		WithSecretVariable("SONAR_TOKEN", sonarToken).
+		WithSecretVariable("SONAR_TOKEN", server.SonarToken).
 		WithEnvVariable("SONAR_HOST_URL", "http://sonar-server:9000").
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec([]string{
 			"sonar-scanner",
 			"-Dsonar.projectName=proj1",
 			"-Dsonar.projectKey=proj1",
+			"-Dsonar.qualitygate.wait=true",
 		}).Sync(ctx)
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to run sonarqube scan: %w", err)
+		return "", fmt.Errorf("failed to run sonarqube scan: %w", err)
 	}
 
 	// get json report of issues
-	report := m.getReport(sonarSvc, sonarToken, impactSeverities)
+	report := m.getReport(server.Service, server.SonarToken, impactSeverities)
 
-	return report, nil
+	if rawJson {
+		return report.Contents(ctx)
+	}
+
+	return m.AnalyzeSonarReport(ctx, report)
 }
 
-// generate random sonar admin pw and return as a secret
+// generate random sonar admin pw that passes sonarqube pw requirements
 func (m *Sonarqube) generateRandomTokenAsSecret() *dagger.Secret {
-	const (
-		lower   = "abcdefghijklmnopqrstuvwxyz"
-		upper   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		numbers = "0123456789"
-		special = "!@#%"
-		all     = lower + upper + numbers + special
-	)
-
-	b := make([]byte, 16)
-
-	// 1 guaranteed from each required set
-	b[0] = lower[m.randomInt(len(lower))]
-	b[1] = upper[m.randomInt(len(upper))]
-	b[2] = numbers[m.randomInt(len(numbers))]
-	b[3] = special[m.randomInt(len(special))]
-
-	// fill remaining with full charset
-	for i := 4; i < 16; i++ {
-		b[i] = all[m.randomInt(len(all))]
-	}
-
-	// shuffle so pattern isn't predictable
-	m.shuffle(b)
-
-	token := string(b)
-
-	return dag.SetSecret("SONAR_ADMIN_TOKEN", token)
-}
-
-// helper for token gen
-func (m *Sonarqube) randomInt(max int) int {
-	b := make([]byte, 1)
+	b := make([]byte, 6)
 	_, _ = rand.Read(b)
-	return int(b[0]) % max
-}
 
-// helper for token gen
-func (m *Sonarqube) shuffle(b []byte) {
-	for i := len(b) - 1; i > 0; i-- {
-		j := m.randomInt(i + 1)
-		b[i], b[j] = b[j], b[i]
-	}
+	// %x forces lowercase and numbers. "A!" guarantees uppercase and special char.
+	compliantPassword := fmt.Sprintf("A!%x", b)
+
+	return dag.SetSecret("SONAR_ADMIN_TOKEN", compliantPassword)
 }
 
 // base curl container for sonar api queries
@@ -230,8 +246,8 @@ func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service,
 func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret, impactSeverities string) *dagger.File {
 
 	fetchScript := `
-	PAGE_SIZE=100
-	BASE_URL="http://sonar-server:9000/api/issues/search?components=proj1&impactSeverities=$IMPACT_SEVERITIES&ps=$PAGE_SIZE"
+	PAGE_SIZE=499
+	BASE_URL="http://sonar-server:9000/api/issues/search?components=proj1&additionalFields=comments&issueStatuses=OPEN,CONFIRMED&impactSeverities=$IMPACT_SEVERITIES&ps=$PAGE_SIZE"
 	
 	echo "Fetching initial page..." >&2
 	first_page=$(curl -s --retry 5 --noproxy "*" -u "$SONAR_TOKEN:" "${BASE_URL}&p=1")
@@ -260,8 +276,6 @@ func (m *Sonarqube) getReport(svc *dagger.Service, token *dagger.Secret, impactS
 		WithSecretVariable("SONAR_TOKEN", token).
 		WithEnvVariable("IMPACT_SEVERITIES", impactSeverities).
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
-		// Wait for report generation to finish
-		WithExec([]string{"sh", "-c", pollScript}).
 		// Fetch report
 		WithExec([]string{"sh", "-c", fetchScript}, dagger.ContainerWithExecOpts{
 			RedirectStdout: "sonar-report.json",
@@ -286,4 +300,117 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 	}
 
 	return nil
+}
+
+// Parses sonarqube JSON report into human readable format. Will return an error if issues are found HIGH or above.
+func (m *Sonarqube) AnalyzeSonarReport(ctx context.Context, reportFile *dagger.File) (string, error) {
+	reportRaw, err := reportFile.Contents(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to read sonar report file contents: %w", err)
+	}
+
+	var totalIssues int
+	var blockers, criticals, highs, mediums, lows []SonarIssue
+
+	seenIssues := make(map[string]bool)
+
+	categorizeIssue := func(issue SonarIssue) {
+		if seenIssues[issue.Key] {
+			return
+		}
+		seenIssues[issue.Key] = true
+		totalIssues++
+
+		switch strings.ToUpper(issue.Severity) {
+		case "BLOCKER":
+			blockers = append(blockers, issue)
+		case "CRITICAL":
+			criticals = append(criticals, issue)
+		case "HIGH", "MAJOR":
+			highs = append(highs, issue)
+		case "MEDIUM", "MINOR":
+			mediums = append(mediums, issue)
+		default:
+			lows = append(lows, issue)
+		}
+	}
+
+	trimmedRaw := strings.TrimSpace(reportRaw)
+	// Parse standard JSON and multi-line JSONL
+	var singlePage SonarPage
+	if err := json.Unmarshal([]byte(trimmedRaw), &singlePage); err == nil && len(singlePage.Issues) > 0 {
+		for _, issue := range singlePage.Issues {
+			categorizeIssue(issue)
+		}
+	} else {
+		lines := strings.Split(trimmedRaw, "\n")
+		for i, line := range lines {
+			trimmedLine := strings.TrimSpace(line)
+			if trimmedLine == "" {
+				continue
+			}
+
+			var page SonarPage
+			if err := json.Unmarshal([]byte(trimmedLine), &page); err != nil {
+				return "", fmt.Errorf("failed to parse JSON on line %d (verify format): %w", i+1, err)
+			}
+
+			for _, issue := range page.Issues {
+				categorizeIssue(issue)
+			}
+		}
+	}
+
+	failCount := len(blockers) + len(criticals) + len(highs)
+
+	// Use a strings.Builder to capture the entire report output
+	var report strings.Builder
+
+	fmt.Fprintf(&report, "\n=========================================\n")
+	fmt.Fprintf(&report, "       SONARQUBE ANALYSIS SUMMARY        \n")
+	fmt.Fprintf(&report, "=========================================\n")
+	fmt.Fprintf(&report, "Total Unique Issues Found: %d\n", totalIssues)
+	fmt.Fprintf(&report, "-----------------------------------------\n")
+	fmt.Fprintf(&report, " 🛑 BLOCKER:  %d\n", len(blockers))
+	fmt.Fprintf(&report, " 💥 CRITICAL: %d\n", len(criticals))
+	fmt.Fprintf(&report, " ⚠️  HIGH:     %d\n", len(highs))
+	fmt.Fprintf(&report, " 📝 MEDIUM:   %d\n", len(mediums))
+	fmt.Fprintf(&report, " ℹ️  LOW:      %d\n", len(lows))
+	fmt.Fprintf(&report, "=========================================\n")
+
+	// Helper closure to build categorized blocks
+	appendIssueGroup := func(title string, list []SonarIssue) {
+		if len(list) == 0 {
+			return
+		}
+		fmt.Fprintf(&report, "\n>>> %s ISSUES (%d) <<<\n", title, len(list))
+		for _, issue := range list {
+			fmt.Fprintf(&report, "  - [KEY: %s]\n", issue.Key)
+			fmt.Fprintf(&report, "    Component: %s (Line: %d)\n", issue.Component, issue.Line)
+			fmt.Fprintf(&report, "    Message:   %s\n\n", issue.Message)
+		}
+	}
+
+	appendIssueGroup("BLOCKER", blockers)
+	appendIssueGroup("CRITICAL", criticals)
+	appendIssueGroup("HIGH", highs)
+	appendIssueGroup("MEDIUM", mediums)
+
+	fmt.Fprintf(&report, "=========================================\n")
+
+	// return error and print report summary
+	if failCount > 0 {
+		// Output to standard out so it is captured in successful execution history if checked
+		// fmt.Print(report.String())
+
+		// Return the entire structured string inside the error.
+		return "", fmt.Errorf("%s\nQuality Gate Failed: Found %d blocking issue(s) (Blocker: %d, Critical: %d, High: %d)",
+			report.String(), failCount, len(blockers), len(criticals), len(highs))
+	}
+
+	successMsg := fmt.Sprintf("Success! Analyzed %d unique issues. Code quality thresholds passed.", totalIssues)
+	fmt.Println(report.String())
+	fmt.Println(successMsg)
+
+	return successMsg, nil
 }
