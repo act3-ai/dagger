@@ -20,17 +20,17 @@ update_dag_deps() {
             exit 1
         fi
 
-        # Use jq to extract all dependencies <name>\t<source> 
-        # Note: only update dependencies that starts with "github.com/dagger/dagger"
         # Read name and source line-by-line using tab as a delimiter
         while IFS=$'\t' read -r name source; do
             if [[ -n "$name" ]]; then
-                printf "Updating dependency: %s in %s to %s\n" "$name" "$mod" "$dagger_version"
+                printf "Updating dependency: %s (%s) in %s to %s\n" "$name" "$source" "$mod" "$dagger_version"
                 set -x
                 dagger update -m "$mod" "${name}@${dagger_version}"
                 set +x
             fi
 
+        # Use jq expression to fetch dependencies that starts with "github.com/dagger/dagger"
+        # and return list of: <name>\t<source> 
         done < <(jq -r '.dependencies[]? | select(.source | startswith("github.com/dagger/dagger")) | "\(.name)\t\(.source)"' "$dagger_json_file")
     done
 }
