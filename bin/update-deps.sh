@@ -1,5 +1,40 @@
 #!/usr/bin/env bash
 
+update_dag_deps() {
+    local dagger_version="$1"
+
+    # Loop through all immediate subdirs and any tests dir they may contain
+    for dir in */ */tests/; do    
+        # Remove trailing slash
+        mod="${dir%/}"
+        dagger_json_file="$mod/dagger.json"
+
+        # folders that we want to skip
+        if [[ "$mod" =~ ^(bin|\.dagger)$ ]]; then
+            continue
+        fi    
+
+        # dagger.json file is required
+        if [[ ! -f "$dagger_json_file" ]]; then
+            printf "ERROR: dagger.json file for module: %s not found\n" "$mod"
+            exit 1
+        fi
+
+        # Read name and source line-by-line using tab as a delimiter
+        while IFS=$'\t' read -r name source; do
+            if [[ -n "$name" ]]; then
+                printf "Updating dependency: %s (%s) in %s to %s\n" "$name" "$source" "$mod" "$dagger_version"
+                set -x
+                dagger update -m "$mod" "${name}@${dagger_version}"
+                set +x
+            fi
+
+        # Use jq expression to fetch dependencies that starts with "github.com/dagger/dagger"
+        # and return list of: <name>\t<source> 
+        done < <(jq -r '.dependencies[]? | select(.source | startswith("github.com/dagger/dagger")) | "\(.name)\t\(.source)"' "$dagger_json_file")
+    done
+}
+
 function list_modules() {
   find . -maxdepth 2 -mindepth 2 -type f -name dagger.json -exec dirname {} \; | sed 's|^\./||'
 }
@@ -28,13 +63,18 @@ function check_git_status() {
 #update dagger engine to latest version in all modules
 function upgrade_dagger_engine_all() {
 
+  local LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
+
   #upgrade dagger engine locally first
   brew upgrade dagger
 
   #upgrade dagger engine in all modules
   dagger develop -r
+
+  # Update dagger modules to the latest dagger version 
+  update_dag_deps $LATEST_DAGGER_VERSION
+
   #create branch for updates
-  LATEST_DAGGER_VERSION=$(detect_latest_dagger_version)
   git checkout -b "update_dagger_engine_$LATEST_DAGGER_VERSION"
 
   changed_files=$(git diff --name-only -- "dagger.json" "**/dagger.json" "**/go.mod" "**/go.sum")
@@ -50,7 +90,7 @@ function upgrade_dagger_engine_all() {
     echo "Creating commit: fix: update dagger engine to $LATEST_DAGGER_VERSION"
     git commit -S -m "fix: update dagger engine to $LATEST_DAGGER_VERSION"
   else
-    echo "No changes in $module"
+    echo "No changed files"
   fi
 
 }
