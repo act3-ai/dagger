@@ -66,7 +66,8 @@ func (m *Kubeconform) ValidateKustomize(
 	// Relative paths containing kustomization files to build and validate
 	// ex. --paths="overlays/dev,overlays/prod"
 	paths []string,
-	// Optional directory of CRDs to validate with
+	// directory of CRDs to validate with
+	// Must be in .yaml format
 	// +optional
 	crds *dagger.Directory,
 ) *dagger.Container {
@@ -80,7 +81,7 @@ func (m *Kubeconform) KustomizeBuild(
 	// top level source code directory
 	// +defaultPath="/"
 	src *dagger.Directory,
-	// Relative paths containing kustomization files to build and validate
+	// Relative paths in src containing kustomization files to build and validate
 	// ex. --paths="overlays/dev,overlays/prod"
 	paths []string) *dagger.Directory {
 
