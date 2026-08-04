@@ -1,21 +1,9 @@
-// A generated module for Kubeconform functions
-//
-// This module has been generated via dagger init and serves as a reference to
-// basic module structure as you get started with Dagger.
-//
-// Two functions have been pre-created. You can modify, delete, or add to them,
-// as needed. They demonstrate usage of arguments and return types using simple
-// echo and grep commands. The functions can be called from the dagger CLI or
-// from one of the SDKs.
-//
-// The first line in this comment block is a short description line and the
-// rest is a long description with more detail on the module's purpose or usage,
-// if appropriate. All modules should have a short description.
+// This module validates Kubernetes manifests using Kubeconform.
+// Kustomize is also supported, and can be used to render manifests to validate against.
 
 package main
 
 import (
-	"context"
 	"dagger/kubeconform/internal/dagger"
 	"fmt"
 	"strings"
@@ -24,7 +12,7 @@ import (
 type Kubeconform struct{}
 
 // validates a directory of Kubernetes manifests against standard and CRD schemas.
-func (m *Kubeconform) Validate(ctx context.Context,
+func (m *Kubeconform) Validate(
 	// directory of kubernetes manifests to validate
 	manifests *dagger.Directory,
 	// Directory containing CRD definitions to validate with.
@@ -59,7 +47,6 @@ func (m *Kubeconform) Validate(ctx context.Context,
 
 // ValidateKustomize builds Kustomize directories and validates the resulting manifests.
 func (m *Kubeconform) ValidateKustomize(
-	ctx context.Context,
 	// Top-level source directory
 	// +defaultPath="/"
 	src *dagger.Directory,
@@ -72,7 +59,7 @@ func (m *Kubeconform) ValidateKustomize(
 	crds *dagger.Directory,
 ) *dagger.Container {
 	manifests := m.KustomizeBuild(src, paths)
-	return m.Validate(ctx, manifests, crds)
+	return m.Validate(manifests, crds)
 }
 
 // builds rendered Kubernetes manifests for specified paths using `kubectl kustomize`.
