@@ -48,7 +48,6 @@ func (m *Kubeconform) Validate(
 // ValidateKustomize builds Kustomize directories and validates the resulting manifests.
 func (m *Kubeconform) ValidateKustomize(
 	// Top-level source directory
-	// +defaultPath="/"
 	src *dagger.Directory,
 	// Relative paths containing kustomization files to build and validate
 	// ex. --paths="overlays/dev,overlays/prod"
@@ -65,8 +64,7 @@ func (m *Kubeconform) ValidateKustomize(
 // builds rendered Kubernetes manifests for specified paths using `kubectl kustomize`.
 // Returns a directory containing the rendered .yaml files.
 func (m *Kubeconform) KustomizeBuild(
-	// top level source code directory
-	// +defaultPath="/"
+	// Top-level source directory
 	src *dagger.Directory,
 	// Relative paths in src containing kustomization files to build and validate
 	// ex. --paths="overlays/dev,overlays/prod"
