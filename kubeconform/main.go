@@ -19,13 +19,22 @@ func (m *Kubeconform) Validate(
 	// Must be in .yaml format
 	// +optional
 	crds *dagger.Directory,
+	// enable verbose logging
+	// +optional
+	verbose bool,
 ) *dagger.Container {
 	validateCtr := m.bashCtr().
 		WithDirectory("/manifests", manifests)
 
 	args := []string{
-		"/kubeconform", "-strict",
+		"/kubeconform",
+		"-strict",
+		"-summary",
 		"-schema-location", "default",
+	}
+
+	if verbose {
+		args = append(args, "-verbose")
 	}
 
 	// convert crds to openapi2 schemas and validate with them if provided
@@ -56,9 +65,12 @@ func (m *Kubeconform) ValidateKustomize(
 	// Must be in .yaml format
 	// +optional
 	crds *dagger.Directory,
+	// enable verbose logging
+	// +optional
+	verbose bool,
 ) *dagger.Container {
 	manifests := m.KustomizeBuild(src, paths)
-	return m.Validate(manifests, crds)
+	return m.Validate(manifests, crds, verbose)
 }
 
 // builds rendered Kubernetes manifests for specified paths using `kubectl kustomize`.

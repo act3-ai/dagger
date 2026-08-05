@@ -26,7 +26,7 @@ func (m *Tests) Manifest() *dagger.Container {
 		Directory("testdata/").
 		Filter(dagger.DirectoryFilterOpts{Include: []string{"kustomize/manifest.yaml"}})
 
-	return dag.Kubeconform().Validate(manifest)
+	return dag.Kubeconform().Validate(manifest, dagger.KubeconformValidateOpts{Verbose: true})
 }
 
 // +check
