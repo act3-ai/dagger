@@ -60,3 +60,7 @@ jobs:
       - name: test-netrc
         working-directory: ./netrc/tests
         run: dagger checks
+      
+      - name: test-kubeconform
+        working-directory: ./kubeconform/tests
+        run: dagger checks

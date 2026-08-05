@@ -1,0 +1,14 @@
+{
+  "name": "kubeconform",
+  "engineVersion": "v0.21.7",
+  "sdk": {
+    "source": "go"
+  },
+  "dependencies": [
+    {
+      "name": "wolfi",
+      "source": "github.com/dagger/dagger/modules/wolfi@v0.21.7",
+      "pin": "054f94b2d86c0ac00bef11ac4550816973c4aeef"
+    }
+  ]
+}

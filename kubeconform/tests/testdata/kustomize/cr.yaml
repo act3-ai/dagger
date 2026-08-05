@@ -1,0 +1,8 @@
+apiVersion: stable.example.com/v1
+kind: KubeconformTest
+metadata:
+  name: test-app-instance
+  namespace: default
+spec:
+  replicas: 3
+  image: "nginx:latest"
