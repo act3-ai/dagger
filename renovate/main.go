@@ -261,13 +261,18 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 	}
 
 	return m.Base.
+		WithExec([]string{
+			"sh", "-c",
+			"curl -fsSL https://dl.dagger.io/dagger/install.sh | BIN_DIR=/tmp DAGGER_VERSION=0.21.7 sh",
+		}).
 		WithEnvVariable("RENOVATE_ENDPOINT", m.EndpointURL).
 		WithEnvVariable("RENOVATE_PLATFORM", m.Platform).
 		WithSecretVariable("RENOVATE_TOKEN", m.Token).
 		WithEnvVariable("RENOVATE_USERNAME", "renovate-bot").
 		WithEnvVariable("RENOVATE_AUTODISCOVER", "false").
 		WithEnvVariable("RENOVATE_GLOBAL_EXTENDS", globalExtends).
-		WithEnvVariable("RENOVATE_ALLOWED_POST_UPGRADE_COMMANDS", `["^.*$"]`).
+		WithEnvVariable("RENOVATE_ALLOWED_COMMANDS", `["^.*$"]`).
+		WithEnvVariable("RENOVATE_ALLOW_SHELL_EXECUTOR_FOR_POST_UPGRADE_COMMANDS", "true").
 		WithSecretVariable("RENOVATE_HOST_RULES", hostRules).
 		WithEnvVariable("RENOVATE_GIT_AUTHOR", fmt.Sprintf("%s <%s>", m.Author, m.Email)).
 		With(func(c *dagger.Container) *dagger.Container {
@@ -290,6 +295,6 @@ func (m *Renovate) Update(ctx context.Context) (string, error) {
 		WithExec(append([]string{
 			"env",
 			"OTEL_EXPORTER_OTLP_ENDPOINT=",
-		}, cmd...)).
+		}, cmd...), dagger.ContainerWithExecOpts{ExperimentalPrivilegedNesting: true}).
 		Stdout(ctx)
 }
