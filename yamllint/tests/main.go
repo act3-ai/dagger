@@ -48,16 +48,17 @@ func (t *Tests) Config(ctx context.Context) *dagger.Container {
 // +check
 // Version tests the 'Version' option for 'New'.
 func (t *Tests) Version(ctx context.Context) error {
-	version := "1.38.0"
-	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Version: version}).
+	pkgVersion := "1.38.0-r2"
+	expectedOutput := "1.38.0"
+	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Version: pkgVersion}).
 		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
 		Stdout(ctx)
 	if err != nil {
 		return err
 	}
 
-	if !strings.Contains(out, version) {
-		return fmt.Errorf("unexpected version, want %s, got %s", version, out)
+	if !strings.Contains(out, expectedOutput) {
+		return fmt.Errorf("unexpected version, want %s, got %s", expectedOutput, out)
 	}
 	return nil
 }
