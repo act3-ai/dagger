@@ -32,6 +32,10 @@ func (r *Release) AddTags(ctx context.Context,
 	// Additional tags
 	tags []string,
 ) (string, error) {
+	if len(tags) == 0 {
+		return "", nil
+	}
+
 	return r.orasCtr().
 		WithExec(append([]string{"oras", "tag", ref}, tags...)).
 		Stdout(ctx)
