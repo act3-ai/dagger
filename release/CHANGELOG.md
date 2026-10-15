@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.20] - 2026-10-15
+
+### 🐛 Bug Fixes
+
+- Handle empt tags list in AddTags() [8d6c201](https://github.com/act3-ai/dagger/commit/8d6c2019975e55eb3820010b926623361ba12e68) by @ktarplee, Signed-off-by:Kyle M. Tarplee <kmtarplee@ieee.org>
+
+
 ## [0.3.19] - 2026-06-17
 
 ### 🐛 Bug Fixes
