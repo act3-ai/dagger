@@ -77,6 +77,16 @@ func Test_extraTags(t *testing.T) {
 			existing: []string{"v1.0.0", "v1.0.1", "v1.1.0"},
 			want:     []string{"v1", "v1.1", "latest"},
 		},
+		{name: "Release candidate",
+			target:   "v1.2.3-rc.2",
+			existing: []string{"v1.2.2", "v1.0.1", "v1.1.0"},
+			want:     []string{},
+		},
+		{name: "Prerelease",
+			target:   "v1.2.3-pre1",
+			existing: []string{"v1.2.2", "v1.0.1", "v1.1.0"},
+			want:     []string{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
