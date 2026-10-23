@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.0.5] - 2026-10-23
+
+### 🐛 Bug Fixes
+
+- Set cognitive complexity to 25 for go, ts, and python [cb73e1e](https://github.com/act3-ai/dagger/commit/cb73e1e3c868fcac375d273d209d3429ea4229f1) by @pspurlock
+
+
 ## [0.0.4] - 2026-07-17
 
 ### 🐛 Bug Fixes
