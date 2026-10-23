@@ -99,6 +99,57 @@ fi
 cat /tmp/token_res | jq -r '.token'
 `
 
+const setCognitiveComplexityScript = `
+# Define pairs in plain space-separated list: lang,rule_prefix
+for ITEM in "go go" "ts typescript" "py python"; do
+    LANG=$(echo "$ITEM" | cut -d' ' -f1)
+    RULE_PREFIX=$(echo "$ITEM" | cut -d' ' -f2)
+
+    echo "Configuring cognitive complexity for language: $LANG (rule prefix: $RULE_PREFIX)"
+
+    # 1. Fetch search payload and verify response
+    res=$(curl -s -u admin:$SONAR_ADMIN_TOKEN "http://sonar-server:9000/api/qualityprofiles/search?language=$LANG")
+    
+    profile_key=$(echo "$res" | jq -r 'if .profiles then (.profiles[] | select(.isDefault==true) | .key) else empty end')
+
+    if [ -z "$profile_key" ] || [ "$profile_key" = "null" ]; then
+        echo "No default profile found for language '$LANG', skipping..."
+        continue
+    fi
+
+    # 2. Copy default profile to CustomSonarWay
+    curl -s -u admin:$SONAR_ADMIN_TOKEN -X POST \
+        --data-urlencode "fromKey=$profile_key" \
+        --data-urlencode "toName=CustomSonarWay" \
+        "http://sonar-server:9000/api/qualityprofiles/copy" > /dev/null
+
+    # 3. Set CustomSonarWay as default
+    curl -s -u admin:$SONAR_ADMIN_TOKEN -X POST \
+        --data-urlencode "language=$LANG" \
+        --data-urlencode "qualityProfile=CustomSonarWay" \
+        "http://sonar-server:9000/api/qualityprofiles/set_default" > /dev/null
+
+    # 4. Get key of CustomSonarWay profile
+    custom_res=$(curl -s -u admin:$SONAR_ADMIN_TOKEN "http://sonar-server:9000/api/qualityprofiles/search?language=$LANG&qualityProfile=CustomSonarWay")
+    custom_key=$(echo "$custom_res" | jq -r 'if .profiles then (.profiles[] | select(.name=="CustomSonarWay") | .key) else empty end')
+
+    # 5. Activate rule with threshold=25
+    rule_key="${RULE_PREFIX}:S3776"
+    http_code=$(curl -s -o /tmp/rule_res -w "%{http_code}" -u admin:$SONAR_ADMIN_TOKEN -X POST \
+        --data-urlencode "key=$custom_key" \
+        --data-urlencode "rule=$rule_key" \
+        --data-urlencode "severity=MAJOR" \
+        --data-urlencode "params=threshold=25" \
+        "http://sonar-server:9000/api/qualityprofiles/activate_rule")
+
+    if [ "$http_code" -eq 200 ] || [ "$http_code" -eq 204 ]; then
+        echo "Successfully set $LANG ($rule_key) threshold to 25."
+    else
+        echo "Failed to set rule for $LANG (HTTP $http_code): $(cat /tmp/rule_res)"
+    fi
+done
+`
+
 // start up sonar-server as a service
 func (m *Sonarqube) Service() *dagger.Service {
 
@@ -293,6 +344,7 @@ func (m *Sonarqube) serverSetup(ctx context.Context, svc *dagger.Service, adminT
 		WithEnvVariable("CACHEBUSTER", time.Now().String()).
 		WithExec([]string{"sh", "-c", changePasswordScript}, dagger.ContainerWithExecOpts{}).
 		WithExec([]string{"sh", "-c", createProjectScript}).
+		WithExec([]string{"sh", "-c", setCognitiveComplexityScript}).
 		Stdout(ctx)
 
 	if err != nil {
