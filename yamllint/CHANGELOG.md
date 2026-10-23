@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.12] - 2026-10-23
+
+### 🐛 Bug Fixes
+
+- Yamllint test [9c6268b](https://github.com/act3-ai/dagger/commit/9c6268b6dac8b73a4ac5b48bb9d13261fe839ffc) by @pspurlock
+
+- Another version fix for yamllint test [db9cc11](https://github.com/act3-ai/dagger/commit/db9cc1119353c853544139a6b1dedc09eef5b953) by @pspurlock
+
+
 ## [0.3.11] - 2026-06-17
 
 ### 🐛 Bug Fixes
