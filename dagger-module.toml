@@ -1,0 +1,9 @@
+name = "ci"
+engineVersion = "v0.21.6"
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "release"
+  source = "release"

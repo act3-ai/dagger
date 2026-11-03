@@ -1,0 +1,180 @@
+[modules.ci]
+source = ".dagger"
+main = true
+
+[modules.dagger-go-sdk]
+source = "github.com/dagger/go-sdk"
+
+[sdks.go]
+module = "dagger-go-sdk"
+
+[sdks.go.scopes.".dagger"]
+clients = ["./data-tool/tests", "./docker/tests", "./git-cliff", "./git-cliff/tests", "./gocoverage/tests", "./goreleaser/tests", "./govulncheck", "./markdownlint/tests", "./python/tests", "./release", "./release/tests", "./renovate", "./shields/tests", "./yamllint/tests"]
+is-module = true
+
+[sdks.go.scopes.data-tool]
+clients = ["github.com/sagikazarmark/daggerverse/registry-config@126b5fbbdad70dbf2a8689600baec2eb78c05ef4", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
+is-module = true
+
+[sdks.go.scopes.data-tool.settings]
+globalClient = true
+
+[sdks.go.scopes."data-tool/tests"]
+clients = ["./data-tool"]
+is-module = true
+
+[sdks.go.scopes."data-tool/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.docker]
+is-module = true
+
+[sdks.go.scopes.docker.settings]
+globalClient = true
+
+[sdks.go.scopes."docker/tests"]
+clients = ["./docker"]
+is-module = true
+
+[sdks.go.scopes."docker/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.git-cliff]
+is-module = true
+
+[sdks.go.scopes.git-cliff.settings]
+globalClient = true
+
+[sdks.go.scopes."git-cliff/tests"]
+clients = ["./git-cliff"]
+is-module = true
+
+[sdks.go.scopes."git-cliff/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.gocoverage]
+is-module = true
+name = "go-coverage"
+
+[sdks.go.scopes.gocoverage.settings]
+globalClient = true
+
+[sdks.go.scopes."gocoverage/tests"]
+clients = ["github.com/sagikazarmark/daggerverse/go@d9ba06776c4c1ccf6f329bd862b9b439c4582ab6", "./gocoverage"]
+is-module = true
+
+[sdks.go.scopes."gocoverage/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.goreleaser]
+clients = ["github.com/sagikazarmark/daggerverse/registry-config@126b5fbbdad70dbf2a8689600baec2eb78c05ef4"]
+is-module = true
+
+[sdks.go.scopes.goreleaser.settings]
+globalClient = true
+
+[sdks.go.scopes."goreleaser/tests"]
+clients = ["./goreleaser", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
+is-module = true
+
+[sdks.go.scopes."goreleaser/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.govulncheck]
+clients = ["github.com/sagikazarmark/daggerverse/go@d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"]
+is-module = true
+
+[sdks.go.scopes.govulncheck.settings]
+globalClient = true
+
+[sdks.go.scopes.markdownlint]
+is-module = true
+
+[sdks.go.scopes.markdownlint.settings]
+globalClient = true
+
+[sdks.go.scopes."markdownlint/tests"]
+clients = ["./markdownlint"]
+is-module = true
+
+[sdks.go.scopes."markdownlint/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.python]
+is-module = true
+
+[sdks.go.scopes.python.settings]
+globalClient = true
+
+[sdks.go.scopes."python/tests"]
+clients = ["./python"]
+is-module = true
+
+[sdks.go.scopes."python/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.release]
+clients = ["github.com/sagikazarmark/daggerverse/gh@5dcc7e4c4cd5ed230046955f42e27f2166545155", "./git-cliff", "github.com/sagikazarmark/daggerverse/registry-config@5dcc7e4c4cd5ed230046955f42e27f2166545155", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
+is-module = true
+
+[sdks.go.scopes.release.settings]
+globalClient = true
+
+[sdks.go.scopes."release/tests"]
+clients = ["./release"]
+is-module = true
+
+[sdks.go.scopes."release/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.renovate]
+is-module = true
+
+[sdks.go.scopes.renovate.settings]
+globalClient = true
+
+[sdks.go.scopes.shields]
+clients = ["github.com/sagikazarmark/daggerverse/go@6133ad18e131b891d4723b8e25d69f5de077b472", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
+is-module = true
+
+[sdks.go.scopes.shields.settings]
+globalClient = true
+
+[sdks.go.scopes."shields/tests"]
+clients = ["./shields"]
+is-module = true
+
+[sdks.go.scopes."shields/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.yamllint]
+clients = ["github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
+is-module = true
+
+[sdks.go.scopes.yamllint.settings]
+globalClient = true
+
+[sdks.go.scopes."yamllint/tests"]
+clients = ["github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead", "./yamllint"]
+is-module = true
+
+[sdks.go.scopes."yamllint/tests".settings]
+globalClient = true
+
+[sdks.go.scopes.kubeconform]
+clients = ["github.com/dagger/dagger/modules/wolfi@054f94b2d86c0ac00bef11ac4550816973c4aeef"]
+is-module = true
+
+[sdks.go.scopes."kubeconform/tests"]
+clients = ["./kubeconform"]
+is-module = true
+
+[sdks.go.scopes.netrc]
+is-module = true
+
+[sdks.go.scopes."netrc/tests"]
+clients = ["./netrc"]
+is-module = true
+
+[sdks.go.scopes.sonarqube]
+is-module = true

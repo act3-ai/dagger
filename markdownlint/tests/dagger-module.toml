@@ -1,0 +1,9 @@
+name = "tests"
+engineVersion = "v0.21.6"
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "markdownlint"
+  source = ".."

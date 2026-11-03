@@ -1,0 +1,9 @@
+name = "tests"
+engineVersion = "v0.21.7"
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "kubeconform"
+  source = ".."

@@ -1,0 +1,24 @@
+name = "release"
+engineVersion = "v0.21.6"
+
+[runtime]
+  source = "go"
+
+[[dependencies]]
+  name = "gh"
+  source = "github.com/sagikazarmark/daggerverse/gh@5dcc7e4c4cd5ed230046955f42e27f2166545155"
+  pin = "5dcc7e4c4cd5ed230046955f42e27f2166545155"
+
+[[dependencies]]
+  name = "git-cliff"
+  source = "../git-cliff"
+
+[[dependencies]]
+  name = "registry-config"
+  source = "github.com/sagikazarmark/daggerverse/registry-config@main"
+  pin = "5dcc7e4c4cd5ed230046955f42e27f2166545155"
+
+[[dependencies]]
+  name = "wolfi"
+  source = "github.com/dagger/dagger/modules/wolfi@v0.21.3"
+  pin = "0ec84486003f052214339a2f8bdcd5761f23cead"
