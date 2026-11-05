@@ -22,51 +22,51 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 25, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 30, 6))
         .withFunction(
           function("Check", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test unit test coverage check")
-            .withSourceMap(sourceMap("main.go", 45, 1))
+            .withSourceMap(sourceMap("main.go", 49, 1))
             .withCheck
         )
         .withFunction(
           function("CheckExcludes", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test unit test coverage check")
-            .withSourceMap(sourceMap("main.go", 52, 1))
+            .withSourceMap(sourceMap("main.go", 56, 1))
             .withCheck
         )
         .withFunction(
           function("Debug", typeDef.withKind(TypeDefKind.STRING_KIND))
-            .withSourceMap(sourceMap("main.go", 38, 1))
+            .withSourceMap(sourceMap("main.go", 42, 1))
         )
         .withFunction(
           function("Directory", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("// Test merge\nfunc (t *Tests) Merge(ctx context.Context) error {\n\tresults1 := dag.Coverage(t.base(), opts).UnitTests()\n\tresults2 := dag.Coverage(t.base()).Exec(\"./cmd/myapp\", []string{\"argument\"})\n\n\tresults := results1.Merge(results2)\n\n\tcov, err := results.Percent(ctx)\n\tif err != nil {\n\t\treturn err\n\t}\n\n\texpected := 100.0\n\tif math.Abs(cov-expected) > 0.01 {\n\t\treturn fmt.Errorf(\"expected %0.2f%% code coverage but saw %0.2f%%\", expected, cov)\n\t}\n\treturn nil\n}")
-            .withSourceMap(sourceMap("main.go", 131, 1))
+            .withSourceMap(sourceMap("main.go", 135, 1))
             .withCheck
         )
         .withFunction(
           function("Exec", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test exec")
-            .withSourceMap(sourceMap("main.go", 104, 1))
+            .withSourceMap(sourceMap("main.go", 108, 1))
             .withCheck
         )
         .withFunction(
           function("HTML", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test HTML generation")
-            .withSourceMap(sourceMap("main.go", 59, 1))
+            .withSourceMap(sourceMap("main.go", 63, 1))
             .withCheck
         )
         .withFunction(
           function("SVG", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test SVG generation")
-            .withSourceMap(sourceMap("main.go", 74, 1))
+            .withSourceMap(sourceMap("main.go", 78, 1))
             .withCheck
         )
         .withFunction(
           function("Summary", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test Summary generation")
-            .withSourceMap(sourceMap("main.go", 89, 1))
+            .withSourceMap(sourceMap("main.go", 93, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

@@ -10,7 +10,7 @@ import (
 )
 
 // Code coverage generator
-type GoCoverage struct { // go-coverage (../../main.go:18:6)
+type GoCoverage struct { // go-coverage (../../main.go:19:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -30,7 +30,7 @@ func (r *GoCoverage) WithGraphQLQuery(q *querybuilder.Selection) *GoCoverage {
 }
 
 // Run a go package with coverage
-func (r *GoCoverage) Exec(pkg string, args []string) *GoCoverageCoverageResults { // go-coverage (../../main.go:78:1)
+func (r *GoCoverage) Exec(pkg string, args []string) *GoCoverageCoverageResults { // go-coverage (../../main.go:79:1)
 	q := r.query.Select("exec")
 	q = q.Arg("pkg", pkg)
 	q = q.Arg("args", args)
@@ -97,7 +97,7 @@ func (r *GoCoverage) UnmarshalJSON(bs []byte) error {
 }
 
 // Code coverage from unit tests
-func (r *GoCoverage) UnitTests() *GoCoverageCoverageResults { // go-coverage (../../main.go:43:1)
+func (r *GoCoverage) UnitTests() *GoCoverageCoverageResults { // go-coverage (../../main.go:44:1)
 	q := r.query.Select("unitTests")
 
 	return &GoCoverageCoverageResults{
@@ -113,7 +113,7 @@ func (r *GoCoverage) AsNode() Node {
 }
 
 // Code coverage results
-type GoCoverageCoverageResults struct { // go-coverage (../../main.go:97:6)
+type GoCoverageCoverageResults struct { // go-coverage (../../main.go:98:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -143,7 +143,7 @@ func (r *GoCoverageCoverageResults) WithGraphQLQuery(q *querybuilder.Selection) 
 }
 
 // Check that the coverage percentage is above a threshold
-func (r *GoCoverageCoverageResults) Check(ctx context.Context, threshold float64) error { // go-coverage (../../main.go:238:1)
+func (r *GoCoverageCoverageResults) Check(ctx context.Context, threshold float64) error { // go-coverage (../../main.go:239:1)
 	if r.check != nil {
 		return nil
 	}
@@ -154,14 +154,14 @@ func (r *GoCoverageCoverageResults) Check(ctx context.Context, threshold float64
 }
 
 // Get a directory of all the results
-func (r *GoCoverageCoverageResults) Directory() *Directory { // go-coverage (../../main.go:253:1)
+func (r *GoCoverageCoverageResults) Directory() *Directory { // go-coverage (../../main.go:254:1)
 	q := r.query.Select("directory")
 
 	return new(Directory).WithGraphQLQuery(q)
 }
 
 // HTML report
-func (r *GoCoverageCoverageResults) HTML() *File { // go-coverage (../../main.go:185:1)
+func (r *GoCoverageCoverageResults) HTML() *File { // go-coverage (../../main.go:186:1)
 	q := r.query.Select("html")
 
 	return new(File).WithGraphQLQuery(q)
@@ -227,11 +227,11 @@ type GoCoverageCoverageResultsMergeOpts struct {
 	//
 	// module paths to include
 	//
-	Pkgs []string // go-coverage (../../main.go:124:2)
+	Pkgs []string // go-coverage (../../main.go:125:2)
 }
 
 // Merge all results
-func (r *GoCoverageCoverageResults) Merge(other *GoCoverageCoverageResults, opts ...GoCoverageCoverageResultsMergeOpts) *GoCoverageCoverageResults { // go-coverage (../../main.go:118:1)
+func (r *GoCoverageCoverageResults) Merge(other *GoCoverageCoverageResults, opts ...GoCoverageCoverageResultsMergeOpts) *GoCoverageCoverageResults { // go-coverage (../../main.go:119:1)
 	assertNotNil("other", other)
 	q := r.query.Select("merge")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -249,7 +249,7 @@ func (r *GoCoverageCoverageResults) Merge(other *GoCoverageCoverageResults, opts
 }
 
 // Percent code coverage (total of all statements)
-func (r *GoCoverageCoverageResults) Percent(ctx context.Context) (float64, error) { // go-coverage (../../main.go:210:1)
+func (r *GoCoverageCoverageResults) Percent(ctx context.Context) (float64, error) { // go-coverage (../../main.go:211:1)
 	if r.percent != nil {
 		return *r.percent, nil
 	}
@@ -262,21 +262,21 @@ func (r *GoCoverageCoverageResults) Percent(ctx context.Context) (float64, error
 }
 
 // Summary of coverage by functions
-func (r *GoCoverageCoverageResults) Summary() *File { // go-coverage (../../main.go:193:1)
+func (r *GoCoverageCoverageResults) Summary() *File { // go-coverage (../../main.go:194:1)
 	q := r.query.Select("summary")
 
 	return new(File).WithGraphQLQuery(q)
 }
 
 // SVG heat map of code coverage
-func (r *GoCoverageCoverageResults) Svg() *File { // go-coverage (../../main.go:175:1)
+func (r *GoCoverageCoverageResults) Svg() *File { // go-coverage (../../main.go:176:1)
 	q := r.query.Select("svg")
 
 	return new(File).WithGraphQLQuery(q)
 }
 
 // Text format (older style) coverage format
-func (r *GoCoverageCoverageResults) TextFormat() *File { // go-coverage (../../main.go:146:1)
+func (r *GoCoverageCoverageResults) TextFormat() *File { // go-coverage (../../main.go:147:1)
 	q := r.query.Select("textFormat")
 
 	return new(File).WithGraphQLQuery(q)
@@ -293,11 +293,11 @@ type GoCoverageOpts struct {
 	//
 	// Exclude files from coverage
 	//
-	Excludes []string // go-coverage (../../main.go:34:2)
+	Excludes []string // go-coverage (../../main.go:35:2)
 }
 
 // Code coverage generator
-func (r *Query) GoCoverage(base *Container, opts ...GoCoverageOpts) *GoCoverage { // go-coverage (../../main.go:26:1)
+func (r *Query) GoCoverage(base *Container, opts ...GoCoverageOpts) *GoCoverage { // go-coverage (../../main.go:27:1)
 	assertNotNil("base", base)
 	q := r.query.Select("goCoverage")
 	for i := len(opts) - 1; i >= 0; i-- {

@@ -22,68 +22,68 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("GoCoverage", description: "Code coverage generator", sourceMap: sourceMap("main.go", 18, 6))
+      typeDef.withObject("GoCoverage", description: "Code coverage generator", sourceMap: sourceMap("main.go", 19, 6))
         .withFunction(
           function("Exec", typeDef.withObject("CoverageResults"))
             .withDescription("Run a go package with coverage")
-            .withSourceMap(sourceMap("main.go", 78, 1))
-            .withArg("pkg", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 79, 2))
-            .withArg("args", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), sourceMap: sourceMap("main.go", 80, 2))
+            .withSourceMap(sourceMap("main.go", 79, 1))
+            .withArg("pkg", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 80, 2))
+            .withArg("args", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), sourceMap: sourceMap("main.go", 81, 2))
         )
         .withFunction(
           function("UnitTests", typeDef.withObject("CoverageResults"))
             .withDescription("Code coverage from unit tests")
-            .withSourceMap(sourceMap("main.go", 43, 1))
+            .withSourceMap(sourceMap("main.go", 44, 1))
         )
         .withConstructor(
           function("", typeDef.withObject("GoCoverage"))
-            .withSourceMap(sourceMap("main.go", 26, 1))
-            .withArg("base", typeDef.withObject("Container"), description: "base container for go.  Expectations:\n- working directory is set to the go.mod file\n- go tool works for go-cover-treemap (optional)", sourceMap: sourceMap("main.go", 30, 2))
-            .withArg("excludes", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "Exclude files from coverage", sourceMap: sourceMap("main.go", 34, 2))
+            .withSourceMap(sourceMap("main.go", 27, 1))
+            .withArg("base", typeDef.withObject("Container"), description: "base container for go.  Expectations:\n- working directory is set to the go.mod file\n- go tool works for go-cover-treemap (optional)", sourceMap: sourceMap("main.go", 31, 2))
+            .withArg("excludes", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "Exclude files from coverage", sourceMap: sourceMap("main.go", 35, 2))
         ),
-      typeDef.withObject("CoverageResults", description: "Code coverage results", sourceMap: sourceMap("main.go", 97, 6))
+      typeDef.withObject("CoverageResults", description: "Code coverage results", sourceMap: sourceMap("main.go", 98, 6))
         .withFunction(
           function("Check", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Check that the coverage percentage is above a threshold")
-            .withSourceMap(sourceMap("main.go", 238, 1))
-            .withArg("threshold", typeDef.withKind(TypeDefKind.FLOAT_KIND), description: "minimum percentage to accept", sourceMap: sourceMap("main.go", 240, 2))
+            .withSourceMap(sourceMap("main.go", 239, 1))
+            .withArg("threshold", typeDef.withKind(TypeDefKind.FLOAT_KIND), description: "minimum percentage to accept", sourceMap: sourceMap("main.go", 241, 2))
         )
         .withFunction(
           function("Directory", typeDef.withObject("Directory"))
             .withDescription("Get a directory of all the results")
-            .withSourceMap(sourceMap("main.go", 253, 1))
+            .withSourceMap(sourceMap("main.go", 254, 1))
         )
         .withFunction(
           function("HTML", typeDef.withObject("File"))
             .withDescription("HTML report")
-            .withSourceMap(sourceMap("main.go", 185, 1))
+            .withSourceMap(sourceMap("main.go", 186, 1))
         )
         .withFunction(
           function("Merge", typeDef.withObject("CoverageResults"))
             .withDescription("Merge all results")
-            .withSourceMap(sourceMap("main.go", 118, 1))
-            .withArg("other", typeDef.withObject("CoverageResults"), description: "other coverage results to merge into the returned results", sourceMap: sourceMap("main.go", 120, 2))
-            .withArg("pkgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "module paths to include", sourceMap: sourceMap("main.go", 124, 2))
+            .withSourceMap(sourceMap("main.go", 119, 1))
+            .withArg("other", typeDef.withObject("CoverageResults"), description: "other coverage results to merge into the returned results", sourceMap: sourceMap("main.go", 121, 2))
+            .withArg("pkgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "module paths to include", sourceMap: sourceMap("main.go", 125, 2))
         )
         .withFunction(
           function("Percent", typeDef.withKind(TypeDefKind.FLOAT_KIND))
             .withDescription("Percent code coverage (total of all statements)")
-            .withSourceMap(sourceMap("main.go", 210, 1))
+            .withSourceMap(sourceMap("main.go", 211, 1))
         )
         .withFunction(
           function("SVG", typeDef.withObject("File"))
             .withDescription("SVG heat map of code coverage")
-            .withSourceMap(sourceMap("main.go", 175, 1))
+            .withSourceMap(sourceMap("main.go", 176, 1))
         )
         .withFunction(
           function("Summary", typeDef.withObject("File"))
             .withDescription("Summary of coverage by functions")
-            .withSourceMap(sourceMap("main.go", 193, 1))
+            .withSourceMap(sourceMap("main.go", 194, 1))
         )
         .withFunction(
           function("TextFormat", typeDef.withObject("File"))
             .withDescription("Text format (older style) coverage format")
-            .withSourceMap(sourceMap("main.go", 146, 1))
+            .withSourceMap(sourceMap("main.go", 147, 1))
         )
     ]
   }

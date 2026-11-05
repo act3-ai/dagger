@@ -22,23 +22,23 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 23, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 25, 6))
         .withFunction(
           function("BuildAll", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test build for all platforms defined in goreleaser config.")
-            .withSourceMap(sourceMap("main.go", 40, 1))
+            .withSourceMap(sourceMap("main.go", 42, 1))
             .withCheck
         )
         .withFunction(
           function("BuildPlatform", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test build for a specific platform.")
-            .withSourceMap(sourceMap("main.go", 62, 1))
+            .withSourceMap(sourceMap("main.go", 64, 1))
             .withCheck
         )
         .withConstructor(
           function("", typeDef.withObject("Tests"))
-            .withSourceMap(sourceMap("main.go", 28, 1))
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), description: "testdata source directory", defaultPath: "./goreleaser/tests/testdata", sourceMap: sourceMap("main.go", 31, 2))
+            .withSourceMap(sourceMap("main.go", 30, 1))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), description: "testdata source directory", defaultPath: "./goreleaser/tests/testdata", sourceMap: sourceMap("main.go", 33, 2))
         )
     ]
   }

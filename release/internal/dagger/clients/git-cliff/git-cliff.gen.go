@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type GitCliff struct { // git-cliff (../../main.go:19:6)
+type GitCliff struct { // git-cliff (../../main.go:21:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -30,7 +30,7 @@ func (r *GitCliff) WithGraphQLQuery(q *querybuilder.Selection) *GitCliff {
 }
 
 // Prints a bumped tag for unreleased changes.
-func (r *GitCliff) BumpedVersion(ctx context.Context) (string, error) { // git-cliff (../../main.go:177:1)
+func (r *GitCliff) BumpedVersion(ctx context.Context) (string, error) { // git-cliff (../../main.go:179:1)
 	if r.bumpedVersion != nil {
 		return *r.bumpedVersion, nil
 	}
@@ -49,16 +49,16 @@ type GitCliffChangelogOpts struct {
 	//
 	//
 	// Default: "CHANGELOG.md"
-	Changelog string // git-cliff (../../main.go:100:2)
+	Changelog string // git-cliff (../../main.go:102:2)
 	//
 	// tag to generate changelog for
 	//
-	Tag string // git-cliff (../../main.go:103:2)
+	Tag string // git-cliff (../../main.go:105:2)
 }
 
 // generate a changelog file with unreleased changes and bumps the tag if tag is not provided
 // If file already exists, it will prepend to the existing changelog instead of creating a new one.
-func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File { // git-cliff (../../main.go:95:1)
+func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File { // git-cliff (../../main.go:97:1)
 	q := r.query.Select("changelog")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `changelog` optional argument
@@ -76,7 +76,7 @@ func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File { // git-cliff
 
 // Returns a git-cliff container with optionally mounted secret variables
 // for private gitlab, github, or gitea tokens
-func (r *GitCliff) Container() *Container { // git-cliff (../../main.go:22:2)
+func (r *GitCliff) Container() *Container { // git-cliff (../../main.go:24:2)
 	q := r.query.Select("container")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -144,19 +144,19 @@ type GitCliffReleaseNotesOpts struct {
 	//
 	//
 	// Default: "releasenotes.md"
-	Notes string // git-cliff (../../main.go:140:2)
+	Notes string // git-cliff (../../main.go:142:2)
 	//
 	// tag to generate changelog for
 	//
-	Tag string // git-cliff (../../main.go:143:2)
+	Tag string // git-cliff (../../main.go:145:2)
 	//
 	// append additional provided release notes
 	//
-	ExtraNotes string // git-cliff (../../main.go:146:2)
+	ExtraNotes string // git-cliff (../../main.go:148:2)
 }
 
 // generate release notes file with unreleased changes and bumps the tag if tag is not provided
-func (r *GitCliff) ReleaseNotes(opts ...GitCliffReleaseNotesOpts) *File { // git-cliff (../../main.go:135:1)
+func (r *GitCliff) ReleaseNotes(opts ...GitCliffReleaseNotesOpts) *File { // git-cliff (../../main.go:137:1)
 	q := r.query.Select("releaseNotes")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `notes` optional argument
@@ -189,27 +189,27 @@ type GitCliffOpts struct {
 	//
 	//
 	// Default: "latest"
-	GitCliffVersion string // git-cliff (../../main.go:36:2)
+	GitCliffVersion string // git-cliff (../../main.go:38:2)
 
-	WorkingDir string // git-cliff (../../main.go:38:2)
+	WorkingDir string // git-cliff (../../main.go:40:2)
 	//
 	// private token to use when authenticating with a private github instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/github
 	//
-	GithubToken *Secret // git-cliff (../../main.go:42:2)
+	GithubToken *Secret // git-cliff (../../main.go:44:2)
 	//
 	// private token to use when authenticating with a private gitlab instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/gitlab
 	//
-	GitlabToken *Secret // git-cliff (../../main.go:46:2)
+	GitlabToken *Secret // git-cliff (../../main.go:48:2)
 	//
 	// private token to use when authenticating with a private gitea instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/gitea
 	//
-	GiteaToken *Secret // git-cliff (../../main.go:50:2)
+	GiteaToken *Secret // git-cliff (../../main.go:52:2)
 }
 
-func (r *Query) GitCliff(gitRef *GitRef, opts ...GitCliffOpts) *GitCliff { // git-cliff (../../main.go:30:1)
+func (r *Query) GitCliff(gitRef *GitRef, opts ...GitCliffOpts) *GitCliff { // git-cliff (../../main.go:32:1)
 	assertNotNil("gitRef", gitRef)
 	q := r.query.Select("gitCliff")
 	for i := len(opts) - 1; i >= 0; i-- {

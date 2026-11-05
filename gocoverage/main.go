@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"al.essio.dev/pkg/shellescape"
+	core "dagger.io/dagger/core"
 )
 
 // Code coverage generator
@@ -64,7 +65,7 @@ func (m *GoCoverage) UnitTests(
 	pkg = strings.TrimSpace(pkg)
 
 	text := m.Base.
-		WithDirectory("coverage", dag.Directory()).
+		WithDirectory("coverage", core.NewDirectory()).
 		WithExec([]string{"go", "test", "-trimpath", "./...", "-coverprofile", "/raw.txt", "-coverpkg", pkg + "/..."}).
 		File("/raw.txt")
 
@@ -81,7 +82,7 @@ func (m *GoCoverage) Exec(ctx context.Context,
 ) (*CoverageResults, error) {
 	const covDir = "/coverage"
 	raw := m.Base.
-		WithDirectory(covDir, dag.Directory()).
+		WithDirectory(covDir, core.NewDirectory()).
 		WithExec([]string{"go", "build", "-trimpath", "-cover", "-o", "/app", pkg}).
 		WithEnvVariable("GOCOVERDIR", covDir).
 		WithExec(append([]string{"/app"}, args...)).
@@ -135,7 +136,7 @@ func (cr *CoverageResults) Merge(ctx context.Context,
 	raw := cr.Coverage.Base.
 		WithDirectory("/left", cr.Raw).
 		WithDirectory("/right", other.Raw).
-		WithDirectory("/merged", dag.Directory()).
+		WithDirectory("/merged", core.NewDirectory()).
 		WithExec(args).
 		Directory("/merged")
 
@@ -256,7 +257,7 @@ func (cr *CoverageResults) Directory(ctx context.Context) (*dagger.Directory, er
 		return nil, err
 	}
 
-	return dag.Directory().
+	return core.NewDirectory().
 			WithFile("heat.svg", cr.SVG()).
 			WithFile("index.html", cr.HTML()).
 			WithFile("coverage.txt", cr.TextFormat()).

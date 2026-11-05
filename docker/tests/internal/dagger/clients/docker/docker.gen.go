@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Docker struct { // docker (../../main.go:14:6)
+type Docker struct { // docker (../../main.go:16:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -43,20 +43,20 @@ type DockerBuildOpts struct {
 	//
 	//
 	// Default: "Dockerfile"
-	Dockerfile string // docker (../../main.go:178:2)
+	Dockerfile string // docker (../../main.go:180:2)
 	//
 	// target stage of image build
 	//
-	Target string // docker (../../main.go:182:2)
+	Target string // docker (../../main.go:184:2)
 	//
 	// platform to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// defaults to the platform of the dagger engine
 	//
-	Platform Platform // docker (../../main.go:186:2)
+	Platform Platform // docker (../../main.go:188:2)
 }
 
 // Build image from Dockerfile
-func (r *Docker) Build(opts ...DockerBuildOpts) *Container { // docker (../../main.go:173:1)
+func (r *Docker) Build(opts ...DockerBuildOpts) *Container { // docker (../../main.go:175:1)
 	q := r.query.Select("build")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `dockerfile` optional argument
@@ -138,20 +138,20 @@ type DockerPublishOpts struct {
 	//
 	//
 	// Default: "Dockerfile"
-	Dockerfile string // docker (../../main.go:228:2)
+	Dockerfile string // docker (../../main.go:230:2)
 	//
 	// target stage of image build
 	//
-	Target string // docker (../../main.go:235:2)
+	Target string // docker (../../main.go:237:2)
 	//
 	// platforms to build with. value of [os]/[arch], example: linux/amd64, linux/arm64
 	// defaults to the platform of the dagger engine
 	//
-	Platforms []Platform // docker (../../main.go:239:2)
+	Platforms []Platform // docker (../../main.go:241:2)
 }
 
 // Build a multi-arch image index from Dockerfile and Publish to an OCI registry, returning a slice of image digest references.
-func (r *Docker) Publish(ctx context.Context, address string, tags []string, opts ...DockerPublishOpts) ([]string, error) { // docker (../../main.go:225:1)
+func (r *Docker) Publish(ctx context.Context, address string, tags []string, opts ...DockerPublishOpts) ([]string, error) { // docker (../../main.go:227:1)
 	q := r.query.Select("publish")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `dockerfile` optional argument
@@ -177,7 +177,7 @@ func (r *Docker) Publish(ctx context.Context, address string, tags []string, opt
 }
 
 // Add docker build args to builds
-func (r *Docker) WithBuildArg(name string, value string) *Docker { // docker (../../main.go:130:1)
+func (r *Docker) WithBuildArg(name string, value string) *Docker { // docker (../../main.go:132:1)
 	q := r.query.Select("withBuildArg")
 	q = q.Arg("name", name)
 	q = q.Arg("value", value)
@@ -189,7 +189,7 @@ func (r *Docker) WithBuildArg(name string, value string) *Docker { // docker (..
 }
 
 // Add docker registry creds to builds
-func (r *Docker) WithDockerConfig(file *File) *Docker { // docker (../../main.go:91:1)
+func (r *Docker) WithDockerConfig(file *File) *Docker { // docker (../../main.go:93:1)
 	assertNotNil("file", file)
 	q := r.query.Select("withDockerConfig")
 	q = q.Arg("file", file)
@@ -201,7 +201,7 @@ func (r *Docker) WithDockerConfig(file *File) *Docker { // docker (../../main.go
 }
 
 // Add labels to builds
-func (r *Docker) WithLabel(name string, value string) *Docker { // docker (../../main.go:144:1)
+func (r *Docker) WithLabel(name string, value string) *Docker { // docker (../../main.go:146:1)
 	q := r.query.Select("withLabel")
 	q = q.Arg("name", name)
 	q = q.Arg("value", value)
@@ -213,7 +213,7 @@ func (r *Docker) WithLabel(name string, value string) *Docker { // docker (../..
 }
 
 // Add docker registry creds to builds
-func (r *Docker) WithRegistryCreds(registry string, username string, password *Secret) *Docker { // docker (../../main.go:74:1)
+func (r *Docker) WithRegistryCreds(registry string, username string, password *Secret) *Docker { // docker (../../main.go:76:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withRegistryCreds")
 	q = q.Arg("registry", registry)
@@ -227,7 +227,7 @@ func (r *Docker) WithRegistryCreds(registry string, username string, password *S
 }
 
 // Add a docker secret to builds
-func (r *Docker) WithSecret(name string, value *Secret) *Docker { // docker (../../main.go:60:1)
+func (r *Docker) WithSecret(name string, value *Secret) *Docker { // docker (../../main.go:62:1)
 	assertNotNil("value", value)
 	q := r.query.Select("withSecret")
 	q = q.Arg("name", name)
@@ -245,7 +245,7 @@ func (r *Docker) AsNode() Node {
 	return new(NodeClient).WithGraphQLQuery(r.query)
 }
 
-func (r *Query) Docker(src *Directory) *Docker { // docker (../../main.go:50:1)
+func (r *Query) Docker(src *Directory) *Docker { // docker (../../main.go:52:1)
 	assertNotNil("src", src)
 	q := r.query.Select("docker")
 	q = q.Arg("src", src)

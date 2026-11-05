@@ -17,6 +17,8 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+	goreleaser "dagger/tests/internal/dagger/clients/goreleaser"
+	wolfi "dagger/tests/internal/dagger/clients/wolfi"
 	"fmt"
 )
 
@@ -38,7 +40,7 @@ func New(
 // +check
 // Test build for all platforms defined in goreleaser config.
 func (t *Tests) BuildAll(ctx context.Context) error {
-	dist := dag.Goreleaser(t.gitRepoGo()).
+	dist := goreleaser.New(t.gitRepoGo()).
 		Build().
 		All()
 
@@ -60,9 +62,9 @@ func (t *Tests) BuildAll(ctx context.Context) error {
 // +check
 // Test build for a specific platform.
 func (t *Tests) BuildPlatform(ctx context.Context) error {
-	bin := dag.Goreleaser(t.Source).
+	bin := goreleaser.New(t.Source).
 		Build().
-		Platform("hello-world-linux-amd64", dagger.GoreleaserBuildPlatformOpts{Platform: dagger.Platform("linux/amd64")})
+		Platform("hello-world-linux-amd64", goreleaser.GoreleaserBuildPlatformOpts{Platform: dagger.Platform("linux/amd64")})
 	if bin == nil {
 		return fmt.Errorf("got nil build executable")
 	}
@@ -75,8 +77,8 @@ func (t *Tests) BuildPlatform(ctx context.Context) error {
 func (t *Tests) gitRepoGo() *dagger.Directory {
 	dir := "hello-world-go"
 
-	return dag.Wolfi().
-		Container(dagger.WolfiContainerOpts{Packages: []string{"git"}}).
+	return wolfi.New().
+		Container(wolfi.WolfiContainerOpts{Packages: []string{"git"}}).
 		WithMountedDirectory(dir, t.Source.Directory(dir)).
 		WithWorkdir(dir).
 		WithExec([]string{"git", "init"}).

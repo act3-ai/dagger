@@ -10,7 +10,7 @@ import (
 )
 
 // Goreleaser represents the `goreleaser` command.
-type Goreleaser struct { // goreleaser (../../main.go:32:6)
+type Goreleaser struct { // goreleaser (../../main.go:36:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -48,7 +48,7 @@ func (r *Goreleaser) Build() *GoreleaserBuild { // goreleaser (../../build.go:22
 	}
 }
 
-func (r *Goreleaser) Container() *Container { // goreleaser (../../main.go:33:2)
+func (r *Goreleaser) Container() *Container { // goreleaser (../../main.go:37:2)
 	q := r.query.Select("container")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -124,13 +124,13 @@ type GoreleaserRunOpts struct {
 	//
 	// Output results, without an error.
 	//
-	IgnoreError bool // goreleaser (../../main.go:225:2)
+	IgnoreError bool // goreleaser (../../main.go:229:2)
 }
 
 // Run goreleaser.
 //
 // Run is a "catch-all" in case functions are not implemented.
-func (r *Goreleaser) Run(ctx context.Context, args []string, opts ...GoreleaserRunOpts) (string, error) { // goreleaser (../../main.go:220:1)
+func (r *Goreleaser) Run(ctx context.Context, args []string, opts ...GoreleaserRunOpts) (string, error) { // goreleaser (../../main.go:224:1)
 	if r.run != nil {
 		return *r.run, nil
 	}
@@ -155,13 +155,13 @@ type GoreleaserWithEnvVariableOpts struct {
 	// Replace `${VAR}` or $VAR in the value according to the current environment
 	// variables defined in the container (e.g., "/opt/bin:$PATH").
 	//
-	Expand bool // goreleaser (../../main.go:123:2)
+	Expand bool // goreleaser (../../main.go:127:2)
 }
 
 // WithEnvVariable adds an environment variable to the goreleaser container.
 //
 // This is useful for reusability and readability by not breaking the goreleaser calling chain.
-func (r *Goreleaser) WithEnvVariable(name string, value string, opts ...GoreleaserWithEnvVariableOpts) *Goreleaser { // goreleaser (../../main.go:114:1)
+func (r *Goreleaser) WithEnvVariable(name string, value string, opts ...GoreleaserWithEnvVariableOpts) *Goreleaser { // goreleaser (../../main.go:118:1)
 	q := r.query.Select("withEnvVariable")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `expand` optional argument
@@ -179,7 +179,7 @@ func (r *Goreleaser) WithEnvVariable(name string, value string, opts ...Goreleas
 }
 
 // Add credentials for use with Git
-func (r *Goreleaser) WithGitAuth(host string, username string, password *Secret) *Goreleaser { // goreleaser (../../main.go:149:1)
+func (r *Goreleaser) WithGitAuth(host string, username string, password *Secret) *Goreleaser { // goreleaser (../../main.go:153:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withGitAuth")
 	q = q.Arg("host", host)
@@ -197,15 +197,15 @@ type GoreleaserWithGoBuildCacheOpts struct {
 	//
 	// Identifier of the directory to use as the cache volume's root.
 	//
-	Source *Directory // goreleaser (../../main.go:206:2)
+	Source *Directory // goreleaser (../../main.go:210:2)
 	//
 	// Sharing mode of the cache volume.
 	//
-	Sharing CacheSharingMode // goreleaser (../../main.go:211:2)
+	Sharing CacheSharingMode // goreleaser (../../main.go:215:2)
 }
 
 // Mount a cache volume for Go build cache.
-func (r *Goreleaser) WithGoBuildCache(cache *CacheVolume, opts ...GoreleaserWithGoBuildCacheOpts) *Goreleaser { // goreleaser (../../main.go:200:1)
+func (r *Goreleaser) WithGoBuildCache(cache *CacheVolume, opts ...GoreleaserWithGoBuildCacheOpts) *Goreleaser { // goreleaser (../../main.go:204:1)
 	assertNotNil("cache", cache)
 	q := r.query.Select("withGoBuildCache")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -231,15 +231,15 @@ type GoreleaserWithGoModuleCacheOpts struct {
 	//
 	// Identifier of the directory to use as the cache volume's root.
 	//
-	Source *Directory // goreleaser (../../main.go:188:2)
+	Source *Directory // goreleaser (../../main.go:192:2)
 	//
 	// Sharing mode of the cache volume.
 	//
-	Sharing CacheSharingMode // goreleaser (../../main.go:193:2)
+	Sharing CacheSharingMode // goreleaser (../../main.go:197:2)
 }
 
 // Mount a cache volume for Go module cache.
-func (r *Goreleaser) WithGoModuleCache(cache *CacheVolume, opts ...GoreleaserWithGoModuleCacheOpts) *Goreleaser { // goreleaser (../../main.go:182:1)
+func (r *Goreleaser) WithGoModuleCache(cache *CacheVolume, opts ...GoreleaserWithGoModuleCacheOpts) *Goreleaser { // goreleaser (../../main.go:186:1)
 	assertNotNil("cache", cache)
 	q := r.query.Select("withGoModuleCache")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -261,7 +261,7 @@ func (r *Goreleaser) WithGoModuleCache(cache *CacheVolume, opts ...GoreleaserWit
 }
 
 // Add registry credentials.
-func (r *Goreleaser) WithRegistryAuth(address string, username string, secret *Secret) *Goreleaser { // goreleaser (../../main.go:169:1)
+func (r *Goreleaser) WithRegistryAuth(address string, username string, secret *Secret) *Goreleaser { // goreleaser (../../main.go:173:1)
 	assertNotNil("secret", secret)
 	q := r.query.Select("withRegistryAuth")
 	q = q.Arg("address", address)
@@ -277,7 +277,7 @@ func (r *Goreleaser) WithRegistryAuth(address string, username string, secret *S
 // WithSecretVariable adds an env variable containing a secret to the goreleaser container.
 //
 // This is useful for reusability and readability by not breaking the goreleaser calling chain.
-func (r *Goreleaser) WithSecretVariable(name string, secret *Secret) *Goreleaser { // goreleaser (../../main.go:138:1)
+func (r *Goreleaser) WithSecretVariable(name string, secret *Secret) *Goreleaser { // goreleaser (../../main.go:142:1)
 	assertNotNil("secret", secret)
 	q := r.query.Select("withSecretVariable")
 	q = q.Arg("name", name)
@@ -784,29 +784,29 @@ type GoreleaserOpts struct {
 	//
 	// Additonal .gitignore file
 	//
-	GitIgnore *File // goreleaser (../../main.go:45:2)
+	GitIgnore *File // goreleaser (../../main.go:49:2)
 	//
 	// Custom container to use as a base container. Must have 'goreleaser' available on PATH.
 	//
-	Container *Container // goreleaser (../../main.go:49:2)
+	Container *Container // goreleaser (../../main.go:53:2)
 	//
 	// Version (image tag) to use as a goreleaser binary source.
 	//
 	//
 	// Default: "latest"
-	Version string // goreleaser (../../main.go:54:2)
+	Version string // goreleaser (../../main.go:58:2)
 	//
 	// Configuration file.
 	//
-	Config *File // goreleaser (../../main.go:58:2)
+	Config *File // goreleaser (../../main.go:62:2)
 	//
 	// Disable mounting cache volumes.
 	//
-	DisableCache bool // goreleaser (../../main.go:63:2)
+	DisableCache bool // goreleaser (../../main.go:67:2)
 }
 
 // Goreleaser represents the `goreleaser` command.
-func (r *Query) Goreleaser(src *Directory, opts ...GoreleaserOpts) *Goreleaser { // goreleaser (../../main.go:39:1)
+func (r *Query) Goreleaser(src *Directory, opts ...GoreleaserOpts) *Goreleaser { // goreleaser (../../main.go:43:1)
 	assertNotNil("src", src)
 	q := r.query.Select("goreleaser")
 	for i := len(opts) - 1; i >= 0; i-- {

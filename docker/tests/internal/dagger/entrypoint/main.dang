@@ -22,26 +22,26 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 24, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 28, 6))
         .withFunction(
           function("WithBuildArg", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
-            .withSourceMap(sourceMap("main.go", 65, 1))
+            .withSourceMap(sourceMap("main.go", 69, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "./docker/tests", sourceMap: sourceMap("main.go", 67, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "./docker/tests", sourceMap: sourceMap("main.go", 71, 2))
         )
         .withFunction(
           function("WithLabels", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test WithLabels to ensure name and value are being set properly")
-            .withSourceMap(sourceMap("main.go", 28, 1))
+            .withSourceMap(sourceMap("main.go", 32, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 30, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 34, 2))
         )
         .withFunction(
           function("WithSecret", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test WithSecrets to ensure name and value are being set properly")
-            .withSourceMap(sourceMap("main.go", 86, 1))
+            .withSourceMap(sourceMap("main.go", 90, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 88, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 92, 2))
         )
         .withConstructor(function("", typeDef.withObject("Tests")))
     ]

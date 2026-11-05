@@ -3,6 +3,8 @@
 package main
 
 import (
+	registryconfig "dagger/goreleaser/internal/dagger/clients/registry-config"
+
 	core "dagger.io/dagger/core"
 
 	"context"
@@ -15,9 +17,6 @@ import (
 
 	"dagger/goreleaser/internal/dagger"
 )
-
-// Deprecated: use explicit core constructors and generated module clients.
-var dag = dagger.Connect()
 
 func Tracer() trace.Tracer {
 	return otel.Tracer("dagger.io/sdk.go")
@@ -50,7 +49,7 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 func (r Goreleaser) MarshalJSON() ([]byte, error) {
 	var concrete struct {
 		Container      *dagger.Container
-		RegistryConfig *dagger.RegistryConfig
+		RegistryConfig *registryconfig.RegistryConfig
 	}
 	concrete.Container = r.Container
 	concrete.RegistryConfig = r.RegistryConfig
@@ -60,7 +59,7 @@ func (r Goreleaser) MarshalJSON() ([]byte, error) {
 func (r *Goreleaser) UnmarshalJSON(bs []byte) error {
 	var concrete struct {
 		Container      *dagger.Container
-		RegistryConfig *dagger.RegistryConfig
+		RegistryConfig *registryconfig.RegistryConfig
 	}
 	err := json.Unmarshal(bs, &concrete)
 	if err != nil {

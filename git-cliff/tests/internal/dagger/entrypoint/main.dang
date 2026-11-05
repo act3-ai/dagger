@@ -22,35 +22,35 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 25, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 29, 6))
         .withFunction(
           function("BumpedVersion", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("test BumpedVersion")
-            .withSourceMap(sourceMap("main.go", 62, 1))
+            .withSourceMap(sourceMap("main.go", 66, 1))
             .withCheck
         )
         .withFunction(
           function("ChangelogOutput", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("test changelog output")
-            .withSourceMap(sourceMap("main.go", 87, 1))
+            .withSourceMap(sourceMap("main.go", 91, 1))
             .withCheck
         )
         .withFunction(
           function("ChangelogPrepend", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("test changelog prepend")
-            .withSourceMap(sourceMap("main.go", 115, 1))
+            .withSourceMap(sourceMap("main.go", 119, 1))
             .withCheck
         )
         .withFunction(
           function("ReleaseNotes", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("test releasenotes")
-            .withSourceMap(sourceMap("main.go", 143, 1))
+            .withSourceMap(sourceMap("main.go", 147, 1))
             .withCheck
         )
         .withFunction(
           function("ReleaseNotesWithExtraNotes", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("test releasenotes with extra notes added")
-            .withSourceMap(sourceMap("main.go", 171, 1))
+            .withSourceMap(sourceMap("main.go", 175, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

@@ -20,6 +20,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	gitcliff "dagger/tests/internal/dagger/clients/git-cliff"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
@@ -43,14 +47,14 @@ func parseErr(err error) error {
 // return container with a git repo and an initial commit with tag v1.0.0
 func (t *Tests) gitRepo() *dagger.Container {
 
-	return dag.Container().
+	return core.NewContainer().
 		From("alpine/git:latest").
 		WithWorkdir("/repo").
 		WithNewFile("README.md", "# My Project").
 		WithExec([]string{"git", "init"}).
 		WithExec([]string{"git", "config", "user.name", "test"}).
 		WithExec([]string{"git", "config", "user.email", "test@dagger.io"}).
-		WithFile("cliff.toml", dag.CurrentModule().Source().File("test.cliff.toml")).
+		WithFile("cliff.toml", core.NewCurrentModule().Source().File("test.cliff.toml")).
 		WithExec([]string{"git", "add", "README.md", "cliff.toml"}).
 		WithExec([]string{"git", "commit", "-m", "fix: Initial commit"}).
 		WithExec([]string{"git", "tag", "-a", "-m", "Initial commit", "v1.0.0"})
@@ -67,7 +71,7 @@ func (t *Tests) BumpedVersion(ctx context.Context) error {
 		WithExec([]string{"git", "add", "test.md"}).
 		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	actual, err := dag.GitCliff(gitRef).BumpedVersion(ctx)
+	actual, err := gitcliff.New(gitRef).BumpedVersion(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -98,7 +102,7 @@ func (t *Tests) ChangelogOutput(ctx context.Context) error {
 - Test tag
 `
 
-	actual, err := dag.GitCliff(gitRef).Changelog().Contents(ctx)
+	actual, err := gitcliff.New(gitRef).Changelog().Contents(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -126,7 +130,7 @@ func (t *Tests) ChangelogPrepend(ctx context.Context) error {
 - Test tag
 ## [1.0.0]`
 
-	actual, err := dag.GitCliff(gitRef).Changelog().Contents(ctx)
+	actual, err := gitcliff.New(gitRef).Changelog().Contents(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -154,7 +158,7 @@ func (t *Tests) ReleaseNotes(ctx context.Context) error {
 - Test tag
 `
 
-	actual, err := dag.GitCliff(gitRef).ReleaseNotes().Contents(ctx)
+	actual, err := gitcliff.New(gitRef).ReleaseNotes().Contents(ctx)
 
 	if err != nil {
 		return parseErr(err)
@@ -183,7 +187,7 @@ extra notes
 - Test tag
 `
 
-	actual, err := dag.GitCliff(gitRef).ReleaseNotes(dagger.GitCliffReleaseNotesOpts{ExtraNotes: "extra notes"}).Contents(ctx)
+	actual, err := gitcliff.New(gitRef).ReleaseNotes(gitcliff.GitCliffReleaseNotesOpts{ExtraNotes: "extra notes"}).Contents(ctx)
 
 	if err != nil {
 		return parseErr(err)

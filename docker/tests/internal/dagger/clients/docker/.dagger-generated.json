@@ -2,6 +2,6 @@
   "version": 1,
   "files": {
     "dagger.gen.go": "2cd1358df23d8b9206e317748b24c8051cab27817810e73e4fae800b4435bd64",
-    "docker.gen.go": "c2f1575e2839bd27888980273539351d5d989a532dcd5e93e729736c9ac714b1"
+    "docker.gen.go": "51c8a091640ff61464e42798cc8ae8ebaa63e31a71ac05c67b63dd57436debb3"
   }
 }

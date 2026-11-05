@@ -140,56 +140,38 @@ globalClient = true
 [sdks.go.scopes.docker]
 is-module = true
 
-[sdks.go.scopes.docker.settings]
-globalClient = true
-
 [sdks.go.scopes."docker/tests"]
 clients = ["./docker"]
 is-module = true
 
-[sdks.go.scopes."docker/tests".settings]
-globalClient = true
-
 [sdks.go.scopes.git-cliff]
 is-module = true
-
-[sdks.go.scopes.git-cliff.settings]
-globalClient = true
 
 [sdks.go.scopes."git-cliff/tests"]
 clients = ["./git-cliff"]
 is-module = true
 
-[sdks.go.scopes."git-cliff/tests".settings]
-globalClient = true
-
 [sdks.go.scopes.gocoverage]
 is-module = true
 name = "go-coverage"
-
-[sdks.go.scopes.gocoverage.settings]
-globalClient = true
 
 [sdks.go.scopes."gocoverage/tests"]
 clients = ["github.com/sagikazarmark/daggerverse/go@d9ba06776c4c1ccf6f329bd862b9b439c4582ab6", "./gocoverage"]
 is-module = true
 
-[sdks.go.scopes."gocoverage/tests".settings]
-globalClient = true
-
 [sdks.go.scopes.goreleaser]
 clients = ["github.com/sagikazarmark/daggerverse/registry-config@126b5fbbdad70dbf2a8689600baec2eb78c05ef4"]
 is-module = true
 
-[sdks.go.scopes.goreleaser.settings]
-globalClient = true
+#[sdks.go.scopes.goreleaser.settings]
+#globalClient = true
 
 [sdks.go.scopes."goreleaser/tests"]
 clients = ["./goreleaser", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
 is-module = true
 
-[sdks.go.scopes."goreleaser/tests".settings]
-globalClient = true
+#[sdks.go.scopes."goreleaser/tests".settings]
+#globalClient = true
 
 [sdks.go.scopes.govulncheck]
 clients = ["github.com/sagikazarmark/daggerverse/go@d9ba06776c4c1ccf6f329bd862b9b439c4582ab6"]
