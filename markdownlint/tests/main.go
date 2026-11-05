@@ -17,13 +17,17 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+
+	markdownlint "dagger/tests/internal/dagger/clients/markdownlint"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
 
 // helper
 func (t *Tests) srcDir() *dagger.Directory {
-	src := dag.CurrentModule().
+	src := core.NewCurrentModule().
 		Source().
 		Directory("testdata").
 		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.md"}})
@@ -36,7 +40,7 @@ func (t *Tests) srcDir() *dagger.Directory {
 func (t *Tests) Lint(ctx context.Context,
 ) error {
 
-	_, err := dag.Markdownlint(t.srcDir()).Lint().Sync(ctx)
+	_, err := markdownlint.New(t.srcDir()).Lint().Sync(ctx)
 
 	return err
 
@@ -45,7 +49,7 @@ func (t *Tests) Lint(ctx context.Context,
 // +check
 // Run markdownlint autofix
 func (t *Tests) AutoFix(ctx context.Context) error {
-	empty, err := dag.Markdownlint(t.srcDir()).Fix().IsEmpty(ctx)
+	empty, err := markdownlint.New(t.srcDir()).Fix().IsEmpty(ctx)
 
 	if !empty {
 		return err

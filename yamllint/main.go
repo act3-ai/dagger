@@ -8,6 +8,7 @@ package main
 import (
 	"context"
 	"dagger/yamllint/internal/dagger"
+	wolfi "dagger/yamllint/internal/dagger/clients/wolfi"
 	"fmt"
 	"path/filepath"
 	"slices"
@@ -46,9 +47,9 @@ func New(ctx context.Context,
 		if version != "latest" {
 			pkg = fmt.Sprintf("%s=%s", pkg, version)
 		}
-		base = dag.Wolfi().
+		base = wolfi.New().
 			Container(
-				dagger.WolfiContainerOpts{
+				wolfi.WolfiContainerOpts{
 					Packages: []string{pkg},
 				},
 			)

@@ -22,11 +22,11 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 22, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 25, 6))
         .withFunction(
           function("Secret", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("ensures netrc matches output of secret")
-            .withSourceMap(sourceMap("main.go", 36, 1))
+            .withSourceMap(sourceMap("main.go", 39, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

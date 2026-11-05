@@ -22,53 +22,53 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 16, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 20, 6))
         .withFunction(
           function("Base", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Base tests the 'Base' option for 'New'.")
-            .withSourceMap(sourceMap("main.go", 70, 1))
+            .withSourceMap(sourceMap("main.go", 74, 1))
             .withCheck
         )
         .withFunction(
           function("Config", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Config validates config mounting by mounting a yml file with errors and a config that ignores them")
-            .withSourceMap(sourceMap("main.go", 41, 1))
+            .withSourceMap(sourceMap("main.go", 45, 1))
             .withCheck
         )
         .withFunction(
           function("DirectoryFilter", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("DirectoryFilter ensures the pre-call filtering is properly setup.")
-            .withSourceMap(sourceMap("main.go", 20, 1))
+            .withSourceMap(sourceMap("main.go", 24, 1))
             .withCheck
         )
         .withFunction(
           function("ListFiles", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("ListFiles tests the 'ListFiles' method.")
-            .withSourceMap(sourceMap("main.go", 103, 1))
+            .withSourceMap(sourceMap("main.go", 107, 1))
             .withCheck
         )
         .withFunction(
           function("OutputFormat", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("OutputFormat tests the 'Format' option for 'yamllint'.")
-            .withSourceMap(sourceMap("main.go", 91, 1))
+            .withSourceMap(sourceMap("main.go", 95, 1))
             .withCheck
         )
         .withFunction(
           function("Version", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Version tests the 'Version' option for 'New'.")
-            .withSourceMap(sourceMap("main.go", 52, 1))
+            .withSourceMap(sourceMap("main.go", 56, 1))
             .withCheck
         )
         .withFunction(
           function("WithNoWarnings", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("WithNoWarnings tests the 'WithNoWarnings' method.")
-            .withSourceMap(sourceMap("main.go", 138, 1))
+            .withSourceMap(sourceMap("main.go", 142, 1))
             .withCheck
         )
         .withFunction(
           function("WithStrict", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("WithStrict tests the 'WithStrict' method.")
-            .withSourceMap(sourceMap("main.go", 117, 1))
+            .withSourceMap(sourceMap("main.go", 121, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-func (r *Query) Shields() *Shields { // shields (../../main.go:32:1)
+func (r *Query) Shields() *Shields { // shields (../../main.go:36:1)
 	q := r.query.Select("shields")
 
 	return &Shields{
@@ -24,7 +24,7 @@ func New() *Shields {
 	return Connect().Shields()
 }
 
-type Shields struct { // shields (../../main.go:30:6)
+type Shields struct { // shields (../../main.go:34:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -49,7 +49,7 @@ func (r *Shields) WithGraphQLQuery(q *querybuilder.Selection) *Shields {
 //
 // Caller must use [Shields.AsService].Start and [Shields.AsService].Stop to take
 // advantage of optimization.
-func (r *Shields) AsService() *Service { // shields (../../main.go:308:1)
+func (r *Shields) AsService() *Service { // shields (../../main.go:312:1)
 	q := r.query.Select("asService")
 
 	return new(Service).WithGraphQLQuery(q)
@@ -60,15 +60,15 @@ type ShieldsCoverageOpts struct {
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:42:2)
+	RemoteHost string // shields (../../main.go:46:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:45:2)
+	ShieldsService *Service // shields (../../main.go:49:2)
 }
 
 // Generate a code coverage badge.
-func (r *Shields) Coverage(value float64, opts ...ShieldsCoverageOpts) *File { // shields (../../main.go:37:1)
+func (r *Shields) Coverage(value float64, opts ...ShieldsCoverageOpts) *File { // shields (../../main.go:41:1)
 	q := r.query.Select("coverage")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `remoteHost` optional argument
@@ -90,19 +90,19 @@ type ShieldsGoReportOpts struct {
 	//
 	// goreport reference
 	//
-	GoreportSrc *GitRef // shields (../../main.go:168:2)
+	GoreportSrc *GitRef // shields (../../main.go:172:2)
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:171:2)
+	RemoteHost string // shields (../../main.go:175:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:174:2)
+	ShieldsService *Service // shields (../../main.go:178:2)
 }
 
 // Generate a goreportcard badge.
-func (r *Shields) GoReport(src *GitRef, opts ...ShieldsGoReportOpts) *File { // shields (../../main.go:162:1)
+func (r *Shields) GoReport(src *GitRef, opts ...ShieldsGoReportOpts) *File { // shields (../../main.go:166:1)
 	assertNotNil("src", src)
 	q := r.query.Select("goReport")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -186,19 +186,19 @@ type ShieldsLicenseOpts struct {
 	//
 	//
 	// Default: "B8860B"
-	Color string // shields (../../main.go:149:2)
+	Color string // shields (../../main.go:153:2)
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:152:2)
+	RemoteHost string // shields (../../main.go:156:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:155:2)
+	ShieldsService *Service // shields (../../main.go:159:2)
 }
 
 // Generate a license badge.
-func (r *Shields) License(name string, opts ...ShieldsLicenseOpts) *File { // shields (../../main.go:143:1)
+func (r *Shields) License(name string, opts ...ShieldsLicenseOpts) *File { // shields (../../main.go:147:1)
 	q := r.query.Select("license")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `color` optional argument
@@ -224,15 +224,15 @@ type ShieldsPipelineStatusOpts struct {
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:102:2)
+	RemoteHost string // shields (../../main.go:106:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:105:2)
+	ShieldsService *Service // shields (../../main.go:109:2)
 }
 
 // Generate a pipeline status badge.
-func (r *Shields) PipelineStatus(passing bool, opts ...ShieldsPipelineStatusOpts) *File { // shields (../../main.go:97:1)
+func (r *Shields) PipelineStatus(passing bool, opts ...ShieldsPipelineStatusOpts) *File { // shields (../../main.go:101:1)
 	q := r.query.Select("pipelineStatus")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `remoteHost` optional argument
@@ -254,15 +254,15 @@ type ShieldsPylintOpts struct {
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:72:2)
+	RemoteHost string // shields (../../main.go:76:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:75:2)
+	ShieldsService *Service // shields (../../main.go:79:2)
 }
 
 // Generate a pylint badge.
-func (r *Shields) Pylint(value float64, opts ...ShieldsPylintOpts) *File { // shields (../../main.go:67:1)
+func (r *Shields) Pylint(value float64, opts ...ShieldsPylintOpts) *File { // shields (../../main.go:71:1)
 	q := r.query.Select("pylint")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `remoteHost` optional argument
@@ -284,35 +284,35 @@ type ShieldsSendQueryOpts struct {
 	//
 	// Badge label.
 	//
-	Label string // shields (../../main.go:246:2)
+	Label string // shields (../../main.go:250:2)
 	//
 	// Badge label color.
 	//
-	LabelColor string // shields (../../main.go:249:2)
+	LabelColor string // shields (../../main.go:253:2)
 	//
 	// Badge logo.
 	//
-	Logo string // shields (../../main.go:256:2)
+	Logo string // shields (../../main.go:260:2)
 	//
 	// Logo color. Hex, rgb, rgba, hsl, hsla and css colors.
 	//
-	LogoColor string // shields (../../main.go:259:2)
+	LogoColor string // shields (../../main.go:263:2)
 	//
 	// Badge style.
 	//
-	Style string // shields (../../main.go:262:2)
+	Style string // shields (../../main.go:266:2)
 	//
 	// Remotely hosted Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:265:2)
+	RemoteHost string // shields (../../main.go:269:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remote. A new one is created if not provided and no remote specified.
 	//
-	ShieldsService *Service // shields (../../main.go:268:2)
+	ShieldsService *Service // shields (../../main.go:272:2)
 }
 
 // A utility for querying a Shields service.
-func (r *Shields) SendQuery(value string, valueColor string, opts ...ShieldsSendQueryOpts) *File { // shields (../../main.go:243:1)
+func (r *Shields) SendQuery(value string, valueColor string, opts ...ShieldsSendQueryOpts) *File { // shields (../../main.go:247:1)
 	q := r.query.Select("sendQuery")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `label` optional argument
@@ -357,25 +357,25 @@ type ShieldsVersionOpts struct {
 	//
 	//
 	// Default: "version"
-	Label string // shields (../../main.go:124:2)
+	Label string // shields (../../main.go:128:2)
 	//
 	// Badge color
 	//
 	//
 	// Default: "blue"
-	Color string // shields (../../main.go:130:2)
+	Color string // shields (../../main.go:134:2)
 	//
 	// Remote Shields service, with scheme, host, and port. Ignored if a dagger shieldsService is provided.
 	//
-	RemoteHost string // shields (../../main.go:133:2)
+	RemoteHost string // shields (../../main.go:137:2)
 	//
 	// (default) Shields as a dagger service. Takes precedence over remoteHost, a new one is made if neither is provided.
 	//
-	ShieldsService *Service // shields (../../main.go:136:2)
+	ShieldsService *Service // shields (../../main.go:140:2)
 }
 
 // Generate a semantic version badge.
-func (r *Shields) Version(version string, opts ...ShieldsVersionOpts) *File { // shields (../../main.go:120:1)
+func (r *Shields) Version(version string, opts ...ShieldsVersionOpts) *File { // shields (../../main.go:124:1)
 	q := r.query.Select("version")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `label` optional argument

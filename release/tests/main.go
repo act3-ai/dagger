@@ -17,7 +17,10 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+	release "dagger/tests/internal/dagger/clients/release"
 	"fmt"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
@@ -25,14 +28,14 @@ type Tests struct{}
 // return container with a git repo and an initial commit with tag v1.0.0
 func (t *Tests) gitRepo() *dagger.Container {
 
-	return dag.Container().
+	return core.NewContainer().
 		From("alpine/git:latest").
 		WithWorkdir("/repo").
 		WithNewFile("README.md", "# My Project").
 		WithExec([]string{"git", "init"}).
 		WithExec([]string{"git", "config", "user.name", "test"}).
 		WithExec([]string{"git", "config", "user.email", "test@dagger.io"}).
-		WithFile("cliff.toml", dag.CurrentModule().Source().File("test.cliff.toml")).
+		WithFile("cliff.toml", core.NewCurrentModule().Source().File("test.cliff.toml")).
 		WithExec([]string{"git", "add", "README.md", "cliff.toml"}).
 		WithExec([]string{"git", "commit", "-m", "fix: Initial commit"}).
 		WithExec([]string{"git", "tag", "-a", "-m", "Initial commit", "v1.0.0"})
@@ -78,8 +81,8 @@ index 0000000..9427169
 +
 +- Test tag
 `
-	version, err := dag.Release(gitref).Version(ctx)
-	changes := dag.Release(gitref).Prepare(version)
+	version, err := release.New(gitref).Version(ctx)
+	changes := release.New(gitref).Prepare(version)
 
 	patch, err := changes.AsPatch().Contents(ctx)
 
@@ -119,7 +122,7 @@ index e539fc7..2ac64b8 100644
 +appVersion: "v1.5.6"
 `
 
-	changes := dag.Release(gitref).PrepareHelmChart("v1.5.6", "charts/mychart")
+	changes := release.New(gitref).PrepareHelmChart("v1.5.6", "charts/mychart")
 
 	patch, err := changes.AsPatch().Contents(ctx)
 
@@ -159,7 +162,7 @@ index e539fc7..ab3dd8f 100644
 +appVersion: "v1.5.7"
 `
 
-	changes := dag.Release(gitref).PrepareHelmChart("v1.5.6", "charts/mychart", dagger.ReleasePrepareHelmChartOpts{AppVersion: "v1.5.7"})
+	changes := release.New(gitref).PrepareHelmChart("v1.5.6", "charts/mychart", release.ReleasePrepareHelmChartOpts{AppVersion: "v1.5.7"})
 
 	patch, err := changes.AsPatch().Contents(ctx)
 

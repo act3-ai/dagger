@@ -22,119 +22,119 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 12, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 15, 6))
         .withFunction(
           function("Base", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run mypy, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 34, 1))
+            .withSourceMap(sourceMap("main.go", 37, 1))
             .withCheck
         )
         .withFunction(
           function("CognitiveComplexity", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run cognitive complexity lint, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 261, 1))
+            .withSourceMap(sourceMap("main.go", 263, 1))
             .withCheck
         )
         .withFunction(
           function("Mypy", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run mypy, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 55, 1))
+            .withSourceMap(sourceMap("main.go", 57, 1))
             .withCheck
         )
         .withFunction(
           function("Pylint", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run pylint, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 63, 1))
+            .withSourceMap(sourceMap("main.go", 65, 1))
             .withCheck
         )
         .withFunction(
           function("Pyright", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run pyright, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 71, 1))
+            .withSourceMap(sourceMap("main.go", 73, 1))
             .withCheck
         )
         .withFunction(
           function("Pytest", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run unit-test, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 224, 1))
+            .withSourceMap(sourceMap("main.go", 226, 1))
             .withCheck
         )
         .withFunction(
           function("PytestReport", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run unit-test, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 232, 1))
+            .withSourceMap(sourceMap("main.go", 234, 1))
             .withCheck
         )
         .withFunction(
           function("RuffFormat", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff format, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 160, 1))
+            .withSourceMap(sourceMap("main.go", 162, 1))
             .withCheck
         )
         .withFunction(
           function("RuffFormatFix", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff format-fix, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 213, 1))
+            .withSourceMap(sourceMap("main.go", 215, 1))
             .withCheck
         )
         .withFunction(
           function("RuffFormatReport", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff format-report, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 168, 1))
+            .withSourceMap(sourceMap("main.go", 170, 1))
             .withCheck
         )
         .withFunction(
           function("RuffFormatReportWithExtraArgs", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff format-report with arguments, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 185, 1))
+            .withSourceMap(sourceMap("main.go", 187, 1))
             .withCheck
         )
         .withFunction(
           function("RuffLint", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff lint, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 96, 1))
+            .withSourceMap(sourceMap("main.go", 98, 1))
             .withCheck
         )
         .withFunction(
           function("RuffLintFix", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff lint-fix, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 149, 1))
+            .withSourceMap(sourceMap("main.go", 151, 1))
             .withCheck
         )
         .withFunction(
           function("RuffLintReport", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff lint-report, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 104, 1))
+            .withSourceMap(sourceMap("main.go", 106, 1))
             .withCheck
         )
         .withFunction(
           function("RuffLintReportWithExtraArgs", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ruff lint-report with extra arguments, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 121, 1))
+            .withSourceMap(sourceMap("main.go", 123, 1))
             .withCheck
         )
         .withFunction(
           function("RuffVersion", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Check if ruff version override works")
-            .withSourceMap(sourceMap("main.go", 80, 1))
+            .withSourceMap(sourceMap("main.go", 82, 1))
             .withCheck
         )
         .withFunction(
           function("Ty", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ty, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 269, 1))
+            .withSourceMap(sourceMap("main.go", 271, 1))
             .withCheck
         )
         .withFunction(
           function("TyReport", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run ty, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 277, 1))
+            .withSourceMap(sourceMap("main.go", 279, 1))
             .withCheck
         )
         .withFunction(
           function("UvProject", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run unit-test, expect valid/no errors")
-            .withSourceMap(sourceMap("main.go", 294, 1))
+            .withSourceMap(sourceMap("main.go", 296, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

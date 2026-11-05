@@ -22,21 +22,21 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 23, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 26, 6))
         .withFunction(
           function("Prepare", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("ensure prepare generates a CHANGELOG.md, VERSION, and releases/v1.0.1.md file after a bump")
-            .withSourceMap(sourceMap("main.go", 44, 1))
+            .withSourceMap(sourceMap("main.go", 47, 1))
             .withCheck
         )
         .withFunction(
           function("PrepareHelmChart", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
-            .withSourceMap(sourceMap("main.go", 94, 1))
+            .withSourceMap(sourceMap("main.go", 97, 1))
             .withCheck
         )
         .withFunction(
           function("PrepareHelmChartWithAppVersion", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
-            .withSourceMap(sourceMap("main.go", 134, 1))
+            .withSourceMap(sourceMap("main.go", 137, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

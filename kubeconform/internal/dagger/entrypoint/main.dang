@@ -22,30 +22,30 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Kubeconform", sourceMap: sourceMap("main.go", 12, 6))
+      typeDef.withObject("Kubeconform", sourceMap: sourceMap("main.go", 14, 6))
         .withFunction(
           function("KustomizeBuild", typeDef.withObject("Directory"))
             .withDescription("builds rendered Kubernetes manifests for specified paths using `kubectl kustomize`.\nReturns a directory containing the rendered .yaml files.")
-            .withSourceMap(sourceMap("main.go", 78, 1))
-            .withArg("src", typeDef.withObject("Directory"), description: "Top-level source directory", sourceMap: sourceMap("main.go", 80, 2))
-            .withArg("paths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), description: "Relative paths in src containing kustomization files to build and validate\nex. --paths=\"overlays/dev,overlays/prod\"", sourceMap: sourceMap("main.go", 83, 2))
+            .withSourceMap(sourceMap("main.go", 80, 1))
+            .withArg("src", typeDef.withObject("Directory"), description: "Top-level source directory", sourceMap: sourceMap("main.go", 82, 2))
+            .withArg("paths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), description: "Relative paths in src containing kustomization files to build and validate\nex. --paths=\"overlays/dev,overlays/prod\"", sourceMap: sourceMap("main.go", 85, 2))
         )
         .withFunction(
           function("Validate", typeDef.withObject("Container"))
             .withDescription("validates a directory of Kubernetes manifests against standard and CRD schemas.")
-            .withSourceMap(sourceMap("main.go", 15, 1))
-            .withArg("manifests", typeDef.withObject("Directory"), description: "directory of kubernetes manifests to validate", sourceMap: sourceMap("main.go", 17, 2))
-            .withArg("crds", typeDef.withObject("Directory").withOptional(true), description: "Directory containing CRD definitions to validate with.\nMust be in .yaml format", sourceMap: sourceMap("main.go", 21, 2))
-            .withArg("verbose", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "enable verbose logging", sourceMap: sourceMap("main.go", 24, 2))
+            .withSourceMap(sourceMap("main.go", 17, 1))
+            .withArg("manifests", typeDef.withObject("Directory"), description: "directory of kubernetes manifests to validate", sourceMap: sourceMap("main.go", 19, 2))
+            .withArg("crds", typeDef.withObject("Directory").withOptional(true), description: "Directory containing CRD definitions to validate with.\nMust be in .yaml format", sourceMap: sourceMap("main.go", 23, 2))
+            .withArg("verbose", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "enable verbose logging", sourceMap: sourceMap("main.go", 26, 2))
         )
         .withFunction(
           function("ValidateKustomize", typeDef.withObject("Container"))
             .withDescription("ValidateKustomize builds Kustomize directories and validates the resulting manifests.")
-            .withSourceMap(sourceMap("main.go", 58, 1))
-            .withArg("src", typeDef.withObject("Directory"), description: "Top-level source directory", sourceMap: sourceMap("main.go", 60, 2))
-            .withArg("paths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), description: "Relative paths containing kustomization files to build and validate\nex. --paths=\"overlays/dev,overlays/prod\"", sourceMap: sourceMap("main.go", 63, 2))
-            .withArg("crds", typeDef.withObject("Directory").withOptional(true), description: "directory of CRDs to validate with\nMust be in .yaml format", sourceMap: sourceMap("main.go", 67, 2))
-            .withArg("verbose", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "enable verbose logging", sourceMap: sourceMap("main.go", 70, 2))
+            .withSourceMap(sourceMap("main.go", 60, 1))
+            .withArg("src", typeDef.withObject("Directory"), description: "Top-level source directory", sourceMap: sourceMap("main.go", 62, 2))
+            .withArg("paths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)), description: "Relative paths containing kustomization files to build and validate\nex. --paths=\"overlays/dev,overlays/prod\"", sourceMap: sourceMap("main.go", 65, 2))
+            .withArg("crds", typeDef.withObject("Directory").withOptional(true), description: "directory of CRDs to validate with\nMust be in .yaml format", sourceMap: sourceMap("main.go", 69, 2))
+            .withArg("verbose", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "enable verbose logging", sourceMap: sourceMap("main.go", 72, 2))
         )
         .withConstructor(function("", typeDef.withObject("Kubeconform")))
     ]

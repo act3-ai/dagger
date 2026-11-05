@@ -21,6 +21,8 @@ package main
 
 import (
 	"dagger/release/internal/dagger"
+
+	registryconfig "dagger/release/internal/dagger/clients/registry-config"
 )
 
 type Release struct {
@@ -28,7 +30,7 @@ type Release struct {
 	// +private
 	GitRef *dagger.GitRef
 	// +private
-	RegistryConfig *dagger.RegistryConfig
+	RegistryConfig *registryconfig.RegistryConfig
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	// +optional
 	// +private
@@ -45,7 +47,7 @@ func New(
 ) (*Release, error) {
 	return &Release{
 		GitRef:         gitRef,
-		RegistryConfig: dag.RegistryConfig(),
+		RegistryConfig: registryconfig.New(),
 		Netrc:          netrc,
 	}, nil
 }

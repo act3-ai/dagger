@@ -22,17 +22,17 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 22, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 26, 6))
         .withFunction(
           function("AutoFix", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run markdownlint autofix")
-            .withSourceMap(sourceMap("main.go", 47, 1))
+            .withSourceMap(sourceMap("main.go", 51, 1))
             .withCheck
         )
         .withFunction(
           function("Lint", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("run markdownlint")
-            .withSourceMap(sourceMap("main.go", 36, 1))
+            .withSourceMap(sourceMap("main.go", 40, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

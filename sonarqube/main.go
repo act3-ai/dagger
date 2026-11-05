@@ -13,6 +13,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	core "dagger.io/dagger/core"
 )
 
 type Sonarqube struct {
@@ -153,7 +155,7 @@ done
 // start up sonar-server as a service
 func (m *Sonarqube) Service() *dagger.Service {
 
-	return dag.Container().
+	return core.NewContainer().
 		From(m.Base).
 		WithEnvVariable("SONAR_ES_BOOTSTRAP_CHECKS_DISABLE", "true").
 		// Define a system passcode that skips user authentication for health metrics
@@ -229,7 +231,7 @@ func (m *Sonarqube) Scan(ctx context.Context,
 	}
 
 	// run sonar scan
-	_, err = dag.Container().
+	_, err = core.NewContainer().
 		From("sonarsource/sonar-scanner-cli:latest").
 		WithServiceBinding("sonar-server", server.Service).
 		WithDirectory("/src", src, dagger.ContainerWithDirectoryOpts{Owner: "scanner-cli"}).
@@ -266,12 +268,12 @@ func (m *Sonarqube) generateRandomTokenAsSecret() *dagger.Secret {
 	// %x forces lowercase and numbers. "A!" guarantees uppercase and special char.
 	compliantPassword := fmt.Sprintf("A!%x", b)
 
-	return dag.SetSecret("SONAR_ADMIN_TOKEN", compliantPassword)
+	return core.SetSecret("SONAR_ADMIN_TOKEN", compliantPassword)
 }
 
 // base curl container for sonar api queries
 func (m *Sonarqube) curlCtr(svc *dagger.Service) *dagger.Container {
-	return dag.Container().
+	return core.NewContainer().
 		From("alpine:latest").
 		WithExec([]string{"apk", "add", "curl", "jq"}).
 		WithServiceBinding("sonar-server", svc)
@@ -289,7 +291,7 @@ func (m *Sonarqube) generateSonarToken(ctx context.Context, svc *dagger.Service,
 		return nil, fmt.Errorf("failed to automatically create sonar token: %w", err)
 	}
 
-	return dag.SetSecret("SONAR_TOKEN", strings.TrimSpace(token)), nil
+	return core.SetSecret("SONAR_TOKEN", strings.TrimSpace(token)), nil
 
 }
 

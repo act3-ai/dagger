@@ -4,7 +4,7 @@ package main
 
 import (
 	"context"
-	"dagger/tests/internal/dagger"
+	shields "dagger/tests/internal/dagger/clients/shields"
 	"fmt"
 	"strings"
 )
@@ -27,7 +27,7 @@ func (t *Tests) Coverage(ctx context.Context) error {
 	}
 
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().Coverage(t.value).Contents(ctx)
+		svgRaw, err := shields.New().Coverage(t.value).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -67,7 +67,7 @@ func (t *Tests) Pylint(ctx context.Context) error {
 	}
 
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().Pylint(t.value).Contents(ctx)
+		svgRaw, err := shields.New().Pylint(t.value).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -104,7 +104,7 @@ func (t *Tests) PipelineStatus(ctx context.Context) error {
 	}
 
 	for _, t := range tests {
-		svgRaw, err := dag.Shields().PipelineStatus(t.passing).Contents(ctx)
+		svgRaw, err := shields.New().PipelineStatus(t.passing).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -151,11 +151,11 @@ func (t *Tests) Version(ctx context.Context) error {
 	}
 
 	for _, t := range tests {
-		opts := dagger.ShieldsVersionOpts{
+		opts := shields.ShieldsVersionOpts{
 			Label: t.label,
 			Color: strings.TrimPrefix(t.color, "#"),
 		}
-		svgRaw, err := dag.Shields().Version(t.version, opts).Contents(ctx)
+		svgRaw, err := shields.New().Version(t.version, opts).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -202,10 +202,10 @@ func (t *Tests) License(ctx context.Context) error {
 	}
 
 	for _, t := range tests {
-		opts := dagger.ShieldsLicenseOpts{
+		opts := shields.ShieldsLicenseOpts{
 			Color: strings.TrimPrefix(t.color, "#"),
 		}
-		svgRaw, err := dag.Shields().License(t.name, opts).Contents(ctx)
+		svgRaw, err := shields.New().License(t.name, opts).Contents(ctx)
 		if err != nil {
 			return fmt.Errorf("getting svg contents: %w", err)
 		}
@@ -236,12 +236,12 @@ func (t *Tests) SendQuery(ctx context.Context) error {
 	// test if we can query the public remote
 	label := "foo"
 	value := "bar"
-	opts := dagger.ShieldsSendQueryOpts{
+	opts := shields.ShieldsSendQueryOpts{
 		Label:      label,
 		RemoteHost: "https://img.shields.io",
 	}
 
-	svgRaw, err := dag.Shields().SendQuery(value, value, opts).Contents(ctx)
+	svgRaw, err := shields.New().SendQuery(value, value, opts).Contents(ctx)
 	if err != nil {
 		return fmt.Errorf("getting svg contents from public remote: %w", err)
 	}

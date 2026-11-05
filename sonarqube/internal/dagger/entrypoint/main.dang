@@ -22,41 +22,41 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Sonarqube", sourceMap: sourceMap("main.go", 18, 6))
+      typeDef.withObject("Sonarqube", sourceMap: sourceMap("main.go", 20, 6))
         .withFunction(
           function("AnalyzeSonarReport", typeDef.withKind(TypeDefKind.STRING_KIND))
             .withDescription("Parses sonarqube JSON report into human readable format. Will return an error if issues are found HIGH or above.")
-            .withSourceMap(sourceMap("main.go", 358, 1))
-            .withArg("reportFile", typeDef.withObject("File"), sourceMap: sourceMap("main.go", 358, 61))
+            .withSourceMap(sourceMap("main.go", 360, 1))
+            .withArg("reportFile", typeDef.withObject("File"), sourceMap: sourceMap("main.go", 360, 61))
         )
         .withFunction(
           function("Bootstrap", typeDef.withObject("SonarServer"))
             .withDescription("starts sonar as a service and bootstraps it with an admin password, project, and sonar token for scanning")
-            .withSourceMap(sourceMap("main.go", 177, 1))
+            .withSourceMap(sourceMap("main.go", 179, 1))
         )
         .withFunction(
           function("Scan", typeDef.withKind(TypeDefKind.STRING_KIND))
             .withDescription("scan a source directory with sonar-scanner and returns a report summary")
-            .withSourceMap(sourceMap("main.go", 214, 1))
-            .withArg("src", typeDef.withObject("Directory"), description: "src directory to scan", sourceMap: sourceMap("main.go", 216, 2))
-            .withArg("impactSeverities", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "comma separated list of impact severities to use when generating report", defaultValue: ("\"MEDIUM,HIGH,BLOCKER\"" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 220, 2))
-            .withArg("rawJson", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "Output the raw JSON report instead of the analyzed summary", defaultValue: ("false" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 224, 2))
+            .withSourceMap(sourceMap("main.go", 216, 1))
+            .withArg("src", typeDef.withObject("Directory"), description: "src directory to scan", sourceMap: sourceMap("main.go", 218, 2))
+            .withArg("impactSeverities", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "comma separated list of impact severities to use when generating report", defaultValue: ("\"MEDIUM,HIGH,BLOCKER\"" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 222, 2))
+            .withArg("rawJson", typeDef.withKind(TypeDefKind.BOOLEAN_KIND).withOptional(true), description: "Output the raw JSON report instead of the analyzed summary", defaultValue: ("false" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 226, 2))
         )
         .withFunction(
           function("Service", typeDef.withObject("Service"))
             .withDescription("start up sonar-server as a service")
-            .withSourceMap(sourceMap("main.go", 154, 1))
+            .withSourceMap(sourceMap("main.go", 156, 1))
         )
-        .withField("Base", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 19, 2))
+        .withField("Base", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 21, 2))
         .withConstructor(
           function("", typeDef.withObject("Sonarqube"))
-            .withSourceMap(sourceMap("main.go", 22, 1))
-            .withArg("base", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "Base sonar-service image override", defaultValue: ("\"sonarqube:community\"" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 26, 2))
+            .withSourceMap(sourceMap("main.go", 24, 1))
+            .withArg("base", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "Base sonar-service image override", defaultValue: ("\"sonarqube:community\"" :: Dagger.JSON!), sourceMap: sourceMap("main.go", 28, 2))
         ),
-      typeDef.withObject("SonarServer", sourceMap: sourceMap("main.go", 46, 6))
-        .withField("Service", typeDef.withObject("Service"), description: "The live running service", sourceMap: sourceMap("main.go", 48, 2))
-        .withField("SonarToken", typeDef.withObject("Secret"), description: "The generated user token used for running scans", sourceMap: sourceMap("main.go", 50, 2))
-        .withField("AdminToken", typeDef.withObject("Secret"), description: "The plaintext admin password (for logging into the UI)", sourceMap: sourceMap("main.go", 52, 2))
+      typeDef.withObject("SonarServer", sourceMap: sourceMap("main.go", 48, 6))
+        .withField("Service", typeDef.withObject("Service"), description: "The live running service", sourceMap: sourceMap("main.go", 50, 2))
+        .withField("SonarToken", typeDef.withObject("Secret"), description: "The generated user token used for running scans", sourceMap: sourceMap("main.go", 52, 2))
+        .withField("AdminToken", typeDef.withObject("Secret"), description: "The plaintext admin password (for logging into the UI)", sourceMap: sourceMap("main.go", 54, 2))
     ]
   }
 

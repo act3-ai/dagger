@@ -16,7 +16,10 @@ package main
 
 import (
 	"context"
+	netrc "dagger/tests/internal/dagger/clients/netrc"
 	"fmt"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
@@ -35,9 +38,9 @@ password MyPass1
 // +check
 func (m *Tests) Secret(ctx context.Context) error {
 
-	pw := dag.SetSecret("MY_PW", "MyPass1")
+	pw := core.SetSecret("MY_PW", "MyPass1")
 
-	mySecret := dag.Netrc().
+	mySecret := netrc.New().
 		WithLogin("myreg.com", "myuser", pw).
 		WithLogin("myreg2.com", "myuser2", pw).
 		AsSecret()

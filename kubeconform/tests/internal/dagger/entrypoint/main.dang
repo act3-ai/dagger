@@ -22,15 +22,15 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 22, 6))
+      typeDef.withObject("Tests", sourceMap: sourceMap("main.go", 26, 6))
         .withFunction(
           function("KustomizeWithCrds", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
-            .withSourceMap(sourceMap("main.go", 36, 1))
+            .withSourceMap(sourceMap("main.go", 40, 1))
             .withCheck
         )
         .withFunction(
           function("Manifest", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
-            .withSourceMap(sourceMap("main.go", 25, 1))
+            .withSourceMap(sourceMap("main.go", 29, 1))
             .withCheck
         )
         .withConstructor(function("", typeDef.withObject("Tests")))

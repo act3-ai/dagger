@@ -2,6 +2,8 @@ package main
 
 import (
 	"dagger/python/internal/dagger"
+
+	core "dagger.io/dagger/core"
 )
 
 type Pytest struct {
@@ -102,7 +104,7 @@ func (pt *Pytest) Report(
 	html := ctr.Directory("/html")
 
 	//merge all result files into a single directory
-	merged := dag.Directory().WithDirectory("xml", xml).
+	merged := core.NewDirectory().WithDirectory("xml", xml).
 		WithDirectory("json", json).
 		WithDirectory("html", html)
 

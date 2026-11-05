@@ -22,23 +22,23 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Netrc", sourceMap: sourceMap("main.go", 14, 6))
+      typeDef.withObject("Netrc", sourceMap: sourceMap("main.go", 16, 6))
         .withFunction(
           function("AsSecret", typeDef.withObject("Secret"))
             .withDescription("creates a netrc as a secret using provided credentials in WithLogin()")
-            .withSourceMap(sourceMap("main.go", 45, 1))
+            .withSourceMap(sourceMap("main.go", 47, 1))
         )
         .withFunction(
           function("WithLogin", typeDef.withObject("Netrc"))
             .withDescription("adds login credentials to netrc")
-            .withSourceMap(sourceMap("main.go", 35, 1))
-            .withArg("machine", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 35, 27))
-            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 35, 43))
-            .withArg("password", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 35, 60))
+            .withSourceMap(sourceMap("main.go", 37, 1))
+            .withArg("machine", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 37, 27))
+            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 37, 43))
+            .withArg("password", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 37, 60))
         )
         .withConstructor(
           function("", typeDef.withObject("Netrc"))
-            .withSourceMap(sourceMap("main.go", 28, 1))
+            .withSourceMap(sourceMap("main.go", 30, 1))
         )
     ]
   }

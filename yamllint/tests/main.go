@@ -4,8 +4,12 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+	wolfi "dagger/tests/internal/dagger/clients/wolfi"
+	yamllint "dagger/tests/internal/dagger/clients/yamllint"
 	"fmt"
 	"strings"
+
+	"dagger.io/dagger/core"
 )
 
 // testdata dir entries
@@ -23,7 +27,7 @@ func (t *Tests) DirectoryFilter(ctx context.Context) error {
 	expectedEntries := 1 // if the config is used, then the ignore files should also be used, leaving us only with `valid.yaml`
 
 	// also test for .yamllint* directive
-	entries, err := dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).
+	entries, err := yamllint.New(src, yamllint.YamllintOpts{Config: cfg}).
 		ListFiles(ctx)
 	if err != nil {
 		return err
@@ -42,7 +46,7 @@ func (t *Tests) Config(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 
-	_, err := dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).Lint().Sync(ctx)
+	_, err := yamllint.New(src, yamllint.YamllintOpts{Config: cfg}).Lint().Sync(ctx)
 
 	return err
 }
@@ -52,8 +56,8 @@ func (t *Tests) Config(ctx context.Context) error {
 func (t *Tests) Version(ctx context.Context) error {
 	pkgVersion := "1.38.0-r2"
 	expectedOutput := "1.38.0"
-	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Version: pkgVersion}).
-		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
+	out, err := yamllint.New(t.srcDir(), yamllint.YamllintOpts{Version: pkgVersion}).
+		Lint(yamllint.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
 		Stdout(ctx)
 	if err != nil {
 		return err
@@ -70,11 +74,11 @@ func (t *Tests) Version(ctx context.Context) error {
 func (t *Tests) Base(ctx context.Context) error {
 	pkgVersion := "1.38.0-r2"
 	expectedOutput := "1.38.0"
-	base := dag.Wolfi().
-		Container(dagger.WolfiContainerOpts{Packages: []string{fmt.Sprintf("yamllint=%s", pkgVersion)}})
+	base := wolfi.New().
+		Container(wolfi.WolfiContainerOpts{Packages: []string{fmt.Sprintf("yamllint=%s", pkgVersion)}})
 
-	out, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Base: base}).
-		Lint(dagger.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
+	out, err := yamllint.New(t.srcDir(), yamllint.YamllintOpts{Base: base}).
+		Lint(yamllint.YamllintLintOpts{ExtraArgs: []string{"--version"}}).
 		Stdout(ctx)
 	if err != nil {
 		return err
@@ -89,8 +93,8 @@ func (t *Tests) Base(ctx context.Context) error {
 // +check
 // OutputFormat tests the 'Format' option for 'yamllint'.
 func (t *Tests) OutputFormat(ctx context.Context) error {
-	out, err := dag.Yamllint(t.srcDir()).
-		Report(dagger.YamllintReportOpts{Format: "github"}).
+	out, err := yamllint.New(t.srcDir()).
+		Report(yamllint.YamllintReportOpts{Format: "github"}).
 		Contents(ctx)
 	if err != nil && strings.Contains(out, "::group::") {
 		return nil
@@ -101,7 +105,7 @@ func (t *Tests) OutputFormat(ctx context.Context) error {
 // +check
 // ListFiles tests the 'ListFiles' method.
 func (t *Tests) ListFiles(ctx context.Context) error {
-	files, err := dag.Yamllint(t.srcDir()).ListFiles(ctx)
+	files, err := yamllint.New(t.srcDir()).ListFiles(ctx)
 	switch {
 	case err != nil:
 		return err
@@ -118,7 +122,7 @@ func (t *Tests) WithStrict(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 	// expect err due to 'document-start' warning
-	report := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
+	report := yamllint.New(t.srcDir(), yamllint.YamllintOpts{Config: cfg}).
 		WithStrict().
 		Report()
 
@@ -139,7 +143,7 @@ func (t *Tests) WithNoWarnings(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 	// expect no err, despite a 'document-start' warning
-	_, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
+	_, err := yamllint.New(t.srcDir(), yamllint.YamllintOpts{Config: cfg}).
 		WithNoWarnings().
 		Lint().Sync(ctx)
 
@@ -149,7 +153,7 @@ func (t *Tests) WithNoWarnings(ctx context.Context) error {
 
 // validSrc returns a dir with a yamllint config and a test file that expects no issues.
 func (t *Tests) srcDir() *dagger.Directory {
-	return dag.CurrentModule().
+	return core.NewCurrentModule().
 		Source().
 		Directory("testdata")
 

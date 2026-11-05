@@ -22,11 +22,11 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Python", sourceMap: sourceMap("main.go", 17, 6))
+      typeDef.withObject("Python", sourceMap: sourceMap("main.go", 19, 6))
         .withFunction(
           function("CheckLock", typeDef.withKind(TypeDefKind.STRING_KIND))
             .withDescription("check that the lockfile is in sync with pyproject.toml")
-            .withSourceMap(sourceMap("main.go", 144, 1))
+            .withSourceMap(sourceMap("main.go", 146, 1))
         )
         .withFunction(
           function("CognitiveComplexity", typeDef.withObject("CognitiveComplexity"))
@@ -36,7 +36,7 @@ type Entrypoint implements ModuleEntrypoint {
         .withFunction(
           function("DevContainer", typeDef.withObject("Container"))
             .withDescription("returns a base UV container with given source and builds dev dependencies using `uv sync`")
-            .withSourceMap(sourceMap("main.go", 106, 1))
+            .withSourceMap(sourceMap("main.go", 108, 1))
         )
         .withFunction(
           function("FunctionTest", typeDef.withKind(TypeDefKind.STRING_KIND))
@@ -52,7 +52,7 @@ type Entrypoint implements ModuleEntrypoint {
         .withFunction(
           function("Project", typeDef.withObject("Container"))
             .withDescription("adds project source to base container")
-            .withSourceMap(sourceMap("main.go", 84, 1))
+            .withSourceMap(sourceMap("main.go", 86, 1))
         )
         .withFunction(
           function("Publish", typeDef.withObject("Container"))
@@ -76,12 +76,12 @@ type Entrypoint implements ModuleEntrypoint {
         .withFunction(
           function("Pytest", typeDef.withObject("Pytest"))
             .withDescription("contains commands for running pytest on a Python project.")
-            .withSourceMap(sourceMap("pytest.go", 13, 1))
+            .withSourceMap(sourceMap("pytest.go", 15, 1))
         )
         .withFunction(
           function("Ruff", typeDef.withObject("Ruff"))
             .withDescription("contains commands for running ruff on a Python project.\nWill attempt to use ruff version specified in given project pyproject.toml, otherwise uses latest")
-            .withSourceMap(sourceMap("ruff.go", 18, 1))
+            .withSourceMap(sourceMap("ruff.go", 20, 1))
         )
         .withFunction(
           function("Service", typeDef.withObject("Service"))
@@ -96,40 +96,40 @@ type Entrypoint implements ModuleEntrypoint {
         .withFunction(
           function("WithEnvVariable", typeDef.withObject("Python"))
             .withDescription("add an environment variable to the base container")
-            .withSourceMap(sourceMap("main.go", 130, 1))
-            .withArg("name", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 130, 39))
-            .withArg("value", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 130, 45))
+            .withSourceMap(sourceMap("main.go", 132, 1))
+            .withArg("name", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 132, 39))
+            .withArg("value", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 132, 45))
         )
         .withFunction(
           function("WithGitAuth", typeDef.withObject("Python"))
             .withDescription("add credentials for private python packages from git")
-            .withSourceMap(sourceMap("main.go", 151, 1))
-            .withArg("host", typeDef.withKind(TypeDefKind.STRING_KIND), description: "host to authenticate with e.g gitlab.com", sourceMap: sourceMap("main.go", 153, 2))
-            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), description: "username to authenticate with", sourceMap: sourceMap("main.go", 155, 2))
-            .withArg("password", typeDef.withObject("Secret"), description: "password to authenticate with", sourceMap: sourceMap("main.go", 157, 2))
+            .withSourceMap(sourceMap("main.go", 153, 1))
+            .withArg("host", typeDef.withKind(TypeDefKind.STRING_KIND), description: "host to authenticate with e.g gitlab.com", sourceMap: sourceMap("main.go", 155, 2))
+            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), description: "username to authenticate with", sourceMap: sourceMap("main.go", 157, 2))
+            .withArg("password", typeDef.withObject("Secret"), description: "password to authenticate with", sourceMap: sourceMap("main.go", 159, 2))
         )
         .withFunction(
           function("WithIndexAuth", typeDef.withObject("Python"))
             .withDescription("Add creds for private python package index")
-            .withSourceMap(sourceMap("main.go", 113, 1))
-            .withArg("name", typeDef.withKind(TypeDefKind.STRING_KIND), description: "name of index in pyproject.toml", sourceMap: sourceMap("main.go", 115, 2))
-            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), description: "username to authenticate with", sourceMap: sourceMap("main.go", 117, 2))
-            .withArg("password", typeDef.withObject("Secret"), description: "password to authenticate with", sourceMap: sourceMap("main.go", 119, 2))
+            .withSourceMap(sourceMap("main.go", 115, 1))
+            .withArg("name", typeDef.withKind(TypeDefKind.STRING_KIND), description: "name of index in pyproject.toml", sourceMap: sourceMap("main.go", 117, 2))
+            .withArg("username", typeDef.withKind(TypeDefKind.STRING_KIND), description: "username to authenticate with", sourceMap: sourceMap("main.go", 119, 2))
+            .withArg("password", typeDef.withObject("Secret"), description: "password to authenticate with", sourceMap: sourceMap("main.go", 121, 2))
         )
         .withFunction(
           function("WithNetrc", typeDef.withObject("Python"))
             .withDescription("adds a netrc file as a secret to the base container")
-            .withSourceMap(sourceMap("main.go", 136, 1))
-            .withArg("netrc", typeDef.withObject("Secret"), description: "netrc file to add, in format of dagger.secret (--netrc file://mynetrc)", sourceMap: sourceMap("main.go", 138, 2))
+            .withSourceMap(sourceMap("main.go", 138, 1))
+            .withArg("netrc", typeDef.withObject("Secret"), description: "netrc file to add, in format of dagger.secret (--netrc file://mynetrc)", sourceMap: sourceMap("main.go", 140, 2))
         )
-        .withField("Base", typeDef.withObject("Container"), description: "Base container (with cache mounts added)", sourceMap: sourceMap("main.go", 19, 2))
+        .withField("Base", typeDef.withObject("Container"), description: "Base container (with cache mounts added)", sourceMap: sourceMap("main.go", 21, 2))
         .withConstructor(
           function("", typeDef.withObject("Python"))
-            .withSourceMap(sourceMap("main.go", 31, 1))
-            .withArg("src", typeDef.withObject("Directory"), description: "top-level source code directory", ignore: ["dist/", ".venv"], sourceMap: sourceMap("main.go", 34, 2))
-            .withArg("base", typeDef.withObject("Container").withOptional(true), description: "base development container", sourceMap: sourceMap("main.go", 38, 2), defaultAddress: "ghcr.io/astral-sh/uv:debian")
-            .withArg("syncArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments for uv sync command.\ndefault value is --frozen --all-extras", sourceMap: sourceMap("main.go", 42, 2))
-            .withArg("syncPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other files used due to UV_PROJECT).\ndefault value is pyproject.toml and uv.lock", sourceMap: sourceMap("main.go", 46, 2))
+            .withSourceMap(sourceMap("main.go", 33, 1))
+            .withArg("src", typeDef.withObject("Directory"), description: "top-level source code directory", ignore: ["dist/", ".venv"], sourceMap: sourceMap("main.go", 36, 2))
+            .withArg("base", typeDef.withObject("Container").withOptional(true), description: "base development container", sourceMap: sourceMap("main.go", 40, 2), defaultAddress: "ghcr.io/astral-sh/uv:debian")
+            .withArg("syncArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments for uv sync command.\ndefault value is --frozen --all-extras", sourceMap: sourceMap("main.go", 44, 2))
+            .withArg("syncPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other files used due to UV_PROJECT).\ndefault value is pyproject.toml and uv.lock", sourceMap: sourceMap("main.go", 48, 2))
         ),
       typeDef.withObject("CognitiveComplexity", description: "run commands for cognitive complexity linting", sourceMap: sourceMap("cognitive_complexity.go", 9, 6))
         .withFunction(
@@ -175,59 +175,59 @@ type Entrypoint implements ModuleEntrypoint {
             .withDescription("Runs pyright and returns results in a json file.")
             .withSourceMap(sourceMap("pyright.go", 33, 1))
         ),
-      typeDef.withObject("Pytest", sourceMap: sourceMap("pytest.go", 7, 6))
+      typeDef.withObject("Pytest", sourceMap: sourceMap("pytest.go", 9, 6))
         .withFunction(
           function("Report", typeDef.withObject("PytestResults"))
             .withDescription("Runs pytest and returns results in multiple file formats. Current formats: json, xml, and html.")
-            .withSourceMap(sourceMap("pytest.go", 81, 1))
-            .withArg("testPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "provide optional test paths for pytest to use,\notherwise pytest will autodiscover from the given source dir", sourceMap: sourceMap("pytest.go", 85, 2))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pytest, e.g., add \"--cov-fail-under=80\" to fail if coverage is below 80%", sourceMap: sourceMap("pytest.go", 88, 2))
+            .withSourceMap(sourceMap("pytest.go", 83, 1))
+            .withArg("testPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "provide optional test paths for pytest to use,\notherwise pytest will autodiscover from the given source dir", sourceMap: sourceMap("pytest.go", 87, 2))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pytest, e.g., add \"--cov-fail-under=80\" to fail if coverage is below 80%", sourceMap: sourceMap("pytest.go", 90, 2))
         )
         .withFunction(
           function("Test", typeDef.withObject("Container"))
             .withDescription("Runs pytest and returns a container that will fail on any errors.")
-            .withSourceMap(sourceMap("pytest.go", 64, 1))
-            .withArg("testPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "provide optional test paths for pytest to use,\notherwise pytest will autodiscover from the given source dir", sourceMap: sourceMap("pytest.go", 68, 2))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pytest, e.g., add \"--cov-fail-under=80\" to fail if coverage is below 80%", sourceMap: sourceMap("pytest.go", 71, 2))
+            .withSourceMap(sourceMap("pytest.go", 66, 1))
+            .withArg("testPaths", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "provide optional test paths for pytest to use,\notherwise pytest will autodiscover from the given source dir", sourceMap: sourceMap("pytest.go", 70, 2))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pytest, e.g., add \"--cov-fail-under=80\" to fail if coverage is below 80%", sourceMap: sourceMap("pytest.go", 73, 2))
         ),
-      typeDef.withObject("Ruff", sourceMap: sourceMap("ruff.go", 10, 6))
+      typeDef.withObject("Ruff", sourceMap: sourceMap("ruff.go", 12, 6))
         .withFunction(
           function("Format", typeDef.withObject("Container"))
             .withDescription("Runs ruff format and returns a container that will fail on any errors.")
-            .withSourceMap(sourceMap("ruff.go", 112, 1))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff format check", sourceMap: sourceMap("ruff.go", 116, 2))
+            .withSourceMap(sourceMap("ruff.go", 114, 1))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff format check", sourceMap: sourceMap("ruff.go", 118, 2))
         )
         .withFunction(
           function("FormatFix", typeDef.withObject("Changeset"))
             .withDescription("Runs ruff format and attempts to fix any format errors. Returns a Changeset\nthat can be used to apply any changes found\nto the host.")
-            .withSourceMap(sourceMap("ruff.go", 154, 1))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff format check", sourceMap: sourceMap("ruff.go", 158, 2))
+            .withSourceMap(sourceMap("ruff.go", 156, 1))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff format check", sourceMap: sourceMap("ruff.go", 160, 2))
         )
         .withFunction(
           function("FormatReport", typeDef.withObject("File"))
             .withDescription("Runs ruff format check and returns the results in a file.")
-            .withSourceMap(sourceMap("ruff.go", 129, 1))
-            .withArg("outputFormat", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "output format of the lint report", defaultValue: ("\"json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 134, 2))
-            .withArg("outputFile", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "name of report file", defaultValue: ("\"ruff-format-results.json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 138, 2))
+            .withSourceMap(sourceMap("ruff.go", 131, 1))
+            .withArg("outputFormat", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "output format of the lint report", defaultValue: ("\"json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 136, 2))
+            .withArg("outputFile", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "name of report file", defaultValue: ("\"ruff-format-results.json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 140, 2))
         )
         .withFunction(
           function("Lint", typeDef.withObject("Container"))
             .withDescription("Runs ruff check and returns a container that will fail on any errors.")
-            .withSourceMap(sourceMap("ruff.go", 57, 1))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff lint check", sourceMap: sourceMap("ruff.go", 61, 2))
+            .withSourceMap(sourceMap("ruff.go", 59, 1))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff lint check", sourceMap: sourceMap("ruff.go", 63, 2))
         )
         .withFunction(
           function("LintFix", typeDef.withObject("Changeset"))
             .withDescription("Runs ruff check and attempts to fix any lint errors. Returns a changeset\nthat can be used to apply any changes found\nto the host. Will return an error if any errors found are not considered fixable by ruff.")
-            .withSourceMap(sourceMap("ruff.go", 72, 1))
-            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff lint check", sourceMap: sourceMap("ruff.go", 76, 2))
+            .withSourceMap(sourceMap("ruff.go", 74, 1))
+            .withArg("extraArgs", typeDef.withListOf(typeDef.withKind(TypeDefKind.STRING_KIND)).withOptional(true), description: "extra arguments to pass to the ruff lint check", sourceMap: sourceMap("ruff.go", 78, 2))
         )
         .withFunction(
           function("LintReport", typeDef.withObject("File"))
             .withDescription("Runs ruff check and returns the results in a file.")
-            .withSourceMap(sourceMap("ruff.go", 91, 1))
-            .withArg("outputFormat", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "output format of the lint report", defaultValue: ("\"json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 96, 2))
-            .withArg("outputFile", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "name of report file", defaultValue: ("\"ruff-lint-results.json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 100, 2))
+            .withSourceMap(sourceMap("ruff.go", 93, 1))
+            .withArg("outputFormat", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "output format of the lint report", defaultValue: ("\"json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 98, 2))
+            .withArg("outputFile", typeDef.withKind(TypeDefKind.STRING_KIND).withOptional(true), description: "name of report file", defaultValue: ("\"ruff-lint-results.json\"" :: Dagger.JSON!), sourceMap: sourceMap("ruff.go", 102, 2))
         ),
       typeDef.withObject("Ty", sourceMap: sourceMap("ty.go", 7, 6))
         .withFunction(
@@ -240,11 +240,11 @@ type Entrypoint implements ModuleEntrypoint {
             .withDescription("Runs pyright and returns results in a json file.")
             .withSourceMap(sourceMap("ty.go", 34, 1))
         ),
-      typeDef.withObject("PytestResults", sourceMap: sourceMap("pytest.go", 17, 6))
-        .withField("Xml", typeDef.withObject("Directory"), description: "returns results of unit-tests and coverage as xml in a directory.", sourceMap: sourceMap("pytest.go", 19, 2))
-        .withField("Json", typeDef.withObject("Directory"), description: "returns results of unit-tests and coverage as json in a directory.", sourceMap: sourceMap("pytest.go", 21, 2))
-        .withField("Html", typeDef.withObject("Directory"), description: "returns results of unit-test as html in a directory", sourceMap: sourceMap("pytest.go", 23, 2))
-        .withField("Merged", typeDef.withObject("Directory"), description: "A directory with all results merged in", sourceMap: sourceMap("pytest.go", 25, 2))
+      typeDef.withObject("PytestResults", sourceMap: sourceMap("pytest.go", 19, 6))
+        .withField("Xml", typeDef.withObject("Directory"), description: "returns results of unit-tests and coverage as xml in a directory.", sourceMap: sourceMap("pytest.go", 21, 2))
+        .withField("Json", typeDef.withObject("Directory"), description: "returns results of unit-tests and coverage as json in a directory.", sourceMap: sourceMap("pytest.go", 23, 2))
+        .withField("Html", typeDef.withObject("Directory"), description: "returns results of unit-test as html in a directory", sourceMap: sourceMap("pytest.go", 25, 2))
+        .withField("Merged", typeDef.withObject("Directory"), description: "A directory with all results merged in", sourceMap: sourceMap("pytest.go", 27, 2))
     ]
   }
 

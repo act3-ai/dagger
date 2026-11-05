@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Netrc struct { // netrc (../../main.go:14:6)
+type Netrc struct { // netrc (../../main.go:16:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -37,7 +37,7 @@ func (r *Netrc) WithGraphQLQuery(q *querybuilder.Selection) *Netrc {
 }
 
 // creates a netrc as a secret using provided credentials in WithLogin()
-func (r *Netrc) AsSecret() *Secret { // netrc (../../main.go:45:1)
+func (r *Netrc) AsSecret() *Secret { // netrc (../../main.go:47:1)
 	q := r.query.Select("asSecret")
 
 	return new(Secret).WithGraphQLQuery(q)
@@ -99,7 +99,7 @@ func (r *Netrc) UnmarshalJSON(bs []byte) error {
 }
 
 // adds login credentials to netrc
-func (r *Netrc) WithLogin(machine string, username string, password *Secret) *Netrc { // netrc (../../main.go:35:1)
+func (r *Netrc) WithLogin(machine string, username string, password *Secret) *Netrc { // netrc (../../main.go:37:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withLogin")
 	q = q.Arg("machine", machine)
@@ -118,7 +118,7 @@ func (r *Netrc) AsNode() Node {
 	return new(NodeClient).WithGraphQLQuery(r.query)
 }
 
-func (r *Query) Netrc() *Netrc { // netrc (../../main.go:28:1)
+func (r *Query) Netrc() *Netrc { // netrc (../../main.go:30:1)
 	q := r.query.Select("netrc")
 
 	return &Netrc{

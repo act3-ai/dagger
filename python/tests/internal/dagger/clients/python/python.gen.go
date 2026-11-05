@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Python struct { // python (../../main.go:17:6)
+type Python struct { // python (../../main.go:19:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -39,14 +39,14 @@ func (r *Python) WithGraphQLQuery(q *querybuilder.Selection) *Python {
 }
 
 // Base container (with cache mounts added)
-func (r *Python) Base() *Container { // python (../../main.go:19:2)
+func (r *Python) Base() *Container { // python (../../main.go:21:2)
 	q := r.query.Select("base")
 
 	return new(Container).WithGraphQLQuery(q)
 }
 
 // check that the lockfile is in sync with pyproject.toml
-func (r *Python) CheckLock(ctx context.Context) (string, error) { // python (../../main.go:144:1)
+func (r *Python) CheckLock(ctx context.Context) (string, error) { // python (../../main.go:146:1)
 	if r.checkLock != nil {
 		return *r.checkLock, nil
 	}
@@ -69,7 +69,7 @@ func (r *Python) CognitiveComplexity() *PythonCognitiveComplexity { // python (.
 }
 
 // returns a base UV container with given source and builds dev dependencies using `uv sync`
-func (r *Python) DevContainer() *Container { // python (../../main.go:106:1)
+func (r *Python) DevContainer() *Container { // python (../../main.go:108:1)
 	q := r.query.Select("devContainer")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -170,7 +170,7 @@ func (r *Python) Mypy() *PythonMypy { // python (../../mypy.go:14:1)
 }
 
 // adds project source to base container
-func (r *Python) Project() *Container { // python (../../main.go:84:1)
+func (r *Python) Project() *Container { // python (../../main.go:86:1)
 	q := r.query.Select("project")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -222,7 +222,7 @@ func (r *Python) Pyright() *PythonPyright { // python (../../pyright.go:13:1)
 }
 
 // contains commands for running pytest on a Python project.
-func (r *Python) Pytest() *PythonPytest { // python (../../pytest.go:13:1)
+func (r *Python) Pytest() *PythonPytest { // python (../../pytest.go:15:1)
 	q := r.query.Select("pytest")
 
 	return &PythonPytest{
@@ -233,7 +233,7 @@ func (r *Python) Pytest() *PythonPytest { // python (../../pytest.go:13:1)
 
 // contains commands for running ruff on a Python project.
 // Will attempt to use ruff version specified in given project pyproject.toml, otherwise uses latest
-func (r *Python) Ruff() *PythonRuff { // python (../../ruff.go:18:1)
+func (r *Python) Ruff() *PythonRuff { // python (../../ruff.go:20:1)
 	q := r.query.Select("ruff")
 
 	return &PythonRuff{
@@ -260,7 +260,7 @@ func (r *Python) Ty() *PythonTy { // python (../../ty.go:13:1)
 }
 
 // add an environment variable to the base container
-func (r *Python) WithEnvVariable(name string, value string) *Python { // python (../../main.go:130:1)
+func (r *Python) WithEnvVariable(name string, value string) *Python { // python (../../main.go:132:1)
 	q := r.query.Select("withEnvVariable")
 	q = q.Arg("name", name)
 	q = q.Arg("value", value)
@@ -272,7 +272,7 @@ func (r *Python) WithEnvVariable(name string, value string) *Python { // python 
 }
 
 // add credentials for private python packages from git
-func (r *Python) WithGitAuth(host string, username string, password *Secret) *Python { // python (../../main.go:151:1)
+func (r *Python) WithGitAuth(host string, username string, password *Secret) *Python { // python (../../main.go:153:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withGitAuth")
 	q = q.Arg("host", host)
@@ -286,7 +286,7 @@ func (r *Python) WithGitAuth(host string, username string, password *Secret) *Py
 }
 
 // Add creds for private python package index
-func (r *Python) WithIndexAuth(name string, username string, password *Secret) *Python { // python (../../main.go:113:1)
+func (r *Python) WithIndexAuth(name string, username string, password *Secret) *Python { // python (../../main.go:115:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withIndexAuth")
 	q = q.Arg("name", name)
@@ -300,7 +300,7 @@ func (r *Python) WithIndexAuth(name string, username string, password *Secret) *
 }
 
 // adds a netrc file as a secret to the base container
-func (r *Python) WithNetrc(netrc *Secret) *Python { // python (../../main.go:136:1)
+func (r *Python) WithNetrc(netrc *Secret) *Python { // python (../../main.go:138:1)
 	assertNotNil("netrc", netrc)
 	q := r.query.Select("withNetrc")
 	q = q.Arg("netrc", netrc)
@@ -748,7 +748,7 @@ func (r *PythonPyright) AsNode() Node {
 	return new(NodeClient).WithGraphQLQuery(r.query)
 }
 
-type PythonPytest struct { // python (../../pytest.go:7:6)
+type PythonPytest struct { // python (../../pytest.go:9:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -828,15 +828,15 @@ type PythonPytestReportOpts struct {
 	// provide optional test paths for pytest to use,
 	// otherwise pytest will autodiscover from the given source dir
 	//
-	TestPaths []string // python (../../pytest.go:85:2)
+	TestPaths []string // python (../../pytest.go:87:2)
 	//
 	// extra arguments to pytest, e.g., add "--cov-fail-under=80" to fail if coverage is below 80%
 	//
-	ExtraArgs []string // python (../../pytest.go:88:2)
+	ExtraArgs []string // python (../../pytest.go:90:2)
 }
 
 // Runs pytest and returns results in multiple file formats. Current formats: json, xml, and html.
-func (r *PythonPytest) Report(opts ...PythonPytestReportOpts) *PythonPytestResults { // python (../../pytest.go:81:1)
+func (r *PythonPytest) Report(opts ...PythonPytestReportOpts) *PythonPytestResults { // python (../../pytest.go:83:1)
 	q := r.query.Select("report")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `testPaths` optional argument
@@ -861,15 +861,15 @@ type PythonPytestTestOpts struct {
 	// provide optional test paths for pytest to use,
 	// otherwise pytest will autodiscover from the given source dir
 	//
-	TestPaths []string // python (../../pytest.go:68:2)
+	TestPaths []string // python (../../pytest.go:70:2)
 	//
 	// extra arguments to pytest, e.g., add "--cov-fail-under=80" to fail if coverage is below 80%
 	//
-	ExtraArgs []string // python (../../pytest.go:71:2)
+	ExtraArgs []string // python (../../pytest.go:73:2)
 }
 
 // Runs pytest and returns a container that will fail on any errors.
-func (r *PythonPytest) Test(opts ...PythonPytestTestOpts) *Container { // python (../../pytest.go:64:1)
+func (r *PythonPytest) Test(opts ...PythonPytestTestOpts) *Container { // python (../../pytest.go:66:1)
 	q := r.query.Select("test")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `testPaths` optional argument
@@ -891,7 +891,7 @@ func (r *PythonPytest) AsNode() Node {
 	return new(NodeClient).WithGraphQLQuery(r.query)
 }
 
-type PythonPytestResults struct { // python (../../pytest.go:17:6)
+type PythonPytestResults struct { // python (../../pytest.go:19:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -911,7 +911,7 @@ func (r *PythonPytestResults) WithGraphQLQuery(q *querybuilder.Selection) *Pytho
 }
 
 // returns results of unit-test as html in a directory
-func (r *PythonPytestResults) HTML() *Directory { // python (../../pytest.go:23:2)
+func (r *PythonPytestResults) HTML() *Directory { // python (../../pytest.go:25:2)
 	q := r.query.Select("html")
 
 	return new(Directory).WithGraphQLQuery(q)
@@ -973,21 +973,21 @@ func (r *PythonPytestResults) UnmarshalJSON(bs []byte) error {
 }
 
 // returns results of unit-tests and coverage as json in a directory.
-func (r *PythonPytestResults) JSON() *Directory { // python (../../pytest.go:21:2)
+func (r *PythonPytestResults) JSON() *Directory { // python (../../pytest.go:23:2)
 	q := r.query.Select("json")
 
 	return new(Directory).WithGraphQLQuery(q)
 }
 
 // A directory with all results merged in
-func (r *PythonPytestResults) Merged() *Directory { // python (../../pytest.go:25:2)
+func (r *PythonPytestResults) Merged() *Directory { // python (../../pytest.go:27:2)
 	q := r.query.Select("merged")
 
 	return new(Directory).WithGraphQLQuery(q)
 }
 
 // returns results of unit-tests and coverage as xml in a directory.
-func (r *PythonPytestResults) XML() *Directory { // python (../../pytest.go:19:2)
+func (r *PythonPytestResults) XML() *Directory { // python (../../pytest.go:21:2)
 	q := r.query.Select("xml")
 
 	return new(Directory).WithGraphQLQuery(q)
@@ -999,7 +999,7 @@ func (r *PythonPytestResults) AsNode() Node {
 	return new(NodeClient).WithGraphQLQuery(r.query)
 }
 
-type PythonRuff struct { // python (../../ruff.go:10:6)
+type PythonRuff struct { // python (../../ruff.go:12:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -1023,11 +1023,11 @@ type PythonRuffFormatOpts struct {
 	//
 	// extra arguments to pass to the ruff format check
 	//
-	ExtraArgs []string // python (../../ruff.go:116:2)
+	ExtraArgs []string // python (../../ruff.go:118:2)
 }
 
 // Runs ruff format and returns a container that will fail on any errors.
-func (r *PythonRuff) Format(opts ...PythonRuffFormatOpts) *Container { // python (../../ruff.go:112:1)
+func (r *PythonRuff) Format(opts ...PythonRuffFormatOpts) *Container { // python (../../ruff.go:114:1)
 	q := r.query.Select("format")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -1044,13 +1044,13 @@ type PythonRuffFormatFixOpts struct {
 	//
 	// extra arguments to pass to the ruff format check
 	//
-	ExtraArgs []string // python (../../ruff.go:158:2)
+	ExtraArgs []string // python (../../ruff.go:160:2)
 }
 
 // Runs ruff format and attempts to fix any format errors. Returns a Changeset
 // that can be used to apply any changes found
 // to the host.
-func (r *PythonRuff) FormatFix(opts ...PythonRuffFormatFixOpts) *Changeset { // python (../../ruff.go:154:1)
+func (r *PythonRuff) FormatFix(opts ...PythonRuffFormatFixOpts) *Changeset { // python (../../ruff.go:156:1)
 	q := r.query.Select("formatFix")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -1069,17 +1069,17 @@ type PythonRuffFormatReportOpts struct {
 	//
 	//
 	// Default: "json"
-	OutputFormat string // python (../../ruff.go:134:2)
+	OutputFormat string // python (../../ruff.go:136:2)
 	//
 	// name of report file
 	//
 	//
 	// Default: "ruff-format-results.json"
-	OutputFile string // python (../../ruff.go:138:2)
+	OutputFile string // python (../../ruff.go:140:2)
 }
 
 // Runs ruff format check and returns the results in a file.
-func (r *PythonRuff) FormatReport(opts ...PythonRuffFormatReportOpts) *File { // python (../../ruff.go:129:1)
+func (r *PythonRuff) FormatReport(opts ...PythonRuffFormatReportOpts) *File { // python (../../ruff.go:131:1)
 	q := r.query.Select("formatReport")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `outputFormat` optional argument
@@ -1155,11 +1155,11 @@ type PythonRuffLintOpts struct {
 	//
 	// extra arguments to pass to the ruff lint check
 	//
-	ExtraArgs []string // python (../../ruff.go:61:2)
+	ExtraArgs []string // python (../../ruff.go:63:2)
 }
 
 // Runs ruff check and returns a container that will fail on any errors.
-func (r *PythonRuff) Lint(opts ...PythonRuffLintOpts) *Container { // python (../../ruff.go:57:1)
+func (r *PythonRuff) Lint(opts ...PythonRuffLintOpts) *Container { // python (../../ruff.go:59:1)
 	q := r.query.Select("lint")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -1176,13 +1176,13 @@ type PythonRuffLintFixOpts struct {
 	//
 	// extra arguments to pass to the ruff lint check
 	//
-	ExtraArgs []string // python (../../ruff.go:76:2)
+	ExtraArgs []string // python (../../ruff.go:78:2)
 }
 
 // Runs ruff check and attempts to fix any lint errors. Returns a changeset
 // that can be used to apply any changes found
 // to the host. Will return an error if any errors found are not considered fixable by ruff.
-func (r *PythonRuff) LintFix(opts ...PythonRuffLintFixOpts) *Changeset { // python (../../ruff.go:72:1)
+func (r *PythonRuff) LintFix(opts ...PythonRuffLintFixOpts) *Changeset { // python (../../ruff.go:74:1)
 	q := r.query.Select("lintFix")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -1201,17 +1201,17 @@ type PythonRuffLintReportOpts struct {
 	//
 	//
 	// Default: "json"
-	OutputFormat string // python (../../ruff.go:96:2)
+	OutputFormat string // python (../../ruff.go:98:2)
 	//
 	// name of report file
 	//
 	//
 	// Default: "ruff-lint-results.json"
-	OutputFile string // python (../../ruff.go:100:2)
+	OutputFile string // python (../../ruff.go:102:2)
 }
 
 // Runs ruff check and returns the results in a file.
-func (r *PythonRuff) LintReport(opts ...PythonRuffLintReportOpts) *File { // python (../../ruff.go:91:1)
+func (r *PythonRuff) LintReport(opts ...PythonRuffLintReportOpts) *File { // python (../../ruff.go:93:1)
 	q := r.query.Select("lintReport")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `outputFormat` optional argument
@@ -1332,20 +1332,20 @@ type PythonOpts struct {
 	//
 	// base development container
 	//
-	Base *Container // python (../../main.go:38:2)
+	Base *Container // python (../../main.go:40:2)
 	//
 	// extra arguments for uv sync command.
 	// default value is --frozen --all-extras
 	//
-	SyncArgs []string // python (../../main.go:42:2)
+	SyncArgs []string // python (../../main.go:44:2)
 	//
 	// extra paths to use while syncing (i.e., paths/files referenced by the pyproject.toml file or other files used due to UV_PROJECT).
 	// default value is pyproject.toml and uv.lock
 	//
-	SyncPaths []string // python (../../main.go:46:2)
+	SyncPaths []string // python (../../main.go:48:2)
 }
 
-func (r *Query) Python(src *Directory, opts ...PythonOpts) *Python { // python (../../main.go:31:1)
+func (r *Query) Python(src *Directory, opts ...PythonOpts) *Python { // python (../../main.go:33:1)
 	assertNotNil("src", src)
 	q := r.query.Select("python")
 	for i := len(opts) - 1; i >= 0; i-- {

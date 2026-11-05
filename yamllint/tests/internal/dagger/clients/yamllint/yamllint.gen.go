@@ -14,20 +14,20 @@ type YamllintOpts struct {
 	//
 	// Custom container to use as a base container. Must have 'yamllint' available on PATH.
 	//
-	Base *Container // yamllint (../../main.go:32:2)
+	Base *Container // yamllint (../../main.go:33:2)
 	//
 	// Version of yamllint to use, defaults to latest version available to apk.
 	//
 	//
 	// Default: "latest"
-	Version string // yamllint (../../main.go:37:2)
+	Version string // yamllint (../../main.go:38:2)
 	//
 	// Configuration file.
 	//
-	Config *File // yamllint (../../main.go:41:2)
+	Config *File // yamllint (../../main.go:42:2)
 }
 
-func (r *Query) Yamllint(src *Directory, opts ...YamllintOpts) *Yamllint { // yamllint (../../main.go:25:1)
+func (r *Query) Yamllint(src *Directory, opts ...YamllintOpts) *Yamllint { // yamllint (../../main.go:26:1)
 	assertNotNil("src", src)
 	q := r.query.Select("yamllint")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -58,7 +58,7 @@ func New(src *Directory, opts ...YamllintOpts) *Yamllint {
 	return Connect().Yamllint(src, opts...)
 }
 
-type Yamllint struct { // yamllint (../../main.go:17:6)
+type Yamllint struct { // yamllint (../../main.go:18:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -147,15 +147,15 @@ type YamllintLintOpts struct {
 	//
 	//
 	// Default: "auto"
-	Format string // yamllint (../../main.go:85:2)
+	Format string // yamllint (../../main.go:86:2)
 	//
 	// Additional arguments to pass to yamllint, without 'yamllint' itself.
 	//
-	ExtraArgs []string // yamllint (../../main.go:89:2)
+	ExtraArgs []string // yamllint (../../main.go:90:2)
 }
 
 // Runs yamllint with all previously provided 'with' options. Returns a container that will fail on any error.
-func (r *Yamllint) Lint(opts ...YamllintLintOpts) *Container { // yamllint (../../main.go:81:1)
+func (r *Yamllint) Lint(opts ...YamllintLintOpts) *Container { // yamllint (../../main.go:82:1)
 	q := r.query.Select("lint")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `format` optional argument
@@ -174,7 +174,7 @@ func (r *Yamllint) Lint(opts ...YamllintLintOpts) *Container { // yamllint (../.
 // List YAML files that can be linted.
 //
 // e.g. 'yamllint --list-files'.
-func (r *Yamllint) ListFiles(ctx context.Context) ([]string, error) { // yamllint (../../main.go:127:1)
+func (r *Yamllint) ListFiles(ctx context.Context) ([]string, error) { // yamllint (../../main.go:128:1)
 	q := r.query.Select("listFiles")
 
 	var response []string
@@ -190,15 +190,15 @@ type YamllintReportOpts struct {
 	//
 	//
 	// Default: "auto"
-	Format string // yamllint (../../main.go:105:2)
+	Format string // yamllint (../../main.go:106:2)
 	//
 	// Additional arguments to pass to yamllint, without 'yamllint' itself.
 	//
-	ExtraArgs []string // yamllint (../../main.go:109:2)
+	ExtraArgs []string // yamllint (../../main.go:110:2)
 }
 
 // Runs 'yamllint' with all previously provided 'with' options and returns a report file.
-func (r *Yamllint) Report(opts ...YamllintReportOpts) *File { // yamllint (../../main.go:101:1)
+func (r *Yamllint) Report(opts ...YamllintReportOpts) *File { // yamllint (../../main.go:102:1)
 	q := r.query.Select("report")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `format` optional argument
@@ -217,7 +217,7 @@ func (r *Yamllint) Report(opts ...YamllintReportOpts) *File { // yamllint (../..
 // Output only error level problems.
 //
 // e.g. 'yamllint --no-warnings'.
-func (r *Yamllint) WithNoWarnings() *Yamllint { // yamllint (../../main.go:153:1)
+func (r *Yamllint) WithNoWarnings() *Yamllint { // yamllint (../../main.go:154:1)
 	q := r.query.Select("withNoWarnings")
 
 	return &Yamllint{
@@ -229,7 +229,7 @@ func (r *Yamllint) WithNoWarnings() *Yamllint { // yamllint (../../main.go:153:1
 // Return non-zero exit code on warnings as well as errors.
 //
 // e.g. 'yamllint --strict'.
-func (r *Yamllint) WithStrict() *Yamllint { // yamllint (../../main.go:145:1)
+func (r *Yamllint) WithStrict() *Yamllint { // yamllint (../../main.go:146:1)
 	q := r.query.Select("withStrict")
 
 	return &Yamllint{

@@ -7,9 +7,13 @@ package main
 import (
 	"context"
 	"dagger/govulncheck/internal/dagger"
+
+	gomod "dagger/govulncheck/internal/dagger/clients/go"
 	"errors"
 	"fmt"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 // TODO: Support -mode=archive ??
@@ -43,7 +47,7 @@ func New(
 		container = container.WithExec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, version)})
 	}
 	container = container.WithFile("/usr/local/bin/git-credential-env",
-		dag.CurrentModule().Source().File("bin/git-credential-env.sh")).            // needed for WithGitAuth()
+		core.NewCurrentModule().Source().File("bin/git-credential-env.sh")).        // needed for WithGitAuth()
 		WithExec([]string{"git", "config", "--global", "credential.helper", "env"}) // needed for WithGitAuth()
 
 	return &Govulncheck{
@@ -139,7 +143,7 @@ func (gv *Govulncheck) WithGitAuth(
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
 	host = strings.ReplaceAll(host, ".", "_")
-	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+	gitUserSecret := core.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
 	// add secret variables for provided creds
 	gv.Container = gv.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
@@ -200,6 +204,6 @@ func (gv *Govulncheck) WithShow(
 }
 
 func defaultContainer(version string) *dagger.Container {
-	return dag.Go().
+	return gomod.New().
 		Exec([]string{"go", "install", fmt.Sprintf("%s@%s", goVulnCheck, version)})
 }

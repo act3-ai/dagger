@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"dagger/release/internal/dagger"
+	gitcliff "dagger/release/internal/dagger/clients/git-cliff"
+	wolfi "dagger/release/internal/dagger/clients/wolfi"
 	"fmt"
 	"path"
 	"regexp"
@@ -43,7 +45,7 @@ func (r *Release) Prepare(ctx context.Context,
 		return nil, fmt.Errorf("invalid semver %q: %w", version, err)
 	}
 
-	gcOpts := dagger.GitCliffOpts{
+	gcOpts := gitcliff.GitCliffOpts{
 		GithubToken: githubToken,
 		GitlabToken: gitlabToken,
 		GiteaToken:  giteaToken,
@@ -51,13 +53,13 @@ func (r *Release) Prepare(ctx context.Context,
 	}
 
 	// generate changelog if one is not found, else prepend to an existing one
-	changelogFile := dag.GitCliff(r.GitRef, gcOpts).
-		Changelog(dagger.GitCliffChangelogOpts{
+	changelogFile := gitcliff.New(r.GitRef, gcOpts).
+		Changelog(gitcliff.GitCliffChangelogOpts{
 			Tag: version})
 
 	// generate release notes with optional extraNotes if provided
-	releaseNotesFile := dag.GitCliff(r.GitRef, gcOpts).
-		ReleaseNotes(dagger.GitCliffReleaseNotesOpts{
+	releaseNotesFile := gitcliff.New(r.GitRef, gcOpts).
+		ReleaseNotes(gitcliff.GitCliffReleaseNotesOpts{
 			Tag:        version,
 			ExtraNotes: extraNotes})
 
@@ -93,7 +95,7 @@ func (r *Release) Version(ctx context.Context,
 	giteaToken *dagger.Secret,
 ) (string, error) {
 
-	bumpedTag, err := dag.GitCliff(r.GitRef, dagger.GitCliffOpts{
+	bumpedTag, err := gitcliff.New(r.GitRef, gitcliff.GitCliffOpts{
 		GithubToken: githubToken,
 		GitlabToken: gitlabToken,
 		GiteaToken:  giteaToken,
@@ -132,8 +134,8 @@ func (r *Release) PrepareHelmChart(
 	file := path.Join(chartPath, "Chart.yaml")
 
 	// Base container
-	ctr := dag.Wolfi().
-		Container(dagger.WolfiContainerOpts{
+	ctr := wolfi.New().
+		Container(wolfi.WolfiContainerOpts{
 			Packages: []string{"yq"},
 		}).
 		WithMountedDirectory("/src", src).

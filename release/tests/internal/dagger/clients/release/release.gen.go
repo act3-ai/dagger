@@ -14,10 +14,10 @@ type ReleaseOpts struct {
 	//
 	// .netrc file for private modules can be passed as env var or file --netrc env:var_name, file:/filepath/.netrc
 	//
-	Netrc *Secret // release (../../main.go:44:2)
+	Netrc *Secret // release (../../main.go:46:2)
 }
 
-func (r *Query) Release(gitRef *GitRef, opts ...ReleaseOpts) *Release { // release (../../main.go:39:1)
+func (r *Query) Release(gitRef *GitRef, opts ...ReleaseOpts) *Release { // release (../../main.go:41:1)
 	assertNotNil("gitRef", gitRef)
 	q := r.query.Select("release")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -40,7 +40,7 @@ func New(gitRef *GitRef, opts ...ReleaseOpts) *Release {
 	return Connect().Release(gitRef, opts...)
 }
 
-type Release struct { // release (../../main.go:26:6)
+type Release struct { // release (../../main.go:28:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -72,7 +72,7 @@ func (r *Release) WithGraphQLQuery(q *querybuilder.Selection) *Release {
 }
 
 // Publish additional tags to a remote OCI artifact.
-func (r *Release) AddTags(ctx context.Context, ref string, tags []string) (string, error) { // release (../../tags.go:29:1)
+func (r *Release) AddTags(ctx context.Context, ref string, tags []string) (string, error) { // release (../../tags.go:32:1)
 	if r.addTags != nil {
 		return *r.addTags, nil
 	}
@@ -88,7 +88,7 @@ func (r *Release) AddTags(ctx context.Context, ref string, tags []string) (strin
 
 // Create extra tags based on the provided target tag.
 // Combines ExtraTags() and AddTags().
-func (r *Release) CreateExtraTags(ctx context.Context, ref string, version string) ([]string, error) { // release (../../tags.go:73:1)
+func (r *Release) CreateExtraTags(ctx context.Context, ref string, version string) ([]string, error) { // release (../../tags.go:76:1)
 	q := r.query.Select("createExtraTags")
 	q = q.Arg("ref", ref)
 	q = q.Arg("version", version)
@@ -104,15 +104,15 @@ type ReleaseCreateGithubOpts struct {
 	//
 	// Release title. Default: tag
 	//
-	Title string // release (../../create.go:30:2)
+	Title string // release (../../create.go:33:2)
 	//
 	// Release assets
 	//
-	Assets []*File // release (../../create.go:33:2)
+	Assets []*File // release (../../create.go:36:2)
 }
 
 // Create a release in GitHub.
-func (r *Release) CreateGithub(ctx context.Context, repo string, token *Secret, tag string, notes *File, opts ...ReleaseCreateGithubOpts) (string, error) { // release (../../create.go:19:1)
+func (r *Release) CreateGithub(ctx context.Context, repo string, token *Secret, tag string, notes *File, opts ...ReleaseCreateGithubOpts) (string, error) { // release (../../create.go:22:1)
 	assertNotNil("token", token)
 	assertNotNil("notes", notes)
 	if r.createGithub != nil {
@@ -147,19 +147,19 @@ type ReleaseCreateGitlabOpts struct {
 	//
 	//
 	// Default: "gitlab.com"
-	Host string // release (../../create.go:67:2)
+	Host string // release (../../create.go:70:2)
 	//
 	// Release title. Default: tag
 	//
-	Title string // release (../../create.go:70:2)
+	Title string // release (../../create.go:73:2)
 	//
 	// Release assets
 	//
-	Assets []*File // release (../../create.go:73:2)
+	Assets []*File // release (../../create.go:76:2)
 }
 
 // Create a release in a public or private GitLab instance.
-func (r *Release) CreateGitlab(ctx context.Context, project string, token *Secret, tag string, notes *File, opts ...ReleaseCreateGitlabOpts) (string, error) { // release (../../create.go:55:1)
+func (r *Release) CreateGitlab(ctx context.Context, project string, token *Secret, tag string, notes *File, opts ...ReleaseCreateGitlabOpts) (string, error) { // release (../../create.go:58:1)
 	assertNotNil("token", token)
 	assertNotNil("notes", notes)
 	if r.createGitlab != nil {
@@ -197,7 +197,7 @@ func (r *Release) CreateGitlab(ctx context.Context, project string, token *Secre
 // Ex: Given the patch release 'v1.2.3', which is the latest and greatest, it returns 'v1', 'v1.2', 'latest'.
 //
 // Notice: current issue with SSH AUTH SOCK: https://docs.dagger.io/api/remote-repositories/#multiple-ssh-keys-may-cause-ssh-forwarding-to-fail
-func (r *Release) ExtraTags(ctx context.Context, ref string, version string) ([]string, error) { // release (../../tags.go:51:1)
+func (r *Release) ExtraTags(ctx context.Context, ref string, version string) ([]string, error) { // release (../../tags.go:54:1)
 	q := r.query.Select("extraTags")
 	q = q.Arg("ref", ref)
 	q = q.Arg("version", version)
@@ -268,28 +268,28 @@ type ReleasePrepareOpts struct {
 	//
 	// Additional information to include in release notes. Injected after header and before commit
 	//
-	ExtraNotes string // release (../../prepare.go:22:2)
+	ExtraNotes string // release (../../prepare.go:24:2)
 	//
 	// Working Directory in source directory to run git-cliff
 	//
-	WorkingDir string // release (../../prepare.go:25:2)
+	WorkingDir string // release (../../prepare.go:27:2)
 	//
 	// provide a github token to git-cliff.
 	//
-	GithubToken *Secret // release (../../prepare.go:28:2)
+	GithubToken *Secret // release (../../prepare.go:30:2)
 	//
 	// provide a gitlab token to git-cliff.
 	//
-	GitlabToken *Secret // release (../../prepare.go:31:2)
+	GitlabToken *Secret // release (../../prepare.go:33:2)
 	//
 	// provide a gitea token to git-cliff.
 	//
-	GiteaToken *Secret // release (../../prepare.go:34:2)
+	GiteaToken *Secret // release (../../prepare.go:36:2)
 }
 
 // Generate release notes, changelog, and VERSION file with target release version.
 // Will also optionally bump a version in provided helm chart path.
-func (r *Release) Prepare(version string, opts ...ReleasePrepareOpts) *Changeset { // release (../../prepare.go:17:1)
+func (r *Release) Prepare(version string, opts ...ReleasePrepareOpts) *Changeset { // release (../../prepare.go:19:1)
 	q := r.query.Select("prepare")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraNotes` optional argument
@@ -323,11 +323,11 @@ type ReleasePrepareHelmChartOpts struct {
 	//
 	// version to set Chart appVersion to.
 	//
-	AppVersion string // release (../../prepare.go:125:2)
+	AppVersion string // release (../../prepare.go:127:2)
 }
 
 // Set the version and appVersion of a helm chart.
-func (r *Release) PrepareHelmChart(version string, chartPath string, opts ...ReleasePrepareHelmChartOpts) *Changeset { // release (../../prepare.go:118:1)
+func (r *Release) PrepareHelmChart(version string, chartPath string, opts ...ReleasePrepareHelmChartOpts) *Changeset { // release (../../prepare.go:120:1)
 	q := r.query.Select("prepareHelmChart")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `appVersion` optional argument
@@ -346,25 +346,25 @@ type ReleaseVersionOpts struct {
 	//
 	// Working Directory in source directory to run git-cliff
 	//
-	WorkingDir string // release (../../prepare.go:84:2)
+	WorkingDir string // release (../../prepare.go:86:2)
 	//
 	// provide a github token to git-cliff.
 	//
-	GithubToken *Secret // release (../../prepare.go:87:2)
+	GithubToken *Secret // release (../../prepare.go:89:2)
 	//
 	// provide a gitlab token to git-cliff.
 	//
-	GitlabToken *Secret // release (../../prepare.go:90:2)
+	GitlabToken *Secret // release (../../prepare.go:92:2)
 	//
 	// provide a gitea token to git-cliff.
 	//
-	GiteaToken *Secret // release (../../prepare.go:93:2)
+	GiteaToken *Secret // release (../../prepare.go:95:2)
 }
 
 // Generate the next version from conventional commit messages using git-cliff.
 // Will attempt to coerce a bumped tag if not in semantic version format and
 // Returns a version in format of MAJOR.MINOR.PATCH ex: 1.0.0
-func (r *Release) Version(ctx context.Context, opts ...ReleaseVersionOpts) (string, error) { // release (../../prepare.go:81:1)
+func (r *Release) Version(ctx context.Context, opts ...ReleaseVersionOpts) (string, error) { // release (../../prepare.go:83:1)
 	if r.version != nil {
 		return *r.version, nil
 	}
@@ -395,7 +395,7 @@ func (r *Release) Version(ctx context.Context, opts ...ReleaseVersionOpts) (stri
 }
 
 // Add credentials for a private registry.
-func (r *Release) WithRegistryAuth(address string, username string, secret *Secret) *Release { // release (../../main.go:54:1)
+func (r *Release) WithRegistryAuth(address string, username string, secret *Secret) *Release { // release (../../main.go:56:1)
 	assertNotNil("secret", secret)
 	q := r.query.Select("withRegistryAuth")
 	q = q.Arg("address", address)
@@ -409,7 +409,7 @@ func (r *Release) WithRegistryAuth(address string, username string, secret *Secr
 }
 
 // Removes credentials for a private registry.
-func (r *Release) WithoutRegistryAuth(address string) *Release { // release (../../main.go:68:1)
+func (r *Release) WithoutRegistryAuth(address string) *Release { // release (../../main.go:70:1)
 	q := r.query.Select("withoutRegistryAuth")
 	q = q.Arg("address", address)
 

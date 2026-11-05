@@ -3,10 +3,6 @@ package dagger
 
 import (
 	"context"
-	dep0 "dagger/release/internal/dagger/clients/gh"
-	dep1 "dagger/release/internal/dagger/clients/git-cliff"
-	dep2 "dagger/release/internal/dagger/clients/registry-config"
-	dep3 "dagger/release/internal/dagger/clients/wolfi"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -23,31 +19,14 @@ type Changeset = core.Changeset
 type Container = core.Container
 type DirectoryFilterOpts = core.DirectoryFilterOpts
 type File = core.File
-type GhOpts = dep0.GhOpts
-type GhReleaseCreateOpts = dep0.GhReleaseCreateOpts
-type GitCliffChangelogOpts = dep1.GitCliffChangelogOpts
-type GitCliffOpts = dep1.GitCliffOpts
-type GitCliffReleaseNotesOpts = dep1.GitCliffReleaseNotesOpts
 type GitRef = core.GitRef
 type GitRefTreeOpts = core.GitRefTreeOpts
 type ID = core.ID
 type Node = core.Node
-type RegistryConfig = dep2.RegistryConfig
 type Secret = core.Secret
-type WolfiContainerOpts = dep3.WolfiContainerOpts
-type dep0Client = dep0.Client
-type dep1Client = dep1.Client
-type dep2Client = dep2.Client
-type dep3Client = dep3.Client
 
 // Client borrows a shared connection. Its API contains only the bound module.
-type Client struct {
-	*Query
-	*dep0Client
-	*dep1Client
-	*dep2Client
-	*dep3Client
-}
+type Client struct{ *Query }
 type Query struct {
 	query     *querybuilder.Selection
 	refetchID bool
@@ -70,7 +49,7 @@ func Connect(connections ...*dagger.Client) *Client {
 		connection = connections[0]
 	}
 	q := querybuilder.Query().Client(defaultOrExplicit(connection))
-	return &Client{Query: &Query{query: q, Query: new(core.Query).WithGraphQLQuery(q)}, dep0Client: dep0.Connect(connection), dep1Client: dep1.Connect(connection), dep2Client: dep2.Connect(connection), dep3Client: dep3.Connect(connection)}
+	return &Client{Query: &Query{query: q, Query: new(core.Query).WithGraphQLQuery(q)}}
 }
 
 func defaultOrExplicit(client *dagger.Client) graphql.Client {

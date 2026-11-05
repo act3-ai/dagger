@@ -2,6 +2,6 @@
   "version": 1,
   "files": {
     "dagger.gen.go": "25ccce4465022844141059440fcdc535087affe2dc6b7a0d17f1f399fc8945d4",
-    "netrc.gen.go": "3ff46c4923c1e9b858a270edd90d8a991663cc85af7b536d84635dfce42180c7"
+    "netrc.gen.go": "24873fc56ff34d5470ae13c1b4ab7e34a22f7d2afa702e3a04a86e85be55bbb8"
   }
 }

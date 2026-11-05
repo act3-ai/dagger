@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Kubeconform struct { // kubeconform (../../main.go:12:6)
+type Kubeconform struct { // kubeconform (../../main.go:14:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -85,7 +85,7 @@ func (r *Kubeconform) UnmarshalJSON(bs []byte) error {
 
 // builds rendered Kubernetes manifests for specified paths using `kubectl kustomize`.
 // Returns a directory containing the rendered .yaml files.
-func (r *Kubeconform) KustomizeBuild(src *Directory, paths []string) *Directory { // kubeconform (../../main.go:78:1)
+func (r *Kubeconform) KustomizeBuild(src *Directory, paths []string) *Directory { // kubeconform (../../main.go:80:1)
 	assertNotNil("src", src)
 	q := r.query.Select("kustomizeBuild")
 	q = q.Arg("src", src)
@@ -100,15 +100,15 @@ type KubeconformValidateOpts struct {
 	// Directory containing CRD definitions to validate with.
 	// Must be in .yaml format
 	//
-	Crds *Directory // kubeconform (../../main.go:21:2)
+	Crds *Directory // kubeconform (../../main.go:23:2)
 	//
 	// enable verbose logging
 	//
-	Verbose bool // kubeconform (../../main.go:24:2)
+	Verbose bool // kubeconform (../../main.go:26:2)
 }
 
 // validates a directory of Kubernetes manifests against standard and CRD schemas.
-func (r *Kubeconform) Validate(manifests *Directory, opts ...KubeconformValidateOpts) *Container { // kubeconform (../../main.go:15:1)
+func (r *Kubeconform) Validate(manifests *Directory, opts ...KubeconformValidateOpts) *Container { // kubeconform (../../main.go:17:1)
 	assertNotNil("manifests", manifests)
 	q := r.query.Select("validate")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -132,15 +132,15 @@ type KubeconformValidateKustomizeOpts struct {
 	// directory of CRDs to validate with
 	// Must be in .yaml format
 	//
-	Crds *Directory // kubeconform (../../main.go:67:2)
+	Crds *Directory // kubeconform (../../main.go:69:2)
 	//
 	// enable verbose logging
 	//
-	Verbose bool // kubeconform (../../main.go:70:2)
+	Verbose bool // kubeconform (../../main.go:72:2)
 }
 
 // ValidateKustomize builds Kustomize directories and validates the resulting manifests.
-func (r *Kubeconform) ValidateKustomize(src *Directory, paths []string, opts ...KubeconformValidateKustomizeOpts) *Container { // kubeconform (../../main.go:58:1)
+func (r *Kubeconform) ValidateKustomize(src *Directory, paths []string, opts ...KubeconformValidateKustomizeOpts) *Container { // kubeconform (../../main.go:60:1)
 	assertNotNil("src", src)
 	q := r.query.Select("validateKustomize")
 	for i := len(opts) - 1; i >= 0; i-- {
