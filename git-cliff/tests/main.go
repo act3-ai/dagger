@@ -44,7 +44,7 @@ func parseErr(err error) error {
 func (t *Tests) gitRepo() *dagger.Container {
 
 	return dag.Container().
-		From("alpine/git").
+		From("alpine/git:latest").
 		WithWorkdir("/repo").
 		WithNewFile("README.md", "# My Project").
 		WithExec([]string{"git", "init"}).

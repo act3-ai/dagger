@@ -26,7 +26,7 @@ type Tests struct{}
 func (t *Tests) gitRepo() *dagger.Container {
 
 	return dag.Container().
-		From("alpine/git").
+		From("alpine/git:latest").
 		WithWorkdir("/repo").
 		WithNewFile("README.md", "# My Project").
 		WithExec([]string{"git", "init"}).
@@ -48,7 +48,7 @@ func (t *Tests) Prepare(ctx context.Context) error {
 		WithExec([]string{"git", "add", "test.md"}).
 		WithExec([]string{"git", "commit", "-m", "fix: test tag"}).Directory("/repo").AsGit().Head()
 
-	const expectedPatch = `diff --git b/CHANGELOG.md b/CHANGELOG.md
+	const expectedPatch = `diff --git a/CHANGELOG.md b/CHANGELOG.md
 new file mode 100644
 index 0000000..9427169
 --- /dev/null
@@ -59,14 +59,14 @@ index 0000000..9427169
 +### 🐛 Bug Fixes
 +
 +- Test tag
-diff --git b/VERSION b/VERSION
+diff --git a/VERSION b/VERSION
 new file mode 100644
 index 0000000..7dea76e
 --- /dev/null
 +++ b/VERSION
 @@ -0,0 +1 @@
 +1.0.1
-diff --git b/releases/v1.0.1.md b/releases/v1.0.1.md
+diff --git a/releases/v1.0.1.md b/releases/v1.0.1.md
 new file mode 100644
 index 0000000..9427169
 --- /dev/null

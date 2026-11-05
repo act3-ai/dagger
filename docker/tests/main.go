@@ -26,7 +26,7 @@ type Tests struct{}
 // +check
 // Test WithLabels to ensure name and value are being set properly
 func (t *Tests) WithLabels(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="docker/tests"
 	src *dagger.Directory) error {
 
 	const expectedName = `test.io`
@@ -63,7 +63,7 @@ func (t *Tests) WithLabels(ctx context.Context,
 
 // +check
 func (t *Tests) WithBuildArg(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="./docker/tests"
 	src *dagger.Directory) error {
 
 	// dagger has no list build arg function, so build arg is being set to file in Dockerfile
@@ -84,7 +84,7 @@ func (t *Tests) WithBuildArg(ctx context.Context,
 // + check
 // Test WithSecrets to ensure name and value are being set properly
 func (t *Tests) WithSecret(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="docker/tests"
 	src *dagger.Directory) error {
 
 	_, err := dag.Docker(src).

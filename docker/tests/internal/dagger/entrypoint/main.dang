@@ -27,21 +27,21 @@ type Entrypoint implements ModuleEntrypoint {
           function("WithBuildArg", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withSourceMap(sourceMap("main.go", 65, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: ".", sourceMap: sourceMap("main.go", 67, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "./docker/tests", sourceMap: sourceMap("main.go", 67, 2))
         )
         .withFunction(
           function("WithLabels", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test WithLabels to ensure name and value are being set properly")
             .withSourceMap(sourceMap("main.go", 28, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: ".", sourceMap: sourceMap("main.go", 30, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 30, 2))
         )
         .withFunction(
           function("WithSecret", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Test WithSecrets to ensure name and value are being set properly")
             .withSourceMap(sourceMap("main.go", 86, 1))
             .withCheck
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: ".", sourceMap: sourceMap("main.go", 88, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), defaultPath: "docker/tests", sourceMap: sourceMap("main.go", 88, 2))
         )
         .withConstructor(function("", typeDef.withObject("Tests")))
     ]

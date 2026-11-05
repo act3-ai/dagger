@@ -38,7 +38,7 @@ type Entrypoint implements ModuleEntrypoint {
         .withConstructor(
           function("", typeDef.withObject("Tests"))
             .withSourceMap(sourceMap("main.go", 28, 1))
-            .withArg("src", typeDef.withObject("Directory").withOptional(true), description: "testdata source directory", defaultPath: "testdata", sourceMap: sourceMap("main.go", 31, 2))
+            .withArg("src", typeDef.withObject("Directory").withOptional(true), description: "testdata source directory", defaultPath: "./goreleaser/tests/testdata", sourceMap: sourceMap("main.go", 31, 2))
         )
     ]
   }

@@ -105,7 +105,7 @@ legacy-default-path = true
 source = "sonarqube"
 legacy-default-path = true
 
-[modules.yamlliny]
+[modules.yamllint]
 source = "yamllint"
 legacy-default-path = true
 
@@ -213,6 +213,9 @@ globalClient = true
 
 [sdks.go.scopes.python]
 is-module = true
+
+[sdks.go.scopes.python.settings]
+globalClient = true
 
 [sdks.go.scopes."python/tests"]
 clients = ["./python"]

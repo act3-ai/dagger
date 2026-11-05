@@ -27,7 +27,7 @@ type Tests struct {
 
 func New(
 	// testdata source directory
-	// +defaultPath="testdata"
+	// +defaultPath="./goreleaser/tests/testdata"
 	src *dagger.Directory,
 ) *Tests {
 	return &Tests{
