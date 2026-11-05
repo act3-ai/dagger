@@ -17,7 +17,9 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+	datatool "dagger/tests/internal/dagger/clients/data-tool"
 
+	"dagger.io/dagger/core"
 	"github.com/dagger/dagger/util/parallel"
 )
 
@@ -42,9 +44,9 @@ func (t *Tests) All(ctx context.Context) error {
 
 func (t *Tests) RunSvc(ctx context.Context) *dagger.Service {
 
-	return dag.Container().
+	return core.NewContainer().
 		From("docker.io/library/registry:3.0.0-rc.3").
-		WithMountedCache("/var/lib/registry", dag.CacheVolume("docker-registry")).
+		WithMountedCache("/var/lib/registry", core.NewCacheVolume("docker-registry")).
 		WithExposedPort(5000).
 		AsService()
 
@@ -52,16 +54,16 @@ func (t *Tests) RunSvc(ctx context.Context) *dagger.Service {
 
 // Run test for Gather
 func (t *Tests) Gather(ctx context.Context) error {
-	src := dag.CurrentModule().Source()
+	src := core.NewCurrentModule().Source()
 	config := src.File("testdata/config.yaml")
 	artifacts := src.File("testdata/artifacts.csv")
 
 	registry := t.RunSvc(ctx)
 
-	c := dag.DataTool().Container()
+	c := datatool.New().Container()
 	c = c.WithServiceBinding("registry", registry).WithFile("/root/.config/ace/dt/config.yaml", config)
 
-	_, err := dag.DataTool(dagger.DataToolOpts{Base: c}).Gather(ctx, artifacts, ref)
+	_, err := datatool.New(datatool.DataToolOpts{Base: c}).Gather(ctx, artifacts, ref)
 	if err != nil {
 		return err
 	}
@@ -72,16 +74,16 @@ func (t *Tests) Gather(ctx context.Context) error {
 
 // Run test for Scatter
 func (t *Tests) Scatter(ctx context.Context) error {
-	src := dag.CurrentModule().Source()
+	src := core.NewCurrentModule().Source()
 	config := src.File("testdata/config.yaml")
 	mapping := src.File("testdata/mapping.csv")
 
 	registry := t.RunSvc(ctx)
 
-	c := dag.DataTool().Container()
+	c := datatool.New().Container()
 	c = c.WithServiceBinding("registry", registry).WithFile("/root/.config/ace/dt/config.yaml", config)
 
-	err := dag.DataTool(dagger.DataToolOpts{Base: c}).Scatter(ctx, ref, mapping)
+	err := datatool.New(datatool.DataToolOpts{Base: c}).Scatter(ctx, ref, mapping)
 
 	return err
 
@@ -89,15 +91,15 @@ func (t *Tests) Scatter(ctx context.Context) error {
 
 // Run test for Serialize
 func (t *Tests) Serialize(ctx context.Context) error {
-	src := dag.CurrentModule().Source()
+	src := core.NewCurrentModule().Source()
 	config := src.File("testdata/config.yaml")
 
 	registry := t.RunSvc(ctx)
 
-	c := dag.DataTool().Container()
+	c := datatool.New().Container()
 	c = c.WithServiceBinding("registry", registry).WithFile("/root/.config/ace/dt/config.yaml", config)
 
-	_, err := dag.DataTool(dagger.DataToolOpts{Base: c}).Serialize(ref).Name(ctx)
+	_, err := datatool.New(datatool.DataToolOpts{Base: c}).Serialize(ref).Name(ctx)
 
 	return err
 
@@ -105,14 +107,14 @@ func (t *Tests) Serialize(ctx context.Context) error {
 
 // Run test for Archive
 func (t *Tests) Archive(ctx context.Context) error {
-	src := dag.CurrentModule().Source()
+	src := core.NewCurrentModule().Source()
 	config := src.File("testdata/config.yaml")
 	artifacts := src.File("testdata/artifacts.csv")
 
-	c := dag.DataTool().Container()
+	c := datatool.New().Container()
 	c = c.WithFile("/root/.config/ace/dt/config.yaml", config)
 
-	_, err := dag.DataTool(dagger.DataToolOpts{Base: c}).Archive(artifacts).Name(ctx)
+	_, err := datatool.New(datatool.DataToolOpts{Base: c}).Archive(artifacts).Name(ctx)
 
 	return err
 

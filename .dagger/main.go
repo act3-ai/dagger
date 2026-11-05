@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"dagger/ci/internal/dagger"
+	release "dagger/ci/internal/dagger/clients/release"
 	"fmt"
 )
 
@@ -36,16 +37,16 @@ const (
 func (m *Ci) Prepare(ctx context.Context,
 ) (*dagger.Changeset, error) {
 
-	version, err := dag.Release(m.GitRef).
-		Version(ctx, dagger.ReleaseVersionOpts{WorkingDir: m.Module, GithubToken: m.GithubToken})
+	version, err := release.New(m.GitRef).
+		Version(ctx, release.ReleaseVersionOpts{WorkingDir: m.Module, GithubToken: m.GithubToken})
 	if err != nil {
 		return nil, fmt.Errorf("%s", err)
 	}
 
 	fmt.Printf("Version bump found: %s", version)
 
-	release := dag.Release(m.GitRef).
-		Prepare(version, dagger.ReleasePrepareOpts{WorkingDir: m.Module, GithubToken: m.GithubToken})
+	release := release.New(m.GitRef).
+		Prepare(version, release.ReleasePrepareOpts{WorkingDir: m.Module, GithubToken: m.GithubToken})
 	return release, nil
 }
 
@@ -56,13 +57,13 @@ func (m *Ci) Release(ctx context.Context,
 	notesPath := m.Module + "/releases/v" + version + ".md"
 	notesFile := m.GitRef.Tree().File(notesPath)
 
-	release, err := dag.Release(m.GitRef).
+	release, err := release.New(m.GitRef).
 		CreateGithub(ctx,
 			repo,
 			m.GithubToken,
 			tag,
 			notesFile,
-			dagger.ReleaseCreateGithubOpts{Title: tag})
+			release.ReleaseCreateGithubOpts{Title: tag})
 
 	if err != nil {
 		return "", fmt.Errorf("%s", err)

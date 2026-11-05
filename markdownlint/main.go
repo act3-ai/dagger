@@ -8,6 +8,8 @@ import (
 	"context"
 	"dagger/markdownlint/internal/dagger"
 	"fmt"
+
+	core "dagger.io/dagger/core"
 )
 
 // defaultImageRepository is used when no image is specified.
@@ -42,7 +44,7 @@ func New(ctx context.Context,
 	config *dagger.File,
 ) *Markdownlint {
 	if base == nil {
-		base = dag.Container().
+		base = core.NewContainer().
 			From(fmt.Sprintf("%s:%s", defaultImageRepository, version)).
 			WithUser("root")
 	}

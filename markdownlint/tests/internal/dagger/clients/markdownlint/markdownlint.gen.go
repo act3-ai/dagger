@@ -9,7 +9,7 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-type Markdownlint struct { // markdownlint (../../main.go:16:6)
+type Markdownlint struct { // markdownlint (../../main.go:18:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -28,7 +28,7 @@ func (r *Markdownlint) WithGraphQLQuery(q *querybuilder.Selection) *Markdownlint
 	}
 }
 
-func (r *Markdownlint) Base() *Container { // markdownlint (../../main.go:17:2)
+func (r *Markdownlint) Base() *Container { // markdownlint (../../main.go:19:2)
 	q := r.query.Select("base")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -39,14 +39,14 @@ type MarkdownlintFixOpts struct {
 	//
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	//
-	ExtraArgs []string // markdownlint (../../main.go:136:2)
+	ExtraArgs []string // markdownlint (../../main.go:138:2)
 }
 
 // AutoFix attempts to fix any linting errors reported by rules that emit fix information.
 // Returns a Changeset that can be used to apply any changes made
 // to the host.
 // e.g. 'markdownlint-cli2 --fix'.
-func (r *Markdownlint) Fix(opts ...MarkdownlintFixOpts) *Changeset { // markdownlint (../../main.go:133:1)
+func (r *Markdownlint) Fix(opts ...MarkdownlintFixOpts) *Changeset { // markdownlint (../../main.go:135:1)
 	q := r.query.Select("fix")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -118,11 +118,11 @@ type MarkdownlintLintOpts struct {
 	//
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	//
-	ExtraArgs []string // markdownlint (../../main.go:89:2)
+	ExtraArgs []string // markdownlint (../../main.go:91:2)
 }
 
 // Runs markdownlint-cli2 against a given source directory. Returns a container that with fail with any errors.
-func (r *Markdownlint) Lint(opts ...MarkdownlintLintOpts) *Container { // markdownlint (../../main.go:86:1)
+func (r *Markdownlint) Lint(opts ...MarkdownlintLintOpts) *Container { // markdownlint (../../main.go:88:1)
 	q := r.query.Select("lint")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -139,11 +139,11 @@ type MarkdownlintReportOpts struct {
 	//
 	// Additional arguments to pass to markdownlint-cli2, without 'markdownlint-cli2' itself.
 	//
-	ExtraArgs []string // markdownlint (../../main.go:109:2)
+	ExtraArgs []string // markdownlint (../../main.go:111:2)
 }
 
 // Runs markdownlint-cli2 and returns results in a file.
-func (r *Markdownlint) Report(opts ...MarkdownlintReportOpts) *File { // markdownlint (../../main.go:106:1)
+func (r *Markdownlint) Report(opts ...MarkdownlintReportOpts) *File { // markdownlint (../../main.go:108:1)
 	q := r.query.Select("report")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `extraArgs` optional argument
@@ -166,20 +166,20 @@ type MarkdownlintOpts struct {
 	//
 	// Custom container to use as a base container. Must have 'markdownlint-cli2' available on PATH.
 	//
-	Base *Container // markdownlint (../../main.go:33:2)
+	Base *Container // markdownlint (../../main.go:35:2)
 	//
 	// Version (image tag) to use as a markdownlint-cli2 binary source.
 	//
 	//
 	// Default: "latest"
-	Version string // markdownlint (../../main.go:38:2)
+	Version string // markdownlint (../../main.go:40:2)
 	//
 	// Configuration file.
 	//
-	Config *File // markdownlint (../../main.go:42:2)
+	Config *File // markdownlint (../../main.go:44:2)
 }
 
-func (r *Query) Markdownlint(src *Directory, opts ...MarkdownlintOpts) *Markdownlint { // markdownlint (../../main.go:26:1)
+func (r *Query) Markdownlint(src *Directory, opts ...MarkdownlintOpts) *Markdownlint { // markdownlint (../../main.go:28:1)
 	assertNotNil("src", src)
 	q := r.query.Select("markdownlint")
 	for i := len(opts) - 1; i >= 0; i-- {

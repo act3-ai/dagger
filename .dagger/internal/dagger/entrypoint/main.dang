@@ -22,25 +22,25 @@ type Entrypoint implements ModuleEntrypoint {
 
   pub types: [TypeDef!]! {
     [
-      typeDef.withObject("Ci", sourceMap: sourceMap("main.go", 12, 6))
+      typeDef.withObject("Ci", sourceMap: sourceMap("main.go", 13, 6))
         .withFunction(
           function("Prepare", typeDef.withObject("Changeset"))
-            .withSourceMap(sourceMap("main.go", 36, 1))
+            .withSourceMap(sourceMap("main.go", 37, 1))
         )
         .withFunction(
           function("Release", typeDef.withKind(TypeDefKind.STRING_KIND))
-            .withSourceMap(sourceMap("main.go", 52, 1))
-            .withArg("version", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 53, 2))
+            .withSourceMap(sourceMap("main.go", 53, 1))
+            .withArg("version", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 54, 2))
         )
-        .withField("GitRef", typeDef.withObject("GitRef"), sourceMap: sourceMap("main.go", 13, 2))
-        .withField("GithubToken", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 14, 2))
-        .withField("Module", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 15, 2))
+        .withField("GitRef", typeDef.withObject("GitRef"), sourceMap: sourceMap("main.go", 14, 2))
+        .withField("GithubToken", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 15, 2))
+        .withField("Module", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 16, 2))
         .withConstructor(
           function("", typeDef.withObject("Ci"))
-            .withSourceMap(sourceMap("main.go", 18, 1))
-            .withArg("gitRef", typeDef.withObject("GitRef").withOptional(true), defaultPath: ".", sourceMap: sourceMap("main.go", 20, 2))
-            .withArg("githubToken", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 21, 2))
-            .withArg("module", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 22, 2))
+            .withSourceMap(sourceMap("main.go", 19, 1))
+            .withArg("gitRef", typeDef.withObject("GitRef").withOptional(true), defaultPath: ".", sourceMap: sourceMap("main.go", 21, 2))
+            .withArg("githubToken", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 22, 2))
+            .withArg("module", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 23, 2))
         )
     ]
   }

@@ -120,22 +120,13 @@ module = "dagger-go-sdk"
 clients = ["./release"]
 is-module = true
 
-[sdks.go.scopes.".dagger".settings]
-globalClient = true
-
 [sdks.go.scopes.data-tool]
 clients = ["github.com/sagikazarmark/daggerverse/registry-config@126b5fbbdad70dbf2a8689600baec2eb78c05ef4", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
 is-module = true
 
-[sdks.go.scopes.data-tool.settings]
-globalClient = true
-
 [sdks.go.scopes."data-tool/tests"]
 clients = ["./data-tool"]
 is-module = true
-
-[sdks.go.scopes."data-tool/tests".settings]
-globalClient = true
 
 [sdks.go.scopes.docker]
 is-module = true
@@ -173,9 +164,6 @@ is-module = true
 
 [sdks.go.scopes.markdownlint]
 is-module = true
-
-[sdks.go.scopes.markdownlint.settings]
-globalClient = true
 
 [sdks.go.scopes."markdownlint/tests"]
 clients = ["./markdownlint"]

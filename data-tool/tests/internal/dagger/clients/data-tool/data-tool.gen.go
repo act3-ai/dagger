@@ -10,7 +10,7 @@ import (
 )
 
 // ASCE Data Tool Module
-type DataTool struct { // data-tool (../../main.go:15:6)
+type DataTool struct { // data-tool (../../main.go:19:6)
 	query *querybuilder.Selection
 	// refetchID is set when this object is built through a field marked
 	// @reevaluate: it fetches its ID on every use, so each use evaluates that
@@ -45,15 +45,15 @@ type DataToolArchiveOpts struct {
 	//
 	// filter by platforms
 	//
-	Platforms []Platform // data-tool (../../main.go:194:2)
+	Platforms []Platform // data-tool (../../main.go:198:2)
 	//
 	// Include the manifest.json file (docker compatible)
 	//
-	ManifestJSON bool // data-tool (../../main.go:197:2)
+	ManifestJSON bool // data-tool (../../main.go:201:2)
 }
 
 // Archive the provided OPCI artifacts in an archive
-func (r *DataTool) Archive(artifacts *File, opts ...DataToolArchiveOpts) *File { // data-tool (../../main.go:188:1)
+func (r *DataTool) Archive(artifacts *File, opts ...DataToolArchiveOpts) *File { // data-tool (../../main.go:192:1)
 	assertNotNil("artifacts", artifacts)
 	q := r.query.Select("archive")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -72,7 +72,7 @@ func (r *DataTool) Archive(artifacts *File, opts ...DataToolArchiveOpts) *File {
 }
 
 // Underlying container with all the auth added
-func (r *DataTool) Container() *Container { // data-tool (../../main.go:20:2)
+func (r *DataTool) Container() *Container { // data-tool (../../main.go:24:2)
 	q := r.query.Select("container")
 
 	return new(Container).WithGraphQLQuery(q)
@@ -83,11 +83,11 @@ type DataToolGatherOpts struct {
 	//
 	// platforms
 	//
-	Platforms []Platform // data-tool (../../main.go:101:2)
+	Platforms []Platform // data-tool (../../main.go:105:2)
 }
 
 // Gathers the images and returns the full image reference with digest
-func (r *DataTool) Gather(ctx context.Context, artifacts *File, dest string, opts ...DataToolGatherOpts) (string, error) { // data-tool (../../main.go:92:1)
+func (r *DataTool) Gather(ctx context.Context, artifacts *File, dest string, opts ...DataToolGatherOpts) (string, error) { // data-tool (../../main.go:96:1)
 	assertNotNil("artifacts", artifacts)
 	if r.gather != nil {
 		return *r.gather, nil
@@ -109,7 +109,7 @@ func (r *DataTool) Gather(ctx context.Context, artifacts *File, dest string, opt
 }
 
 // Download the Grype vulnerability database
-func (r *DataTool) GrypeDb() *Directory { // data-tool (../../main.go:152:1)
+func (r *DataTool) GrypeDb() *Directory { // data-tool (../../main.go:156:1)
 	q := r.query.Select("grypeDb")
 
 	return new(Directory).WithGraphQLQuery(q)
@@ -171,7 +171,7 @@ func (r *DataTool) UnmarshalJSON(bs []byte) error {
 }
 
 // Scan the images for vulnerabilities
-func (r *DataTool) Scan(ctx context.Context, image string) (string, error) { // data-tool (../../main.go:232:1)
+func (r *DataTool) Scan(ctx context.Context, image string) (string, error) { // data-tool (../../main.go:236:1)
 	if r.scan != nil {
 		return *r.scan, nil
 	}
@@ -185,7 +185,7 @@ func (r *DataTool) Scan(ctx context.Context, image string) (string, error) { // 
 }
 
 // Scatter images to their proper locations from a gathered image
-func (r *DataTool) Scatter(ctx context.Context, ref string, mapping *File) error { // data-tool (../../main.go:135:1)
+func (r *DataTool) Scatter(ctx context.Context, ref string, mapping *File) error { // data-tool (../../main.go:139:1)
 	assertNotNil("mapping", mapping)
 	if r.scatter != nil {
 		return nil
@@ -202,11 +202,11 @@ type DataToolSerializeOpts struct {
 	//
 	// Include the manifest.json file (docker compatible)
 	//
-	ManifestJSON bool // data-tool (../../main.go:172:2)
+	ManifestJSON bool // data-tool (../../main.go:176:2)
 }
 
 // Serialize a gathered OCI image into a TAR archive file
-func (r *DataTool) Serialize(ref string, opts ...DataToolSerializeOpts) *File { // data-tool (../../main.go:167:1)
+func (r *DataTool) Serialize(ref string, opts ...DataToolSerializeOpts) *File { // data-tool (../../main.go:171:1)
 	q := r.query.Select("serialize")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `manifestJson` optional argument
@@ -220,7 +220,7 @@ func (r *DataTool) Serialize(ref string, opts ...DataToolSerializeOpts) *File { 
 }
 
 // Add credentials for use with Git via "ace-dt git"
-func (r *DataTool) WithGitAuth(host string, username string, password *Secret) *DataTool { // data-tool (../../main.go:72:1)
+func (r *DataTool) WithGitAuth(host string, username string, password *Secret) *DataTool { // data-tool (../../main.go:76:1)
 	assertNotNil("password", password)
 	q := r.query.Select("withGitAuth")
 	q = q.Arg("host", host)
@@ -234,7 +234,7 @@ func (r *DataTool) WithGitAuth(host string, username string, password *Secret) *
 }
 
 // Add credentials for a registry
-func (r *DataTool) WithRegistryAuth(address string, username string, secret *Secret) *DataTool { // data-tool (../../main.go:58:1)
+func (r *DataTool) WithRegistryAuth(address string, username string, secret *Secret) *DataTool { // data-tool (../../main.go:62:1)
 	assertNotNil("secret", secret)
 	q := r.query.Select("withRegistryAuth")
 	q = q.Arg("address", address)
@@ -255,11 +255,11 @@ func (r *DataTool) AsNode() Node {
 
 // DataToolOpts contains options for Query.DataTool
 type DataToolOpts struct {
-	Base *Container // data-tool (../../main.go:25:2)
+	Base *Container // data-tool (../../main.go:29:2)
 }
 
 // ASCE Data Tool Module
-func (r *Query) DataTool(opts ...DataToolOpts) *DataTool { // data-tool (../../main.go:23:1)
+func (r *Query) DataTool(opts ...DataToolOpts) *DataTool { // data-tool (../../main.go:27:1)
 	q := r.query.Select("dataTool")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `base` optional argument
