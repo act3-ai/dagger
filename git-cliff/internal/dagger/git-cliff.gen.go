@@ -9,41 +9,12 @@ import (
 	"github.com/dagger/querybuilder"
 )
 
-// Retrieve the binding value, as type GitCliff
-func (r *Binding) AsGitCliff() *GitCliff { // git-cliff (../../../git-cliff/main.go:19:6)
-	q := r.query.Select("asGitCliff")
-
-	return &GitCliff{
-		query: q,
-	}
-}
-
-// Create or update a binding of type GitCliff in the environment
-func (r *Env) WithGitCliffInput(name string, value *GitCliff, description string) *Env { // git-cliff (../../../git-cliff/main.go:19:6)
-	assertNotNil("value", value)
-	q := r.query.Select("withGitCliffInput")
-	q = q.Arg("name", name)
-	q = q.Arg("value", value)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-// Declare a desired GitCliff output to be assigned in the environment
-func (r *Env) WithGitCliffOutput(name string, description string) *Env { // git-cliff (../../../git-cliff/main.go:19:6)
-	q := r.query.Select("withGitCliffOutput")
-	q = q.Arg("name", name)
-	q = q.Arg("description", description)
-
-	return &Env{
-		query: q,
-	}
-}
-
-type GitCliff struct { // git-cliff (../../../git-cliff/main.go:19:6)
+type GitCliff struct { // git-cliff (../../:0:0)
 	query *querybuilder.Selection
+	// refetchID is set when this object is built through a field marked
+	// @reevaluate: it fetches its ID on every use, so each use evaluates that
+	// field again.
+	refetchID bool
 
 	bumpedVersion *string
 	id            *ID
@@ -52,11 +23,14 @@ type GitCliff struct { // git-cliff (../../../git-cliff/main.go:19:6)
 func (r *GitCliff) WithGraphQLQuery(q *querybuilder.Selection) *GitCliff {
 	return &GitCliff{
 		query: q,
+		// The query's origin is unknown: it may go through a field that
+		// must be reevaluated.
+		refetchID: true,
 	}
 }
 
 // Prints a bumped tag for unreleased changes.
-func (r *GitCliff) BumpedVersion(ctx context.Context) (string, error) { // git-cliff (../../../git-cliff/main.go:177:1)
+func (r *GitCliff) BumpedVersion(ctx context.Context) (string, error) {
 	if r.bumpedVersion != nil {
 		return *r.bumpedVersion, nil
 	}
@@ -70,21 +44,17 @@ func (r *GitCliff) BumpedVersion(ctx context.Context) (string, error) { // git-c
 
 // GitCliffChangelogOpts contains options for GitCliff.Changelog
 type GitCliffChangelogOpts struct {
-	//
 	// file path to output or prepend generated changelog.
 	//
-	//
 	// Default: "CHANGELOG.md"
-	Changelog string // git-cliff (../../../git-cliff/main.go:100:2)
-	//
+	Changelog string
 	// tag to generate changelog for
-	//
-	Tag string // git-cliff (../../../git-cliff/main.go:103:2)
+	Tag string
 }
 
 // generate a changelog file with unreleased changes and bumps the tag if tag is not provided
 // If file already exists, it will prepend to the existing changelog instead of creating a new one.
-func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File { // git-cliff (../../../git-cliff/main.go:95:1)
+func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File {
 	q := r.query.Select("changelog")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `changelog` optional argument
@@ -97,19 +67,15 @@ func (r *GitCliff) Changelog(opts ...GitCliffChangelogOpts) *File { // git-cliff
 		}
 	}
 
-	return &File{
-		query: q,
-	}
+	return new(File).WithGraphQLQuery(q)
 }
 
 // Returns a git-cliff container with optionally mounted secret variables
 // for private gitlab, github, or gitea tokens
-func (r *GitCliff) Container() *Container { // git-cliff (../../../git-cliff/main.go:22:2)
+func (r *GitCliff) Container() *Container {
 	q := r.query.Select("container")
 
-	return &Container{
-		query: q,
-	}
+	return new(Container).WithGraphQLQuery(q)
 }
 
 // A unique identifier for this GitCliff.
@@ -122,7 +88,13 @@ func (r *GitCliff) ID(ctx context.Context) (ID, error) {
 	var response ID
 
 	q = q.Bind(&response)
-	return response, q.Execute(ctx)
+	if r.refetchID {
+		return response, q.Execute(ctx)
+	}
+	return memoizedID(ctx, r.query, func() (ID, error) {
+		err := q.Execute(ctx)
+		return response, err
+	})
 }
 
 // XXX_GraphQLType is an internal function. It returns the native GraphQL type name
@@ -157,30 +129,24 @@ func (r *GitCliff) UnmarshalJSON(bs []byte) error {
 	if err != nil {
 		return err
 	}
-	*r = GitCliff{query: selectNode(dag.query, id, "GitCliff")}
+	*r = GitCliff{query: selectNode(Connect().QueryBuilder(), id, "GitCliff")}
 	return nil
 }
 
 // GitCliffReleaseNotesOpts contains options for GitCliff.ReleaseNotes
 type GitCliffReleaseNotesOpts struct {
-	//
 	// file path to output release notes.
 	//
-	//
 	// Default: "releasenotes.md"
-	Notes string // git-cliff (../../../git-cliff/main.go:140:2)
-	//
+	Notes string
 	// tag to generate changelog for
-	//
-	Tag string // git-cliff (../../../git-cliff/main.go:143:2)
-	//
+	Tag string
 	// append additional provided release notes
-	//
-	ExtraNotes string // git-cliff (../../../git-cliff/main.go:146:2)
+	ExtraNotes string
 }
 
 // generate release notes file with unreleased changes and bumps the tag if tag is not provided
-func (r *GitCliff) ReleaseNotes(opts ...GitCliffReleaseNotesOpts) *File { // git-cliff (../../../git-cliff/main.go:135:1)
+func (r *GitCliff) ReleaseNotes(opts ...GitCliffReleaseNotesOpts) *File {
 	q := r.query.Select("releaseNotes")
 	for i := len(opts) - 1; i >= 0; i-- {
 		// `notes` optional argument
@@ -197,51 +163,29 @@ func (r *GitCliff) ReleaseNotes(opts ...GitCliffReleaseNotesOpts) *File { // git
 		}
 	}
 
-	return &File{
-		query: q,
-	}
-}
-
-// AsNode returns this GitCliff as a Node.
-// This is a local type conversion — no GraphQL call.
-func (r *GitCliff) AsNode() Node {
-	return &NodeClient{
-		query: r.query,
-	}
+	return new(File).WithGraphQLQuery(q)
 }
 
 // GitCliffOpts contains options for Query.GitCliff
 type GitCliffOpts struct {
-	//
 	// Version of git-cliff image.
 	//
-	//
 	// Default: "latest"
-	GitCliffVersion string // git-cliff (../../../git-cliff/main.go:36:2)
+	GitCliffVersion string
 
-	WorkingDir string // git-cliff (../../../git-cliff/main.go:38:2)
-	//
+	WorkingDir string
 	// private token to use when authenticating with a private github instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/github
-	//
-	GithubToken *Secret // git-cliff (../../../git-cliff/main.go:42:2)
-	//
+	GithubToken *Secret
 	// private token to use when authenticating with a private gitlab instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/gitlab
-	//
-	GitlabToken *Secret // git-cliff (../../../git-cliff/main.go:46:2)
-	//
+	GitlabToken *Secret
 	// private token to use when authenticating with a private gitea instance set in cliff.toml
 	// See: https://git-cliff.org/docs/integration/gitea
-	//
-	GiteaToken *Secret // git-cliff (../../../git-cliff/main.go:50:2)
+	GiteaToken *Secret
 }
 
-// GitCliff is a highly customizable changelog generator.
-// This module uses a git reference as a source directory to scan for changes
-// and create a changelog or bump a version. A cliff.toml can be used for additional
-// customization if found in the working directory where GitCliff is being ran.
-func (r *Query) GitCliff(gitRef *GitRef, opts ...GitCliffOpts) *GitCliff { // git-cliff (../../../git-cliff/main.go:30:1)
+func (r *Query) GitCliff(gitRef *GitRef, opts ...GitCliffOpts) *GitCliff { // git-cliff (../../:0:0)
 	assertNotNil("gitRef", gitRef)
 	q := r.query.Select("gitCliff")
 	for i := len(opts) - 1; i >= 0; i-- {
@@ -269,6 +213,7 @@ func (r *Query) GitCliff(gitRef *GitRef, opts ...GitCliffOpts) *GitCliff { // gi
 	q = q.Arg("gitRef", gitRef)
 
 	return &GitCliff{
-		query: q,
+		query:     q,
+		refetchID: r.refetchID,
 	}
 }

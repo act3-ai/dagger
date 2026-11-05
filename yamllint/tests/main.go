@@ -38,11 +38,13 @@ func (t *Tests) DirectoryFilter(ctx context.Context) error {
 
 // +check
 // Config validates config mounting by mounting a yml file with errors and a config that ignores them
-func (t *Tests) Config(ctx context.Context) *dagger.Container {
+func (t *Tests) Config(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 
-	return dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).Lint()
+	_, err := dag.Yamllint(src, dagger.YamllintOpts{Config: cfg}).Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
@@ -133,13 +135,15 @@ func (t *Tests) WithStrict(ctx context.Context) error {
 
 // +check
 // WithNoWarnings tests the 'WithNoWarnings' method.
-func (t *Tests) WithNoWarnings(ctx context.Context) *dagger.Container {
+func (t *Tests) WithNoWarnings(ctx context.Context) error {
 	src := t.srcDir()
 	cfg := src.File(configFixErr)
 	// expect no err, despite a 'document-start' warning
-	return dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
+	_, err := dag.Yamllint(t.srcDir(), dagger.YamllintOpts{Config: cfg}).
 		WithNoWarnings().
-		Lint()
+		Lint().Sync(ctx)
+
+	return err
 
 }
 

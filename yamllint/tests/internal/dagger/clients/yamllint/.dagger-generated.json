@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "files": {
+    "dagger.gen.go": "f702560c620dd236d77b06ff4e37de3dc64f66ff2d664da8ab0d01b7ba25acd1",
+    "yamllint.gen.go": "029f1343151f00ef91de88cf07f7971d4d7641fdd9fa2d78a86ed4962c8402aa"
+  }
+}

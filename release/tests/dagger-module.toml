@@ -1,9 +1,5 @@
 name = "tests"
-engineVersion = "v0.21.6"
 
-[runtime]
-  source = "go"
-
-[[dependencies]]
-  name = "release"
-  source = ".."
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

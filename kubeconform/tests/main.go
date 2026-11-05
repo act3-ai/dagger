@@ -15,23 +15,28 @@
 package main
 
 import (
+	"context"
 	"dagger/tests/internal/dagger"
 )
 
 type Tests struct{}
 
 // +check
-func (m *Tests) Manifest() *dagger.Container {
+func (m *Tests) Manifest(ctx context.Context) error {
 	manifest := dag.CurrentModule().Source().
 		Directory("testdata/").
 		Filter(dagger.DirectoryFilterOpts{Include: []string{"kustomize/manifest.yaml"}})
 
-	return dag.Kubeconform().Validate(manifest, dagger.KubeconformValidateOpts{Verbose: true})
+	_, err := dag.Kubeconform().Validate(manifest, dagger.KubeconformValidateOpts{Verbose: true}).Sync(ctx)
+
+	return err
 }
 
 // +check
-func (m *Tests) KustomizeWithCrds() *dagger.Container {
+func (m *Tests) KustomizeWithCrds(ctx context.Context) error {
 	manifest := dag.CurrentModule().Source().Directory("testdata")
-	return dag.Kubeconform().
-		ValidateKustomize(manifest, []string{"kustomize"}, dagger.KubeconformValidateKustomizeOpts{Crds: manifest.Directory("crds")})
+	_, err := dag.Kubeconform().
+		ValidateKustomize(manifest, []string{"kustomize"}, dagger.KubeconformValidateKustomizeOpts{Crds: manifest.Directory("crds")}).Sync(ctx)
+
+	return err
 }

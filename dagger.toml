@@ -9,8 +9,11 @@ source = "github.com/dagger/go-sdk"
 module = "dagger-go-sdk"
 
 [sdks.go.scopes.".dagger"]
-clients = ["./data-tool/tests", "./docker/tests", "./git-cliff", "./git-cliff/tests", "./gocoverage/tests", "./goreleaser/tests", "./govulncheck", "./markdownlint/tests", "./python/tests", "./release", "./release/tests", "./renovate", "./shields/tests", "./yamllint/tests"]
+clients = ["./release"]
 is-module = true
+
+[sdks.go.scopes.".dagger".settings]
+globalClient = true
 
 [sdks.go.scopes.data-tool]
 clients = ["github.com/sagikazarmark/daggerverse/registry-config@126b5fbbdad70dbf2a8689600baec2eb78c05ef4", "github.com/dagger/dagger/modules/wolfi@0ec84486003f052214339a2f8bdcd5761f23cead"]
@@ -165,16 +168,31 @@ globalClient = true
 clients = ["github.com/dagger/dagger/modules/wolfi@054f94b2d86c0ac00bef11ac4550816973c4aeef"]
 is-module = true
 
+[sdks.go.scopes.kubeconform.settings]
+globalClient = true
+
 [sdks.go.scopes."kubeconform/tests"]
 clients = ["./kubeconform"]
 is-module = true
 
+[sdks.go.scopes."kubeconform/tests".settings]
+globalClient = true
+
 [sdks.go.scopes.netrc]
 is-module = true
+
+[sdks.go.scopes.netrc.settings]
+globalClient = true
 
 [sdks.go.scopes."netrc/tests"]
 clients = ["./netrc"]
 is-module = true
 
+[sdks.go.scopes."netrc/tests".settings]
+globalClient = true
+
 [sdks.go.scopes.sonarqube]
 is-module = true
+
+[sdks.go.scopes.sonarqube.settings]
+globalClient = true

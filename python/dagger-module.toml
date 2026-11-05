@@ -1,5 +1,5 @@
 name = "python"
-engineVersion = "v0.21.6"
 
-[runtime]
-  source = "go"
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

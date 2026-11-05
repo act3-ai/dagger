@@ -1,0 +1,5 @@
+name = "ci"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

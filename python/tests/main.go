@@ -52,20 +52,26 @@ func (t *Tests) Base(ctx context.Context) error {
 
 // +check
 // Run mypy, expect valid/no errors
-func (t *Tests) Mypy() *dagger.Container {
-	return dag.Python(t.srcDir()).Mypy().Lint()
+func (t *Tests) Mypy(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Mypy().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run pylint, expect valid/no errors
-func (t *Tests) Pylint() *dagger.Container {
-	return dag.Python(t.srcDir()).Pylint().Lint()
+func (t *Tests) Pylint(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Pylint().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run pyright, expect valid/no errors
-func (t *Tests) Pyright() *dagger.Container {
-	return dag.Python(t.srcDir()).Pyright().Lint()
+func (t *Tests) Pyright(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Pyright().Lint().Sync(ctx)
+
+	return err
 
 }
 
@@ -87,8 +93,10 @@ func (t *Tests) RuffVersion(ctx context.Context) error {
 
 // +check
 // Run ruff lint, expect valid/no errors
-func (t *Tests) RuffLint() *dagger.Container {
-	return dag.Python(t.srcDir()).Ruff().Lint()
+func (t *Tests) RuffLint(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Ruff().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
@@ -149,8 +157,10 @@ func (t *Tests) RuffLintFix(ctx context.Context) error {
 
 // +check
 // Run ruff format, expect valid/no errors
-func (t *Tests) RuffFormat() *dagger.Container {
-	return dag.Python(t.srcDir()).Ruff().Format()
+func (t *Tests) RuffFormat(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Ruff().Format().Sync(ctx)
+
+	return err
 }
 
 // +check
@@ -211,8 +221,10 @@ func (t *Tests) RuffFormatFix(ctx context.Context) error {
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) Pytest() *dagger.Container {
-	return dag.Python(t.srcDir()).Pytest().Test()
+func (t *Tests) Pytest(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Pytest().Test().Sync(ctx)
+
+	return err
 }
 
 // +check
@@ -246,14 +258,18 @@ func (t *Tests) PytestReport(ctx context.Context) error {
 
 // +check
 // Run cognitive complexity lint, expect valid/no errors
-func (t *Tests) CognitiveComplexity() *dagger.Container {
-	return dag.Python(t.srcDir()).CognitiveComplexity().Lint()
+func (t *Tests) CognitiveComplexity(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).CognitiveComplexity().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run ty, expect valid/no errors
-func (t *Tests) Ty() *dagger.Container {
-	return dag.Python(t.srcDir()).Ty().Lint()
+func (t *Tests) Ty(ctx context.Context) error {
+	_, err := dag.Python(t.srcDir()).Ty().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
@@ -275,13 +291,15 @@ func (t *Tests) TyReport(ctx context.Context) error {
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) UvProject() *dagger.Container {
+func (t *Tests) UvProject(ctx context.Context) error {
 	src := dag.Directory().
 		WithDirectory("sub", t.srcDir())
 
-	return dag.Python(src, dagger.PythonOpts{
+	_, err := dag.Python(src, dagger.PythonOpts{
 		SyncArgs:  []string{"--project", "/app/sub"},
 		SyncPaths: []string{"sub/pyproject.toml", "sub/uv.lock"},
 	}).
-		DevContainer()
+		DevContainer().Sync(ctx)
+
+	return err
 }

@@ -3,35 +3,28 @@
 package main
 
 import (
+	core "dagger.io/dagger/core"
+
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
-	"os"
-	"sort"
 
-	telemetry "github.com/dagger/otel-go"
-	"github.com/vektah/gqlparser/v2/gqlerror"
+	"github.com/dagger/querybuilder"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.40.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"dagger/sonarqube/internal/dagger"
-
-	"github.com/dagger/querybuilder"
 )
 
+// Deprecated: use explicit core constructors and generated module clients.
 var dag = dagger.Connect()
 
 func Tracer() trace.Tracer {
 	return otel.Tracer("dagger.io/sdk.go")
 }
 
-// used for local MarshalJSON implementations
 var marshalCtx = context.Background()
 
-// called by main()
 func setMarshalContext(ctx context.Context) {
 	marshalCtx = ctx
 	dagger.SetMarshalContext(ctx)
@@ -44,13 +37,8 @@ type DaggerObject interface {
 
 type ExecError = dagger.ExecError
 
-// ptr returns a pointer to the given value.
-func ptr[T any](v T) *T {
-	return &v
-}
+func ptr[T any](v T) *T { return &v }
 
-// convertSlice converts a slice of one type to a slice of another type using a
-// converter function
 func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	out := make([]O, len(in))
 	for i, v := range in {
@@ -59,123 +47,156 @@ func convertSlice[I any, O any](in []I, f func(I) O) []O {
 	return out
 }
 
-func main() {
-	ctx := context.Background()
-
-	// Direct slog to the new stderr. This is only for dev time debugging, and
-	// runtime errors/warnings.
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		Level: slog.LevelWarn,
-	})))
-
-	if err := dispatch(ctx); err != nil {
-		os.Exit(2)
+func (r Sonarqube) MarshalJSON() ([]byte, error) {
+	var concrete struct {
+		Base string
 	}
+	concrete.Base = r.Base
+	return json.Marshal(&concrete)
 }
 
-func convertError(rerr error) *dagger.Error {
-	if gqlErr := findSingleGQLError(rerr); gqlErr != nil {
-		dagErr := dag.Error(gqlErr.Message)
-		if gqlErr.Extensions != nil {
-			keys := make([]string, 0, len(gqlErr.Extensions))
-			for k := range gqlErr.Extensions {
-				keys = append(keys, k)
-			}
-			sort.Strings(keys)
-			for _, k := range keys {
-				val, err := json.Marshal(gqlErr.Extensions[k])
-				if err != nil {
-					fmt.Println("failed to marshal error value:", err)
-				}
-				dagErr = dagErr.WithValue(k, dagger.JSON(val))
-			}
-		}
-		return dagErr
+func (r *Sonarqube) UnmarshalJSON(bs []byte) error {
+	var concrete struct {
+		Base string
 	}
-	return dag.Error(rerr.Error())
-}
-
-func findSingleGQLError(rerr error) *gqlerror.Error {
-	switch x := rerr.(type) {
-	case *gqlerror.Error:
-		return x
-	case interface{ Unwrap() []error }:
-		return nil
-	case interface{ Unwrap() error }:
-		return findSingleGQLError(x.Unwrap())
-	default:
-		return nil
-	}
-}
-func dispatch(ctx context.Context) (rerr error) {
-	ctx = telemetry.InitEmbedded(ctx, resource.NewWithAttributes(
-		semconv.SchemaURL,
-		semconv.ServiceNameKey.String("dagger-go-sdk"),
-		// TODO version?
-	))
-	defer telemetry.Close()
-
-	// A lot of the "work" actually happens when we're marshalling the return
-	// value, which entails getting object IDs, which happens in MarshalJSON,
-	// which has no ctx argument, so we use this lovely global variable.
-	setMarshalContext(ctx)
-
-	fnCall := dag.CurrentFunctionCall()
-	defer func() {
-		if rerr != nil {
-			if err := fnCall.ReturnError(ctx, convertError(rerr)); err != nil {
-				fmt.Println("failed to return error:", err, "\noriginal error:", rerr)
-			}
-		}
-	}()
-
-	parentName, err := fnCall.ParentName(ctx)
-	if err != nil {
-		return fmt.Errorf("get parent name: %w", err)
-	}
-	fnName, err := fnCall.Name(ctx)
-	if err != nil {
-		return fmt.Errorf("get fn name: %w", err)
-	}
-	parentJson, err := fnCall.Parent(ctx)
-	if err != nil {
-		return fmt.Errorf("get fn parent: %w", err)
-	}
-	fnArgs, err := fnCall.InputArgs(ctx)
-	if err != nil {
-		return fmt.Errorf("get fn args: %w", err)
-	}
-
-	inputArgs := map[string][]byte{}
-	for _, fnArg := range fnArgs {
-		argName, err := fnArg.Name(ctx)
-		if err != nil {
-			return fmt.Errorf("get fn arg name: %w", err)
-		}
-		argValue, err := fnArg.Value(ctx)
-		if err != nil {
-			return fmt.Errorf("get fn arg value: %w", err)
-		}
-		inputArgs[argName] = []byte(argValue)
-	}
-
-	result, err := invoke(ctx, []byte(parentJson), parentName, fnName, inputArgs)
+	err := json.Unmarshal(bs, &concrete)
 	if err != nil {
 		return err
 	}
-	resultBytes, err := json.Marshal(result)
-	if err != nil {
-		return fmt.Errorf("marshal: %w", err)
-	}
-
-	if err := fnCall.ReturnValue(ctx, dagger.JSON(resultBytes)); err != nil {
-		return fmt.Errorf("store return value: %w", err)
-	}
+	r.Base = concrete.Base
 	return nil
 }
-func invoke(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
+
+func (r SonarServer) MarshalJSON() ([]byte, error) {
+	var concrete struct {
+		Service    *dagger.Service
+		SonarToken *dagger.Secret
+		AdminToken *dagger.Secret
+	}
+	concrete.Service = r.Service
+	concrete.SonarToken = r.SonarToken
+	concrete.AdminToken = r.AdminToken
+	return json.Marshal(&concrete)
+}
+
+func (r *SonarServer) UnmarshalJSON(bs []byte) error {
+	var concrete struct {
+		Service    *dagger.Service
+		SonarToken *dagger.Secret
+		AdminToken *dagger.Secret
+	}
+	err := json.Unmarshal(bs, &concrete)
+	if err != nil {
+		return err
+	}
+	r.Service = concrete.Service
+	r.SonarToken = concrete.SonarToken
+	r.AdminToken = concrete.AdminToken
+	return nil
+}
+
+func DaggerDispatch(ctx context.Context, parentJSON []byte, parentName string, fnName string, inputArgs map[string][]byte) (_ any, err error) {
+	setMarshalContext(ctx)
 	_ = inputArgs
+	if parentName == "" {
+		switch fnName {
+		case "SonarServer", "sonarServer":
+			parentName = "SonarServer"
+			fnName = ""
+		case "Sonarqube", "sonarqube":
+			parentName = "Sonarqube"
+			fnName = ""
+		}
+	}
 	switch parentName {
+	case "SonarServer":
+		if fnName == "New" {
+			fnName = ""
+		}
+		switch fnName {
+		case "":
+			return &SonarServer{}, nil
+		default:
+			return nil, fmt.Errorf("unknown function %s", fnName)
+		}
+	case "Sonarqube":
+		if fnName == "New" {
+			fnName = ""
+		}
+		switch fnName {
+		case "AnalyzeSonarReport":
+			var parent Sonarqube
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var reportFile *core.File
+			if inputArgs["reportFile"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["reportFile"]), &reportFile)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg reportFile", err))
+				}
+			}
+			return (*Sonarqube).AnalyzeSonarReport(&parent, ctx, reportFile)
+		case "Bootstrap":
+			var parent Sonarqube
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Sonarqube).Bootstrap(&parent, ctx)
+		case "Scan":
+			var parent Sonarqube
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var src *core.Directory
+			if inputArgs["src"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["src"]), &src)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg src", err))
+				}
+			}
+			var impactSeverities string
+			if inputArgs["impactSeverities"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["impactSeverities"]), &impactSeverities)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg impactSeverities", err))
+				}
+			}
+			var rawJson bool
+			if inputArgs["rawJson"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["rawJson"]), &rawJson)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg rawJson", err))
+				}
+			}
+			return (*Sonarqube).Scan(&parent, ctx, src, impactSeverities, rawJson)
+		case "Service":
+			var parent Sonarqube
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Sonarqube).Service(&parent), nil
+		case "":
+			var parent Sonarqube
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			var base string
+			if inputArgs["base"] != nil {
+				err = json.Unmarshal([]byte(inputArgs["base"]), &base)
+				if err != nil {
+					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg base", err))
+				}
+			}
+			return New(base), nil
+		default:
+			return nil, fmt.Errorf("unknown function %s", fnName)
+		}
 	default:
 		return nil, fmt.Errorf("unknown object %s", parentName)
 	}
