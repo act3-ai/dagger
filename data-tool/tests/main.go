@@ -25,8 +25,9 @@ type Tests struct{}
 
 const ref = "registry:5000/test/acedt:v1"
 
-// +check
 // Run all tests.
+//
+// +check
 func (t *Tests) All(ctx context.Context) error {
 
 	if err := t.Gather(ctx); err != nil {

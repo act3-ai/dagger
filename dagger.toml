@@ -5,6 +5,114 @@ main = true
 [modules.dagger-go-sdk]
 source = "github.com/dagger/go-sdk"
 
+[modules.data-tool]
+source = "data-tool"
+legacy-default-path = true
+
+[modules."data-tool/tests"]
+source = "data-tool/tests"
+legacy-default-path = true
+
+[modules.docker]
+source = "docker"
+legacy-default-path = true
+
+[modules."docker/tests"]
+source = "docker/tests"
+legacy-default-path = true
+
+[modules.git-cliff]
+source = "git-cliff"
+legacy-default-path = true
+
+[modules."git-cliff/tests"]
+source = "git-cliff/tests"
+legacy-default-path = true
+
+[modules.gocoverage]
+source = "gocoverage"
+legacy-default-path = true
+
+[modules."gocoverage/tests"]
+source = "gocoverage/tests"
+legacy-default-path = true
+
+[modules.goreleaser]
+source = "goreleaser"
+legacy-default-path = true
+
+[modules."goreleaser/tests"]
+source = "goreleaser/tests"
+legacy-default-path = true
+
+[modules.govulncheck]
+source = "govulncheck"
+legacy-default-path = true
+
+[modules.kubeconform]
+source = "kubeconform"
+legacy-default-path = true
+
+[modules."kubeconform/tests"]
+source = "kubeconform/tests"
+legacy-default-path = true
+
+[modules.markdownlint]
+source = "markdownlint"
+legacy-default-path = true
+
+[modules."markdownlint/tests"]
+source = "markdownlint/tests"
+legacy-default-path = true
+
+[modules.netrc]
+source = "netrc"
+legacy-default-path = true
+
+[modules."netrc/tests"]
+source = "netrc/tests"
+legacy-default-path = true
+
+[modules.python]
+source = "python"
+legacy-default-path = true
+
+[modules."python/tests"]
+source = "python/tests"
+legacy-default-path = true
+
+[modules.release]
+source = "release"
+legacy-default-path = true
+
+[modules."release/tests"]
+source = "release/tests"
+legacy-default-path = true
+
+[modules.renovate]
+source = "renovate"
+legacy-default-path = true
+
+[modules.shields]
+source = "shields"
+legacy-default-path = true
+
+[modules."shields/tests"]
+source = "shields/tests"
+legacy-default-path = true
+
+[modules.sonarqube]
+source = "sonarqube"
+legacy-default-path = true
+
+[modules.yamlliny]
+source = "yamllint"
+legacy-default-path = true
+
+[modules."yamllint/tests"]
+source = "yamllint/tests"
+legacy-default-path = true
+
 [sdks.go]
 module = "dagger-go-sdk"
 
@@ -105,9 +213,6 @@ globalClient = true
 
 [sdks.go.scopes.python]
 is-module = true
-
-[sdks.go.scopes.python.settings]
-globalClient = true
 
 [sdks.go.scopes."python/tests"]
 clients = ["./python"]

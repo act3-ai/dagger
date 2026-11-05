@@ -26,32 +26,32 @@ type Entrypoint implements ModuleEntrypoint {
         .withFunction(
           function("All", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run all tests.")
-            .withSourceMap(sourceMap("main.go", 30, 1))
+            .withSourceMap(sourceMap("main.go", 31, 1))
             .withCheck
         )
         .withFunction(
           function("Archive", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run test for Archive")
-            .withSourceMap(sourceMap("main.go", 106, 1))
+            .withSourceMap(sourceMap("main.go", 107, 1))
         )
         .withFunction(
           function("Gather", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run test for Gather")
-            .withSourceMap(sourceMap("main.go", 53, 1))
+            .withSourceMap(sourceMap("main.go", 54, 1))
         )
         .withFunction(
           function("RunSvc", typeDef.withObject("Service"))
-            .withSourceMap(sourceMap("main.go", 42, 1))
+            .withSourceMap(sourceMap("main.go", 43, 1))
         )
         .withFunction(
           function("Scatter", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run test for Scatter")
-            .withSourceMap(sourceMap("main.go", 73, 1))
+            .withSourceMap(sourceMap("main.go", 74, 1))
         )
         .withFunction(
           function("Serialize", typeDef.withKind(TypeDefKind.VOID_KIND).withOptional(true))
             .withDescription("Run test for Serialize")
-            .withSourceMap(sourceMap("main.go", 90, 1))
+            .withSourceMap(sourceMap("main.go", 91, 1))
         )
         .withConstructor(function("", typeDef.withObject("Tests")))
     ]
