@@ -241,7 +241,12 @@ prepare() {
 
     # Run check targeting the module if supported, or root check
     echo "Running checks for '$module'..."
-    dagger check -m "$module"
+    if dagger check -l 2>/dev/null | awk '{print $1}' | grep -Eq "^(${module}|${module}/tests)$"; then
+      echo "Running checks for '$module'..."
+      dagger check "--$module/tests"
+    else
+      echo "No checks registered for '$module', skipping checks."
+    fi
 
     dagger call --auto-apply --progress=dots --module="$module" prepare
 
