@@ -15,5 +15,6 @@ jobs:
       - name: Dagger Checks
         uses: dagger/dagger-for-github@v8.4.0
         with:
-          check: "**"
-          version: "latest"
+          verb: run
+          args: dagger check
+          version: "v1.0.0-beta.24"
