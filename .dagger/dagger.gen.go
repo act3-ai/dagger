@@ -88,14 +88,7 @@ func DaggerDispatch(ctx context.Context, parentJSON []byte, parentName string, f
 			fnName = ""
 		}
 		switch fnName {
-		case "Prepare":
-			var parent Ci
-			err = json.Unmarshal(parentJSON, &parent)
-			if err != nil {
-				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
-			}
-			return (*Ci).Prepare(&parent, ctx)
-		case "Release":
+		case "CreateRelease":
 			var parent Ci
 			err = json.Unmarshal(parentJSON, &parent)
 			if err != nil {
@@ -108,7 +101,14 @@ func DaggerDispatch(ctx context.Context, parentJSON []byte, parentName string, f
 					panic(fmt.Errorf("%s: %w", "failed to unmarshal input arg version", err))
 				}
 			}
-			return (*Ci).Release(&parent, ctx, version)
+			return (*Ci).CreateRelease(&parent, ctx, version)
+		case "Prepare":
+			var parent Ci
+			err = json.Unmarshal(parentJSON, &parent)
+			if err != nil {
+				panic(fmt.Errorf("%s: %w", "failed to unmarshal parent object", err))
+			}
+			return (*Ci).Prepare(&parent, ctx)
 		case "":
 			var parent Ci
 			err = json.Unmarshal(parentJSON, &parent)

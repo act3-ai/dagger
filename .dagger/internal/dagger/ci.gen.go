@@ -16,9 +16,9 @@ type Ci struct { // ci (../../:0:0)
 	// field again.
 	refetchID bool
 
-	id      *ID
-	module  *string
-	release *string
+	createRelease *string
+	id            *ID
+	module        *string
 }
 
 func (r *Ci) WithGraphQLQuery(q *querybuilder.Selection) *Ci {
@@ -28,6 +28,19 @@ func (r *Ci) WithGraphQLQuery(q *querybuilder.Selection) *Ci {
 		// must be reevaluated.
 		refetchID: true,
 	}
+}
+
+func (r *Ci) CreateRelease(ctx context.Context, version string) (string, error) {
+	if r.createRelease != nil {
+		return *r.createRelease, nil
+	}
+	q := r.query.Select("createRelease")
+	q = q.Arg("version", version)
+
+	var response string
+
+	q = q.Bind(&response)
+	return response, q.Execute(ctx)
 }
 
 func (r *Ci) GitRef() *GitRef {
@@ -113,19 +126,6 @@ func (r *Ci) Prepare() *Changeset {
 	q := r.query.Select("prepare")
 
 	return new(Changeset).WithGraphQLQuery(q)
-}
-
-func (r *Ci) Release(ctx context.Context, version string) (string, error) {
-	if r.release != nil {
-		return *r.release, nil
-	}
-	q := r.query.Select("release")
-	q = q.Arg("version", version)
-
-	var response string
-
-	q = q.Bind(&response)
-	return response, q.Execute(ctx)
 }
 
 // CiOpts contains options for Query.Ci

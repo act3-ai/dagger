@@ -50,7 +50,7 @@ func (m *Ci) Prepare(ctx context.Context,
 	return release, nil
 }
 
-func (m *Ci) Release(ctx context.Context,
+func (m *Ci) CreateRelease(ctx context.Context,
 	version string,
 ) (string, error) {
 	tag := m.Module + "/v" + version

@@ -220,3 +220,6 @@ is-module = true
 
 [sdks.go.scopes.sonarqube]
 is-module = true
+
+[modules.ci.settings]
+gitRef = "."

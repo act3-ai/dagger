@@ -40,8 +40,8 @@ type functionSpec struct {
 
 var functions = []functionSpec{
 	{Name: "ci", Receiver: "Ci", FnName: "", Args: map[string]argumentSpec{"gitRef": {Required: false, Default: "", Encoding: "string"}, "githubToken": {Required: false, Default: "", Encoding: "string"}, "module": {Required: true, Default: "", Encoding: "string"}}},
+	{Name: "createRelease", Receiver: "Ci", FnName: "CreateRelease", Args: map[string]argumentSpec{"version": {Required: true, Default: "", Encoding: "string"}}},
 	{Name: "prepare", Receiver: "Ci", FnName: "Prepare", Args: map[string]argumentSpec{}},
-	{Name: "release", Receiver: "Ci", FnName: "Release", Args: map[string]argumentSpec{"version": {Required: true, Default: "", Encoding: "string"}}},
 }
 
 func main() {
