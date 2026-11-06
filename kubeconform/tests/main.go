@@ -15,23 +15,32 @@
 package main
 
 import (
+	"context"
 	"dagger/tests/internal/dagger"
+
+	kubeconform "dagger/tests/internal/dagger/clients/kubeconform"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
 
 // +check
-func (m *Tests) Manifest() *dagger.Container {
-	manifest := dag.CurrentModule().Source().
+func (m *Tests) Manifest(ctx context.Context) error {
+	manifest := core.NewCurrentModule().Source().
 		Directory("testdata/").
 		Filter(dagger.DirectoryFilterOpts{Include: []string{"kustomize/manifest.yaml"}})
 
-	return dag.Kubeconform().Validate(manifest, dagger.KubeconformValidateOpts{Verbose: true})
+	_, err := kubeconform.New().Validate(manifest, kubeconform.KubeconformValidateOpts{Verbose: true}).Sync(ctx)
+
+	return err
 }
 
 // +check
-func (m *Tests) KustomizeWithCrds() *dagger.Container {
-	manifest := dag.CurrentModule().Source().Directory("testdata")
-	return dag.Kubeconform().
-		ValidateKustomize(manifest, []string{"kustomize"}, dagger.KubeconformValidateKustomizeOpts{Crds: manifest.Directory("crds")})
+func (m *Tests) KustomizeWithCrds(ctx context.Context) error {
+	manifest := core.NewCurrentModule().Source().Directory("testdata")
+	_, err := kubeconform.New().
+		ValidateKustomize(manifest, []string{"kustomize"}, kubeconform.KubeconformValidateKustomizeOpts{Crds: manifest.Directory("crds")}).Sync(ctx)
+
+	return err
 }

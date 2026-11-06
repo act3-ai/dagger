@@ -4,9 +4,13 @@ package main
 import (
 	"context"
 	"dagger/data-tool/internal/dagger"
+	registryconfig "dagger/data-tool/internal/dagger/clients/registry-config"
+	wolfi "dagger/data-tool/internal/dagger/clients/wolfi"
 	"fmt"
 	"regexp"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 const baseImage = "ghcr.io/act3-ai/data-tool:v1.16.1"
@@ -14,7 +18,7 @@ const baseImage = "ghcr.io/act3-ai/data-tool:v1.16.1"
 // ASCE Data Tool Module
 type DataTool struct {
 	// +private
-	RegistryConfig *dagger.RegistryConfig
+	RegistryConfig *registryconfig.RegistryConfig
 
 	// Underlying container with all the auth added
 	Container *dagger.Container
@@ -31,7 +35,7 @@ func New(
 	}
 
 	// Grab the acedt executable from its image
-	acedt := dag.Container().
+	acedt := core.NewContainer().
 		From(baseImage).
 		// File("/ko-app/ace-dt")
 		File("/usr/local/bin/ace-dt")
@@ -39,17 +43,17 @@ func New(
 	const cachePath = "/oci"
 
 	// Use the git container (instead of bash) because we want "ace-dt git" to work
-	c := dag.Wolfi().Container(dagger.WolfiContainerOpts{
+	c := wolfi.New().Container(wolfi.WolfiContainerOpts{
 		Packages: []string{"bash", "git", "git-lfs"},
 	}).
 		WithFile("/usr/local/bin/ace-dt", acedt).
 		WithUser("0").
-		WithMountedCache(cachePath, dag.CacheVolume("oci-cache")).
+		WithMountedCache(cachePath, core.NewCacheVolume("oci-cache")).
 		WithEnvVariable("ACE_DT_CACHE_PATH", cachePath).
-		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
-		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
+		WithFile("/usr/local/bin/git-credential-env", core.NewCurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                        // needed for WithGitAuth()
 	return &DataTool{
-		RegistryConfig: dag.RegistryConfig(),
+		RegistryConfig: registryconfig.New(),
 		Container:      c,
 	}
 }
@@ -79,7 +83,7 @@ func (m *DataTool) WithGitAuth(
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
 	host = strings.ReplaceAll(host, ".", "_")
-	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+	gitUserSecret := core.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
 	// add secret variables for provided creds
 	m.Container = m.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
@@ -152,7 +156,7 @@ func (m *DataTool) Scatter(ctx context.Context,
 func (m *DataTool) GrypeDB(ctx context.Context) *dagger.Directory {
 	const cachePath = "/tmp/cache/grype"
 
-	return dag.Container().
+	return core.NewContainer().
 		From("anchore/grype:debug").
 		// WithUser(owner).
 		// WithMountedCache(cachePath, dag.CacheVolume("grype-db-cache"), dagger.ContainerWithMountedCacheOpts{Owner: owner}).
@@ -233,7 +237,7 @@ func (m *DataTool) Scan(ctx context.Context,
 	// Gathered image reference
 	image string,
 ) (string, error) {
-	grype := dag.Container().
+	grype := core.NewContainer().
 		From("anchore/grype:latest").
 		File("/grype")
 
@@ -241,7 +245,7 @@ func (m *DataTool) Scan(ctx context.Context,
 
 	grypeDB := m.GrypeDB(ctx)
 
-	syft := dag.Container().
+	syft := core.NewContainer().
 		From("anchore/syft:latest").
 		File("/syft")
 

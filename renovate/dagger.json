@@ -1,7 +1,0 @@
-{
-  "name": "renovate",
-  "engineVersion": "v0.21.6",
-  "sdk": {
-    "source": "go"
-  }
-}

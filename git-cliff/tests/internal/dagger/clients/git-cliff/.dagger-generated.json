@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "files": {
+    "dagger.gen.go": "28942616d45280a1284f8bac3eaebb59cbf17836b1a8ab2ac647b57f79eff087",
+    "git-cliff.gen.go": "d703f7915a9bfad5b96fbd91e37542f2c0cb3bd99bf10d762afea6ce8d94bb4e"
+  }
+}

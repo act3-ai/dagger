@@ -10,6 +10,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	core "dagger.io/dagger/core"
 )
 
 // Renovate tasks
@@ -116,7 +118,7 @@ func New(
 	logLevel string,
 ) *Renovate {
 	if base == nil {
-		base = dag.Container().From("renovate/renovate:full")
+		base = core.NewContainer().From("renovate/renovate:full")
 	}
 	return &Renovate{
 		Repositories:  repositories,
@@ -220,7 +222,7 @@ func (m *Renovate) getHostRules(ctx context.Context) (*dagger.Secret, error) {
 	}
 
 	// TODO RegistryConfig uses the sha256 digest of the value as the name of the secret
-	return dag.SetSecret("renovate-host-rules", string(hostRulesJson)), nil
+	return core.SetSecret("renovate-host-rules", string(hostRulesJson)), nil
 }
 
 func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
@@ -241,7 +243,7 @@ func (m *Renovate) getSecrets(ctx context.Context) (*dagger.Secret, error) {
 	}
 
 	// TODO RegistryConfig uses the sha256 digest of the value as the name of the secret
-	return dag.SetSecret("renovate-secrets", string(secretsJson)), nil
+	return core.SetSecret("renovate-secrets", string(secretsJson)), nil
 }
 
 // +cache="never"

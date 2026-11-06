@@ -7,6 +7,8 @@ import (
 	"dagger/kubeconform/internal/dagger"
 	"fmt"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 type Kubeconform struct{}
@@ -82,11 +84,11 @@ func (m *Kubeconform) KustomizeBuild(
 	// ex. --paths="overlays/dev,overlays/prod"
 	paths []string) *dagger.Directory {
 
-	ctr := dag.Container().
+	ctr := core.NewContainer().
 		From("bitnami/kubectl").
 		WithDirectory("/src", src).
 		WithWorkdir("/src").
-		WithDirectory("/out", dag.Directory())
+		WithDirectory("/out", core.NewDirectory())
 
 	for _, p := range paths {
 		outFile := fmt.Sprintf("/out/%s.yaml", strings.ReplaceAll(p, "/", "_"))
@@ -102,10 +104,10 @@ func (m *Kubeconform) KustomizeBuild(
 // helper container so that bash is accessible
 func (m *Kubeconform) bashCtr() *dagger.Container {
 
-	kcCtr := dag.Container().
+	kcCtr := core.NewContainer().
 		From("ghcr.io/yannh/kubeconform:latest")
 
-	return dag.Container().From("cgr.dev/chainguard/bash").
+	return core.NewContainer().From("cgr.dev/chainguard/bash").
 		WithFile("/kubeconform", kcCtr.File("/kubeconform")).
 		WithFile("/openapi2jsonschema", kcCtr.File("/openapi2jsonschema")).
 		WithEnvVariable("FILENAME_FORMAT", "{kind}-{fullgroup}-{version}")

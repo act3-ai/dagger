@@ -1,0 +1,5 @@
+name = "release"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

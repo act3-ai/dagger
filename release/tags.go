@@ -7,6 +7,9 @@ import (
 	"fmt"
 	"strings"
 
+	wolfi "dagger/release/internal/dagger/clients/wolfi"
+
+	core "dagger.io/dagger/core"
 	"github.com/distribution/reference"
 )
 
@@ -14,11 +17,11 @@ const imageOras = "ghcr.io/oras-project/oras:v1.3.0"
 
 // orasCtr returns a container with an oras executable, with mounted registry credentials.
 func (r *Release) orasCtr() *dagger.Container {
-	oras := dag.Container().
+	oras := core.NewContainer().
 		From(imageOras).
 		File("/bin/oras")
 
-	return dag.Wolfi().
+	return wolfi.New().
 		Container().
 		WithMountedFile("/bin/oras", oras).
 		WithMountedSecret("/root/.docker/config.json", r.RegistryConfig.Secret())

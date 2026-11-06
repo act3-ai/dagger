@@ -9,6 +9,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 type Netrc struct {
@@ -63,7 +65,7 @@ func (m *Netrc) AsSecret(ctx context.Context) (*dagger.Secret, error) {
 	hashStr := hex.EncodeToString(hash[:])[:8]
 
 	secretName := fmt.Sprintf("NETRC_FILE_%s", hashStr)
-	netrcSecret := dag.SetSecret(secretName, sb.String())
+	netrcSecret := core.SetSecret(secretName, sb.String())
 
 	return netrcSecret, nil
 }

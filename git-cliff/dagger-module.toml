@@ -1,0 +1,5 @@
+name = "git-cliff"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

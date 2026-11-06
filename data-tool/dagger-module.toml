@@ -1,0 +1,5 @@
+name = "data-tool"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

@@ -9,6 +9,8 @@ import (
 	"dagger/docker/internal/dagger"
 	"encoding/json"
 	"fmt"
+
+	"dagger.io/dagger/core"
 )
 
 type Docker struct {
@@ -115,7 +117,7 @@ func (d *Docker) WithDockerConfig(
 
 	// Extract and append credentials
 	for registry, creds := range config.Auths {
-		daggerSecret := dag.SetSecret(registry, creds.Password)
+		daggerSecret := core.SetSecret(registry, creds.Password)
 
 		d.RegistryCreds = append(d.RegistryCreds, RegistryCreds{
 			Registry: registry,
@@ -162,7 +164,7 @@ func (d *Docker) getSecrets(ctx context.Context) ([]*dagger.Secret, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get the secret value in plaintext for %s: %w", s.Name, err)
 		}
-		secret := dag.SetSecret(s.Name, plaintext)
+		secret := core.SetSecret(s.Name, plaintext)
 		secretSlice = append(secretSlice, secret)
 	}
 
@@ -188,7 +190,7 @@ func (d *Docker) Build(
 	// check if platform given, and set to default of the engine if not
 	var err error
 	if platform == "" {
-		platform, err = dag.DefaultPlatform(ctx)
+		platform, err = core.DefaultPlatform(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -243,7 +245,7 @@ func (d *Docker) Publish(ctx context.Context,
 	}
 	// check if platform given, and set to default of the engine if not
 	if len(platforms) == 0 {
-		defaultPlatform, err := dag.DefaultPlatform(ctx)
+		defaultPlatform, err := core.DefaultPlatform(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -265,7 +267,7 @@ func (d *Docker) Publish(ctx context.Context,
 	dgstAddrs := make([]string, 0, len(tags))
 	for _, tag := range tags {
 		addr := fmt.Sprintf("%s:%s", address, tag)
-		a, err := dag.Container().Publish(ctx, addr,
+		a, err := core.NewContainer().Publish(ctx, addr,
 			dagger.ContainerPublishOpts{
 				PlatformVariants: platformVariants,
 			})

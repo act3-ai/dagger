@@ -5,15 +5,18 @@ package main
 import (
 	"context"
 	"dagger/tests/internal/dagger"
+	python "dagger/tests/internal/dagger/clients/python"
 	"fmt"
 	"strings"
+
+	"dagger.io/dagger/core"
 )
 
 type Tests struct{}
 
 // helper
 func (t *Tests) srcDir() *dagger.Directory {
-	src := dag.CurrentModule().
+	src := core.NewCurrentModule().
 		Source().
 		Directory("testapp").
 		Filter(dagger.DirectoryFilterOpts{Exclude: []string{"err.py"}})
@@ -34,8 +37,7 @@ print("it worked")
 func (t *Tests) Base(ctx context.Context) error {
 	const scriptPath = "script.py"
 	// d := dag.Directory().WithNewFile(scriptPath, script)
-	out, err := dag.
-		Python(t.srcDir()).
+	out, err := python.New(t.srcDir()).
 		Project().
 		WithNewFile(scriptPath, script).
 		WithExec([]string{"uv", "run", scriptPath}).
@@ -52,20 +54,26 @@ func (t *Tests) Base(ctx context.Context) error {
 
 // +check
 // Run mypy, expect valid/no errors
-func (t *Tests) Mypy() *dagger.Container {
-	return dag.Python(t.srcDir()).Mypy().Lint()
+func (t *Tests) Mypy(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Mypy().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run pylint, expect valid/no errors
-func (t *Tests) Pylint() *dagger.Container {
-	return dag.Python(t.srcDir()).Pylint().Lint()
+func (t *Tests) Pylint(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Pylint().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run pyright, expect valid/no errors
-func (t *Tests) Pyright() *dagger.Container {
-	return dag.Python(t.srcDir()).Pyright().Lint()
+func (t *Tests) Pyright(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Pyright().Lint().Sync(ctx)
+
+	return err
 
 }
 
@@ -74,9 +82,9 @@ func (t *Tests) Pyright() *dagger.Container {
 func (t *Tests) RuffVersion(ctx context.Context) error {
 
 	//add ruff to pyproject.toml first, then use that version to run lint
-	pinnedVerDir := dag.Python(t.srcDir()).DevContainer().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
+	pinnedVerDir := python.New(t.srcDir()).DevContainer().WithExec([]string{"uv", "add", "ruff==0.14.13"}).Directory("/app")
 
-	pinnedVer, _ := dag.Python(pinnedVerDir).Ruff().Lint().WithExec([]string{"uv", "tree", "--package", "ruff"}).Stdout(ctx)
+	pinnedVer, _ := python.New(pinnedVerDir).Ruff().Lint().WithExec([]string{"uv", "tree", "--package", "ruff"}).Stdout(ctx)
 
 	if pinnedVer != "ruff v0.14.13\n" {
 		return fmt.Errorf("Version expected: ruff v0.14.13, found: %s", pinnedVer)
@@ -87,14 +95,16 @@ func (t *Tests) RuffVersion(ctx context.Context) error {
 
 // +check
 // Run ruff lint, expect valid/no errors
-func (t *Tests) RuffLint() *dagger.Container {
-	return dag.Python(t.srcDir()).Ruff().Lint()
+func (t *Tests) RuffLint(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Ruff().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run ruff lint-report, expect valid/no errors
 func (t *Tests) RuffLintReport(ctx context.Context) error {
-	report := dag.Python(t.srcDir()).Ruff().LintReport()
+	report := python.New(t.srcDir()).Ruff().LintReport()
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -112,7 +122,7 @@ func (t *Tests) RuffLintReport(ctx context.Context) error {
 // Run ruff lint-report with extra arguments, expect valid/no errors
 func (t *Tests) RuffLintReportWithExtraArgs(ctx context.Context) error {
 	expectedName := "ruff-lint.json"
-	report := dag.Python(t.srcDir()).Ruff().LintReport(dagger.PythonRuffLintReportOpts{OutputFormat: "json", OutputFile: expectedName})
+	report := python.New(t.srcDir()).Ruff().LintReport(python.PythonRuffLintReportOpts{OutputFormat: "json", OutputFile: expectedName})
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -139,7 +149,7 @@ func (t *Tests) RuffLintReportWithExtraArgs(ctx context.Context) error {
 // +check
 // Run ruff lint-fix, expect valid/no errors
 func (t *Tests) RuffLintFix(ctx context.Context) error {
-	empty, err := dag.Python(t.srcDir()).Ruff().LintFix().IsEmpty(ctx)
+	empty, err := python.New(t.srcDir()).Ruff().LintFix().IsEmpty(ctx)
 
 	if !empty {
 		return err
@@ -149,14 +159,16 @@ func (t *Tests) RuffLintFix(ctx context.Context) error {
 
 // +check
 // Run ruff format, expect valid/no errors
-func (t *Tests) RuffFormat() *dagger.Container {
-	return dag.Python(t.srcDir()).Ruff().Format()
+func (t *Tests) RuffFormat(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Ruff().Format().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run ruff format-report, expect valid/no errors
 func (t *Tests) RuffFormatReport(ctx context.Context) error {
-	report := dag.Python(t.srcDir()).Ruff().FormatReport()
+	report := python.New(t.srcDir()).Ruff().FormatReport()
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -174,7 +186,7 @@ func (t *Tests) RuffFormatReport(ctx context.Context) error {
 // Run ruff format-report with arguments, expect valid/no errors
 func (t *Tests) RuffFormatReportWithExtraArgs(ctx context.Context) error {
 	expectedName := "ruff-format.json"
-	report := dag.Python(t.srcDir()).Ruff().FormatReport(dagger.PythonRuffFormatReportOpts{OutputFormat: "full", OutputFile: expectedName})
+	report := python.New(t.srcDir()).Ruff().FormatReport(python.PythonRuffFormatReportOpts{OutputFormat: "full", OutputFile: expectedName})
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -201,7 +213,7 @@ func (t *Tests) RuffFormatReportWithExtraArgs(ctx context.Context) error {
 // +check
 // Run ruff format-fix, expect valid/no errors
 func (t *Tests) RuffFormatFix(ctx context.Context) error {
-	empty, err := dag.Python(t.srcDir()).Ruff().FormatFix().IsEmpty(ctx)
+	empty, err := python.New(t.srcDir()).Ruff().FormatFix().IsEmpty(ctx)
 
 	if !empty {
 		return err
@@ -211,14 +223,16 @@ func (t *Tests) RuffFormatFix(ctx context.Context) error {
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) Pytest() *dagger.Container {
-	return dag.Python(t.srcDir()).Pytest().Test()
+func (t *Tests) Pytest(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Pytest().Test().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run unit-test, expect valid/no errors
 func (t *Tests) PytestReport(ctx context.Context) error {
-	ptResults := dag.Python(t.srcDir()).Pytest().Report()
+	ptResults := python.New(t.srcDir()).Pytest().Report()
 
 	checks := []struct {
 		name string
@@ -246,20 +260,24 @@ func (t *Tests) PytestReport(ctx context.Context) error {
 
 // +check
 // Run cognitive complexity lint, expect valid/no errors
-func (t *Tests) CognitiveComplexity() *dagger.Container {
-	return dag.Python(t.srcDir()).CognitiveComplexity().Lint()
+func (t *Tests) CognitiveComplexity(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).CognitiveComplexity().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run ty, expect valid/no errors
-func (t *Tests) Ty() *dagger.Container {
-	return dag.Python(t.srcDir()).Ty().Lint()
+func (t *Tests) Ty(ctx context.Context) error {
+	_, err := python.New(t.srcDir()).Ty().Lint().Sync(ctx)
+
+	return err
 }
 
 // +check
 // Run ty, expect valid/no errors
 func (t *Tests) TyReport(ctx context.Context) error {
-	report := dag.Python(t.srcDir()).Ty().Report()
+	report := python.New(t.srcDir()).Ty().Report()
 	results, err := report.Contents(ctx)
 
 	if err != nil {
@@ -275,13 +293,15 @@ func (t *Tests) TyReport(ctx context.Context) error {
 
 // +check
 // Run unit-test, expect valid/no errors
-func (t *Tests) UvProject() *dagger.Container {
-	src := dag.Directory().
+func (t *Tests) UvProject(ctx context.Context) error {
+	src := core.NewDirectory().
 		WithDirectory("sub", t.srcDir())
 
-	return dag.Python(src, dagger.PythonOpts{
+	_, err := python.New(src, python.PythonOpts{
 		SyncArgs:  []string{"--project", "/app/sub"},
 		SyncPaths: []string{"sub/pyproject.toml", "sub/uv.lock"},
 	}).
-		DevContainer()
+		DevContainer().Sync(ctx)
+
+	return err
 }

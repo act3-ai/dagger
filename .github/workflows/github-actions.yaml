@@ -11,56 +11,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Dagger Engine
-        uses: dagger/dagger-for-github@8.0.0
         with:
-          version: latest
+          fetch-depth: 0
 
-      - name: test-docker
-        working-directory: ./docker/tests
-        run: dagger checks
-
-      - name: test-git-cliff
-        working-directory: ./git-cliff/tests
-        run: dagger checks
-
-      - name: test-goreleaser
-        working-directory: ./goreleaser/tests
-        run: dagger checks
-
-      - name: test-markdownlint
-        working-directory: ./markdownlint/tests
-        run: dagger checks
-
-      - name: test-python
-        working-directory: ./python/tests
-        run: dagger checks
-
-      - name: test-yamllint
-        working-directory: ./yamllint/tests
-        run: dagger checks
-
-      - name: test-release
-        working-directory: ./release/tests
-        run: dagger checks
-
-      - name: test-gocoverage
-        working-directory: ./gocoverage/tests
-        run: dagger checks
-
-      - name: test-acedt
-        working-directory: ./data-tool/tests
-        run: dagger checks
-
-      - name: test-shields
-        working-directory: ./shields/tests
-        run: dagger checks
-
-      - name: test-netrc
-        working-directory: ./netrc/tests
-        run: dagger checks
-      
-      - name: test-kubeconform
-        working-directory: ./kubeconform/tests
-        run: dagger checks
+      - name: Dagger Checks
+        uses: dagger/dagger-for-github@v8.4.0
+        with:
+          verb: run
+          args: dagger check
+          version: "v1.0.0-beta.24"

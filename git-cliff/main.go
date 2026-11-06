@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 const (
@@ -56,7 +58,7 @@ func New(ctx context.Context,
 	cmd := []string{"git-cliff", "--use-native-tls"}
 	srcDir := "/work/src"
 	//base git-cliff container
-	ctr := dag.Container().
+	ctr := core.NewContainer().
 		From(fmt.Sprintf("%s:%s", imageGitCliff, gitCliffVersion)).
 		WithDirectory(srcDir, gitRefDir).
 		With(func(c *dagger.Container) *dagger.Container {

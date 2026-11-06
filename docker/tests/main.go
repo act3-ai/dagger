@@ -19,6 +19,10 @@ import (
 	"dagger/tests/internal/dagger"
 	"fmt"
 	"strings"
+
+	docker "dagger/tests/internal/dagger/clients/docker"
+
+	core "dagger.io/dagger/core"
 )
 
 type Tests struct{}
@@ -26,14 +30,14 @@ type Tests struct{}
 // +check
 // Test WithLabels to ensure name and value are being set properly
 func (t *Tests) WithLabels(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="docker/tests"
 	src *dagger.Directory) error {
 
 	const expectedName = `test.io`
 	const expectedValue = `label1`
 
-	ctr := dag.Docker(src).WithLabel("test.io", "label1").
-		Build(dagger.DockerBuildOpts{Target: "with-label"})
+	ctr := docker.New(src).WithLabel("test.io", "label1").
+		Build(docker.DockerBuildOpts{Target: "with-label"})
 
 	labelList, err := ctr.Labels(ctx)
 	if err != nil {
@@ -63,13 +67,13 @@ func (t *Tests) WithLabels(ctx context.Context,
 
 // +check
 func (t *Tests) WithBuildArg(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="./docker/tests"
 	src *dagger.Directory) error {
 
 	// dagger has no list build arg function, so build arg is being set to file in Dockerfile
 	// .Stdout() requires a WithExec, even if one is in Dockerfile
-	actual, err := dag.Docker(src).WithBuildArg("TEST_ARG1", "testvalue1").
-		Build(dagger.DockerBuildOpts{Target: "with-build-arg"}).WithExec([]string{"cat", "testarg.txt"}).Stdout(ctx)
+	actual, err := docker.New(src).WithBuildArg("TEST_ARG1", "testvalue1").
+		Build(docker.DockerBuildOpts{Target: "with-build-arg"}).WithExec([]string{"cat", "testarg.txt"}).Stdout(ctx)
 
 	const expected = "testvalue1"
 
@@ -84,12 +88,12 @@ func (t *Tests) WithBuildArg(ctx context.Context,
 // + check
 // Test WithSecrets to ensure name and value are being set properly
 func (t *Tests) WithSecret(ctx context.Context,
-	// +defaultPath="."
+	// +defaultPath="docker/tests"
 	src *dagger.Directory) error {
 
-	_, err := dag.Docker(src).
-		WithSecret("TEST_SECRET1", dag.SetSecret("DUMMY_SECRET1", "password1")).
-		Build(dagger.DockerBuildOpts{Target: "with-secret"}).
+	_, err := docker.New(src).
+		WithSecret("TEST_SECRET1", core.SetSecret("DUMMY_SECRET1", "password1")).
+		Build(docker.DockerBuildOpts{Target: "with-secret"}).
 		Sync(ctx)
 
 	return err

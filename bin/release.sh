@@ -73,32 +73,15 @@ has_module_changed() {
   fi
 }
 
-# Run all checks in sub modules
+# Run checks across workspace
 check_all() {
-  local any_failed=0
-  local test_dir
-
-  for dir in */; do
-    test_dir="${dir}tests"
-    if [[ ! -f "$test_dir/dagger.json" ]]; then
-      continue
-    fi
-
-    echo "Checking: $test_dir"
-    
-    # If the subshell fails, set the failure flag to 1
-    if ! (cd "$test_dir" && dagger check); then
-      echo "Check failed in $test_dir"
-      any_failed=1
-    fi
-
-  done
-
-  # If any check failed, exit the parent process with an error code now
-  if [[ $any_failed -eq 1 ]]; then
-    echo "One or more Dagger checks failed."
+  require_no_module
+  echo "Running root dagger check..."
+  if ! dagger check; then
+    echo "Dagger checks failed."
     exit 1
   fi
+  echo "All Dagger checks passed."
 }
 
 # Run prepare on all sub modules
@@ -220,7 +203,6 @@ approve_all() {
 
 }
 
-
 # Run publish on all approved modules
 publish_all() {
   require_some_module
@@ -257,11 +239,13 @@ prepare() {
 
     git fetch --tags
 
-    # Run module tests only if the tests subdirectory exists
-    if [[ -d "$module/tests" ]]; then
-      dagger -m "$module/tests" checks
+    # Run check targeting the module if supported, or root check
+    echo "Running checks for '$module'..."
+    if dagger check -l 2>/dev/null | awk '{print $1}' | grep -Eq "^(${module}|${module}/tests)$"; then
+      echo "Running checks for '$module'..."
+      dagger check "--$module/tests"
     else
-      echo "No tests directory found for '$module', skipping tests."
+      echo "No checks registered for '$module', skipping checks."
     fi
 
     dagger call --auto-apply --progress=dots --module="$module" prepare
@@ -278,7 +262,6 @@ prepare() {
     if confirm_continue approve; then
       "$0" approve "$module"
     fi    
-    
 }
 
 approve() {
@@ -307,9 +290,8 @@ approve() {
     # Prompt user to continue to next step
     echo "Please review the local changes, especially $module/releases/$version.md"
     if confirm_continue publish; then
-      "$0" approve "$module"
+      "$0" publish "$module"
     fi    
-
 }
 
 publish() {
@@ -329,6 +311,24 @@ publish() {
     echo "Successfully ran 'dagger release' on module $module"
 }
 
+help() {
+  cat <<EOF
+Usage: $0 <command> [options] [module...]
+
+Commands:
+  check-all       Run dagger check across the workspace
+  prepare-all     Detect changed modules and prepare releases
+  approve-all     Approve and tag all prepared modules
+  publish-all     Push and publish all approved modules
+  prepare <mod>   Prepare a single module
+  approve <mod>   Approve and tag a single module
+  publish <mod>   Publish a single module
+
+Options:
+  --dry-run       Print commands without executing them
+EOF
+}
+
 ################################################################################################
 #   Main
 ################################################################################################
@@ -339,15 +339,15 @@ ensure_in_project_root
 # Initialize an empty array to store multiple modules
 modules=()
 
-# Initialize to "not a try run"
+# Initialize to "not a dry run"
 dry_run=""
 
 # The _all functions will set this to true to control the lower lever prompting
 # an external env var BATCH_MODE is use to span process boundaries
 batch_mode="${BATCH_MODE:-}"
 
-cmd=$1
-shift
+cmd="${1:-help}"
+shift || true
 
 # Loop through remaining args
 while [[ $# -gt 0 ]]; do
@@ -370,22 +370,22 @@ done
 
 case "$cmd" in
 prepare)
-    printf "\nRunning prepare..."
+    printf "\nRunning prepare...\n"
     prepare
     ;;
 
 approve)
-    printf "\nRunning approve..."
+    printf "\nRunning approve...\n"
     approve
     ;;
 
 publish)
-    printf "Running publish..."
+    printf "Running publish...\n"
     publish
     ;;
 
 check-all)
-    printf "\nRunning all checks for all modules...\n"
+    printf "\nRunning all checks...\n"
     check_all    
     ;;
 

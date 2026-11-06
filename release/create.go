@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 
+	gh "dagger/release/internal/dagger/clients/gh"
+
+	core "dagger.io/dagger/core"
 	"github.com/sourcegraph/conc/pool"
 )
 
@@ -33,15 +36,15 @@ func (r *Release) CreateGithub(ctx context.Context,
 	assets []*dagger.File,
 ) (string, error) {
 
-	err := dag.Gh(
-		dagger.GhOpts{
+	err := gh.New(
+		gh.GhOpts{
 			Token:  token,
 			Repo:   repo,
 			Source: r.GitRef.Tree(),
 		}).
 		Release().
 		Create(ctx, tag, title,
-			dagger.GhReleaseCreateOpts{
+			gh.GhReleaseCreateOpts{
 				NotesFile: notes,
 				Files:     assets,
 			})
@@ -83,7 +86,7 @@ func (r *Release) CreateGitlab(ctx context.Context,
 		title = tag
 	}
 
-	_, err = dag.Container().
+	_, err = core.NewContainer().
 		From(imageGlabCLI).
 		WithMountedFile(notesFileName, notes).
 		WithSecretVariable("GITLAB_TOKEN", token).
@@ -132,7 +135,7 @@ func (r *Release) gitlabUploadAssets(ctx context.Context,
 			if err != nil {
 				return "", err
 			}
-			_, err = dag.Container().
+			_, err = core.NewContainer().
 				From(imageGlabCLI).
 				WithMountedFile(assetName, asset).
 				WithSecretVariable("GITLAB_TOKEN", token).

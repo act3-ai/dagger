@@ -1,0 +1,5 @@
+name = "yamllint"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

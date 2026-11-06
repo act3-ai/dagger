@@ -13,6 +13,10 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	registryconfig "dagger/goreleaser/internal/dagger/clients/registry-config"
+
+	core "dagger.io/dagger/core"
 )
 
 // environment variable names
@@ -33,7 +37,7 @@ type Goreleaser struct {
 	Container *dagger.Container
 
 	// +private
-	RegistryConfig *dagger.RegistryConfig
+	RegistryConfig *registryconfig.RegistryConfig
 }
 
 func New(ctx context.Context,
@@ -82,8 +86,8 @@ func New(ctx context.Context,
 		}).
 		With(func(c *dagger.Container) *dagger.Container {
 			if !disableCache {
-				c = withGoModuleCacheFn(dag.CacheVolume("go-mod"), nil, "")(c)
-				c = withGoBuildCacheFn(dag.CacheVolume("go-build"), nil, "")(c)
+				c = withGoModuleCacheFn(core.NewCacheVolume("go-mod"), nil, "")(c)
+				c = withGoBuildCacheFn(core.NewCacheVolume("go-build"), nil, "")(c)
 			}
 			return c
 		}).
@@ -97,12 +101,12 @@ func New(ctx context.Context,
 		}).
 		WithWorkdir(srcDir).
 		WithMountedDirectory(srcDir, src).
-		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
-		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
+		WithFile("/usr/local/bin/git-credential-env", core.NewCurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                        // needed for WithGitAuth()
 
 	gr := &Goreleaser{
 		Container:      container,
-		RegistryConfig: dag.RegistryConfig(),
+		RegistryConfig: registryconfig.New(),
 	}
 
 	return gr
@@ -156,7 +160,7 @@ func (gr *Goreleaser) WithGitAuth(
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
 	host = strings.ReplaceAll(host, ".", "_")
-	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+	gitUserSecret := core.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
 	// add secret variables for provided creds
 	gr.Container = gr.Container.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).
@@ -252,7 +256,7 @@ func (gr *Goreleaser) Run(ctx context.Context,
 
 // defaultContainer constructs a minimal container containing a source git repository.
 func defaultContainer(version string) *dagger.Container {
-	return dag.Container().
+	return core.NewContainer().
 		From(fmt.Sprintf("%s:%s", imageGoReleaser, version)).
 		With(func(r *dagger.Container) *dagger.Container {
 			// inherit from host, overriden by WithEnvVariable

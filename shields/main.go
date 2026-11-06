@@ -12,11 +12,15 @@ package main
 import (
 	"context"
 	"dagger/shields/internal/dagger"
+	gomod "dagger/shields/internal/dagger/clients/go"
+	wolfi "dagger/shields/internal/dagger/clients/wolfi"
 	"fmt"
 	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 const (
@@ -179,7 +183,7 @@ func (m *Shields) GoReport(ctx context.Context,
 		goreportExecName = "goreportcard-cli"
 	)
 
-	out, _ := dag.Go().
+	out, _ := gomod.New().
 		Container().
 		WithExec([]string{"apt", "install", "make"}).
 		WithDirectory(goreportSrcDir, goreportSrc.Tree()).
@@ -275,7 +279,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 			return nil, fmt.Errorf("building query: %w", err)
 		}
 
-		return dag.HTTP(queryURL), nil
+		return core.HTTP(queryURL), nil
 	case shieldsService == nil:
 		shieldsService = m.AsService()
 		fallthrough
@@ -291,8 +295,8 @@ func (m *Shields) SendQuery(ctx context.Context,
 			return nil, fmt.Errorf("building query: %w", err)
 		}
 
-		return dag.Wolfi().
-			Container(dagger.WolfiContainerOpts{Packages: []string{"curl"}}).
+		return wolfi.New().
+			Container(wolfi.WolfiContainerOpts{Packages: []string{"curl"}}).
 			WithServiceBinding("shields", shieldsService).
 			WithExec([]string{"curl", "-fsSL", queryURL, "-o", badgeFileName}).
 			File(badgeFileName), nil
@@ -306,7 +310,7 @@ func (m *Shields) SendQuery(ctx context.Context,
 // Caller must use [Shields.AsService].Start and [Shields.AsService].Stop to take
 // advantage of optimization.
 func (m *Shields) AsService() *dagger.Service {
-	return dag.Container().
+	return core.NewContainer().
 		From(shieldsCtr).
 		WithExposedPort(shieldsPort).
 		AsService()

@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"path"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 const uvImageDefault = "ghcr.io/astral-sh/uv:debian"
@@ -71,13 +73,13 @@ func New(
 func (python *Python) base() *dagger.Container {
 	return python.Base.
 		WithWorkdir("/app").
-		WithMountedCache("/root/.cache/uv", dag.CacheVolume("uv-cache")).
-		WithMountedCache("/root/.local/share/uv", dag.CacheVolume("uv-home-cache")).
+		WithMountedCache("/root/.cache/uv", core.NewCacheVolume("uv-cache")).
+		WithMountedCache("/root/.local/share/uv", core.NewCacheVolume("uv-home-cache")).
 		WithEnvVariable("UV_SYSTEM_CERTS", "true").
 		WithEnvVariable("UV_CACHE_DIR", "/root/.cache/uv"). // This is the default location for the UV_CACHE_DIR but we set it just to be safe.
 		WithEnvVariable("UV_LINK_MODE", "copy").
-		WithFile("/usr/local/bin/git-credential-env", dag.CurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
-		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                    // needed for WithGitAuth()
+		WithFile("/usr/local/bin/git-credential-env", core.NewCurrentModule().Source().File("bin/git-credential-env.sh")). // needed for WithGitAuth()
+		WithExec([]string{"git", "config", "--global", "credential.helper", "env"})                                        // needed for WithGitAuth()
 }
 
 // adds project source to base container
@@ -158,7 +160,7 @@ func (python *Python) WithGitAuth(
 	// convert host to be in proper env var format.
 	host = strings.ToUpper(host)
 	host = strings.ReplaceAll(host, ".", "_")
-	gitUserSecret := dag.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
+	gitUserSecret := core.SetSecret(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), username)
 
 	// add secret variables for provided creds
 	python.Base = python.Base.WithSecretVariable(fmt.Sprintf("GIT_SECRET_USERNAME_%s", host), gitUserSecret).

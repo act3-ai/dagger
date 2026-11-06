@@ -1,0 +1,5 @@
+name = "netrc"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

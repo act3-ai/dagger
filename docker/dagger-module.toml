@@ -1,0 +1,5 @@
+name = "docker"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

@@ -1,0 +1,5 @@
+name = "shields"
+
+[entrypoint]
+  kind = "dang"
+  source = "./internal/dagger/entrypoint"

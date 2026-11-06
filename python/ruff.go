@@ -5,6 +5,8 @@ import (
 	"dagger/python/internal/dagger"
 	"slices"
 	"strings"
+
+	core "dagger.io/dagger/core"
 )
 
 type Ruff struct {
@@ -50,7 +52,7 @@ func (r *Ruff) baseArgs(ctx context.Context, subcommand string) []string {
 
 func (r *Ruff) baseContainer() *dagger.Container {
 	return r.Python.Project().
-		WithMountedCache("/app/.ruff_cache", dag.CacheVolume("ruff-cache"))
+		WithMountedCache("/app/.ruff_cache", core.NewCacheVolume("ruff-cache"))
 }
 
 // Runs ruff check and returns a container that will fail on any errors.
