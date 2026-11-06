@@ -4,7 +4,6 @@ go 1.26.1
 
 require (
 	dagger.io/dagger v1.0.0-beta.24
-	github.com/99designs/gqlgen v0.17.90
 	github.com/Khan/genqlient v0.8.1
 	github.com/containerd/platforms v0.2.1
 	github.com/dagger/otel-go v1.43.0
@@ -28,6 +27,7 @@ require (
 )
 
 require (
+	github.com/99designs/gqlgen v0.17.90 // indirect
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
