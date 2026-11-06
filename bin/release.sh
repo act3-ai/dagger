@@ -248,7 +248,7 @@ prepare() {
       echo "No checks registered for '$module', skipping checks."
     fi
 
-    dagger call --auto-apply --progress=dots --module="$module" prepare
+    dagger call --auto-apply --progress=dots --module="$module" prepare-release
 
     # Skip prompt if in batch mode
     version=$(cat "$module/VERSION")
@@ -306,9 +306,9 @@ publish() {
 
     version=$(cat "$module/VERSION")
 
-    dagger call --module="$module" release --version="$version"
+    dagger call --module="$module" publish-release --version="$version"
 
-    echo "Successfully ran 'dagger release' on module $module"
+    echo "Successfully ran 'dagger publish-release' on module $module"
 }
 
 help() {

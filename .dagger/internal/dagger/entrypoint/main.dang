@@ -24,13 +24,13 @@ type Entrypoint implements ModuleEntrypoint {
     [
       typeDef.withObject("Ci", sourceMap: sourceMap("main.go", 13, 6))
         .withFunction(
-          function("CreateRelease", typeDef.withKind(TypeDefKind.STRING_KIND))
-            .withSourceMap(sourceMap("main.go", 53, 1))
-            .withArg("version", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 54, 2))
+          function("PrepareRelease", typeDef.withObject("Changeset"))
+            .withSourceMap(sourceMap("main.go", 37, 1))
         )
         .withFunction(
-          function("Prepare", typeDef.withObject("Changeset"))
-            .withSourceMap(sourceMap("main.go", 37, 1))
+          function("PublishRelease", typeDef.withKind(TypeDefKind.STRING_KIND))
+            .withSourceMap(sourceMap("main.go", 53, 1))
+            .withArg("version", typeDef.withKind(TypeDefKind.STRING_KIND), sourceMap: sourceMap("main.go", 54, 2))
         )
         .withField("GitRef", typeDef.withObject("GitRef"), sourceMap: sourceMap("main.go", 14, 2))
         .withField("GithubToken", typeDef.withObject("Secret"), sourceMap: sourceMap("main.go", 15, 2))

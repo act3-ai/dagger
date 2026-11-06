@@ -6,7 +6,7 @@ package main
 import (
 	"context"
 	"dagger/ci/internal/dagger"
-	release "dagger/ci/internal/dagger/clients/release"
+	"dagger/ci/internal/dagger/clients/release"
 	"fmt"
 )
 
@@ -34,7 +34,7 @@ const (
 	repo = "act3-ai/dagger"
 )
 
-func (m *Ci) Prepare(ctx context.Context,
+func (m *Ci) PrepareRelease(ctx context.Context,
 ) (*dagger.Changeset, error) {
 
 	version, err := release.New(m.GitRef).
@@ -50,14 +50,14 @@ func (m *Ci) Prepare(ctx context.Context,
 	return release, nil
 }
 
-func (m *Ci) CreateRelease(ctx context.Context,
+func (m *Ci) PublishRelease(ctx context.Context,
 	version string,
 ) (string, error) {
 	tag := m.Module + "/v" + version
 	notesPath := m.Module + "/releases/v" + version + ".md"
 	notesFile := m.GitRef.Tree().File(notesPath)
 
-	release, err := release.New(m.GitRef).
+	r, err := release.New(m.GitRef).
 		CreateGithub(ctx,
 			repo,
 			m.GithubToken,
@@ -69,7 +69,7 @@ func (m *Ci) CreateRelease(ctx context.Context,
 		return "", fmt.Errorf("%s", err)
 	}
 
-	return release, nil
+	return r, nil
 }
 
 // func (m *Ci) UpgradeDagger() *dagger.Changeset {
